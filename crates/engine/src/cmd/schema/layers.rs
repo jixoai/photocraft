@@ -20,7 +20,7 @@ pub(super) fn description(id: &str) -> Option<&'static str> {
             "Delete one explicit layer or, when omitted, all selected layers. Removes their contents, masks and children; use hideLayers to hide without deletion. Undo restores the deletion."
         }
         "layer.duplicate" => {
-            "Duplicate an explicit layer, or the selected layer set when layer is omitted, with editable content preserved. The copy becomes active. Artboards are placed beside originals unless inPlace=true. document may be the active index or new; copying to another open document requires layer.copyToDocument. name applies only to a single copy."
+            "Duplicate an explicit layer, or the selected layer set when layer is omitted, with editable content preserved. The copy becomes active. Within the same document, a single non-group copy joins the original's link group; multiple copies and copied groups remap links among their copied members and unlink singletons. Artboards are placed beside originals unless inPlace=true. document may be the active index or new; copying to another open document requires layer.copyToDocument. name applies only to a single copy."
         }
         "layer.renameLayer" => {
             "Rename one explicit or active layer without changing its content. A non-whitespace name is required; surrounding spaces are preserved."

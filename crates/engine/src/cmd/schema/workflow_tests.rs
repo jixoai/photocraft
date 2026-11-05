@@ -60,6 +60,27 @@ fn duplicate_destination_contract_creates_new_document_without_mutating_source()
 }
 
 #[test]
+fn duplicate_contract_preserves_upstream_link_group_behavior_and_undo() {
+    let mut session = crate::Session::new();
+    execute(&mut session, "file.new", json!({"width":16,"height":12,"profile":"none","background":"transparent"}));
+    let first = session.active().unwrap().active_layer.unwrap();
+    let second = execute(&mut session, "layer.new.layer", json!({"name":"Linked partner"}))["layer"].as_u64().unwrap();
+    execute(&mut session, "layer.select", json!({"layer":first.0}));
+    execute(&mut session, "layer.select", json!({"layer":second,"mode":"add"}));
+    session.execute("layer.linkLayers", json!({"linked":true})).unwrap();
+    let group = session.active().unwrap().doc.layer(first).unwrap().link_group;
+    assert!(group.is_some());
+    let copied = execute(&mut session, "layer.duplicate", json!({"layer":first.0,"name":"Linked copy"}));
+    let copied = photocraft_doc::LayerId(copied["layer"].as_u64().unwrap());
+    assert_eq!(session.active().unwrap().doc.layer(copied).unwrap().link_group, group);
+    session.execute("edit.undo", json!({})).unwrap();
+    assert!(session.active().unwrap().doc.layer(copied).is_none());
+    session.execute("edit.redo", json!({})).unwrap();
+    assert_eq!(session.active().unwrap().doc.layer(copied).unwrap().link_group, group);
+    assert!(crate::commands::input_schema("layer.duplicate").unwrap()["description"].as_str().unwrap().contains("link group"));
+}
+
+#[test]
 fn audited_workflow_schemas_reject_invalid_types_units_and_dependencies() {
     let mut session = crate::Session::new();
     execute(&mut session, "file.new", json!({"width":16,"height":12,"profile":"none"}));
