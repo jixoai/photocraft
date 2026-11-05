@@ -49,6 +49,9 @@
     "actions.setColor": {
       "coverage": "partial"
     },
+    "actions.setHistory": {
+      "coverage": "partial"
+    },
     "actions.stop": {
       "coverage": "partial"
     },
@@ -1522,7 +1525,7 @@
     },
     "layer.duplicate": {
       "coverage": "complete",
-      "schemaSha256": "afb1b6a952603a2bf6ca25958f3fd2bca4cc8b4facee47c606487988c84ed592"
+      "schemaSha256": "0e6abbcccb05889e5c1989b23ccb527314af0d8b4010c671d290a3868f68f6f0"
     },
     "layer.exportAs": {
       "coverage": "partial"
@@ -1534,6 +1537,21 @@
       "coverage": "partial"
     },
     "layer.flattenImage": {
+      "coverage": "partial"
+    },
+    "layer.frame.convert": {
+      "coverage": "partial"
+    },
+    "layer.frame.fit": {
+      "coverage": "partial"
+    },
+    "layer.frame.info": {
+      "coverage": "partial"
+    },
+    "layer.frame.set": {
+      "coverage": "partial"
+    },
+    "layer.frame.setContent": {
       "coverage": "partial"
     },
     "layer.groupLayers": {
@@ -2860,6 +2878,66 @@
       "coverage": "partial"
     },
     "type.openType.stylisticAlternates": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set1": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set10": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set11": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set12": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set13": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set14": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set15": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set16": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set17": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set18": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set19": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set2": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set20": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set3": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set4": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set5": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set6": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set7": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set8": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticSets.set9": {
       "coverage": "partial"
     },
     "type.openType.swash": {
