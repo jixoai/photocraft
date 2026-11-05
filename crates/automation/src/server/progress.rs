@@ -9,6 +9,9 @@ use rmcp::model::ProgressNotificationParam;
 use rmcp::service::RequestContext;
 use std::time::{Duration, Instant};
 
+#[cfg(test)]
+mod cancellation_tests;
+
 impl PhotocraftMcp {
     pub(super) async fn render_video_progress(&self, params: Value, context: RequestContext<RoleServer>) -> CallToolResult {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();

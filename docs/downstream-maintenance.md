@@ -1,6 +1,6 @@
 # Maintaining the PhotoCraft agent/web downstream
 
-Updated: 2026-11-05. This is the maintenance policy for the `jixoai/photocraft` fork,
+Updated: 2026-11-06. This is the maintenance policy for the `jixoai/photocraft` fork,
 not a change to upstream's contribution or CI policy.
 
 ## Sources and branches
@@ -149,10 +149,10 @@ runtime tests remain necessary.
 When promoting a command from partial to complete, update the reviewed baseline in the
 same audit commit so subsequent downgrades cannot hide behind its earlier partial status.
 
-The original baseline was generated from the pre-merge 964-command inventory. After
-reviewing the first integration it can advance to include new command IDs and the upstream
-duplicate-layer link semantics; original audited commands must not be downgraded. To
-compare a fresh inventory or explicitly record a reviewed replacement:
+The original baseline was generated from the pre-merge 964-command inventory. The first
+reviewed integration adds 26 partial command IDs and documents the upstream duplicate-layer
+link semantics; the 135 original audited commands must not be downgraded. To compare a
+fresh inventory or explicitly record a reviewed replacement:
 
 ```sh
 cargo run --locked --quiet -p photocraft-cli -- commands --json > target/commands.json
