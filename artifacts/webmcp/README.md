@@ -1,5 +1,9 @@
 # PhotoCraft command contracts
 
+This is the pre-sync audit snapshot. Generated inventories stay local and are ignored by
+Git; the compact, reviewed source baseline is `maintenance/command-baseline.json`.
+See `docs/downstream-maintenance.md` for current-inventory comparisons and upstream sync.
+
 Generated on 2026-11-05 from the current engine registry:
 
 ```sh
