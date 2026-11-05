@@ -1,0 +1,3032 @@
+{
+  "formatVersion": 1,
+  "commands": {
+    "actions.assignSet": {
+      "coverage": "partial"
+    },
+    "actions.conditional": {
+      "coverage": "partial"
+    },
+    "actions.delete": {
+      "coverage": "partial"
+    },
+    "actions.dialog": {
+      "coverage": "partial"
+    },
+    "actions.get": {
+      "coverage": "partial"
+    },
+    "actions.insert": {
+      "coverage": "partial"
+    },
+    "actions.list": {
+      "coverage": "partial"
+    },
+    "actions.load": {
+      "coverage": "partial"
+    },
+    "actions.move": {
+      "coverage": "partial"
+    },
+    "actions.newSet": {
+      "coverage": "partial"
+    },
+    "actions.photoshopStep": {
+      "coverage": "partial"
+    },
+    "actions.play": {
+      "coverage": "partial"
+    },
+    "actions.record": {
+      "coverage": "partial"
+    },
+    "actions.rename": {
+      "coverage": "partial"
+    },
+    "actions.save": {
+      "coverage": "partial"
+    },
+    "actions.setColor": {
+      "coverage": "partial"
+    },
+    "actions.stop": {
+      "coverage": "partial"
+    },
+    "actions.stopMessage": {
+      "coverage": "partial"
+    },
+    "actions.toggle": {
+      "coverage": "partial"
+    },
+    "brush.defineFromSelection": {
+      "coverage": "complete",
+      "schemaSha256": "ea0462ea7f9e3799e530b26c534ab80baee19627ed714031335956e55c2c4576"
+    },
+    "brush.get": {
+      "coverage": "complete",
+      "schemaSha256": "d0f460dd3079ec16c041a5cd961d0cd5aa16f058920ce576c5148fc688ffeb28"
+    },
+    "brush.mixer.clean": {
+      "coverage": "partial"
+    },
+    "brush.mixer.load": {
+      "coverage": "partial"
+    },
+    "brush.mixer.sample": {
+      "coverage": "partial"
+    },
+    "brush.presets.delete": {
+      "coverage": "complete",
+      "schemaSha256": "748b1de43be94aa7ade6f1b354b3d1365465ce24d86b2cf1f941666e46f2358f"
+    },
+    "brush.presets.deleteGroup": {
+      "coverage": "partial"
+    },
+    "brush.presets.importAbr": {
+      "coverage": "partial"
+    },
+    "brush.presets.importImage": {
+      "coverage": "partial"
+    },
+    "brush.presets.list": {
+      "coverage": "complete",
+      "schemaSha256": "a72cea47b14ceba95b2068d130b46e05cdf2c978aae4a81fda726842fa79a988"
+    },
+    "brush.presets.move": {
+      "coverage": "partial"
+    },
+    "brush.presets.moveGroup": {
+      "coverage": "partial"
+    },
+    "brush.presets.rename": {
+      "coverage": "partial"
+    },
+    "brush.presets.renameGroup": {
+      "coverage": "partial"
+    },
+    "brush.presets.save": {
+      "coverage": "complete",
+      "schemaSha256": "13b41c5730b8c3768f6b549d4613e7b70fde0073fa98a15deae4d0a9148703cc"
+    },
+    "brush.presets.setCurrent": {
+      "coverage": "complete",
+      "schemaSha256": "e9691bc1c261c75989dbeb213f7ca6d507ad4ab1ec1a683bcf12d1fea2c9d2e5"
+    },
+    "brush.presets.update": {
+      "coverage": "complete",
+      "schemaSha256": "d69eec33f44a9493d31f4aad92d5cb0efbe934aad3b89c898180a9e4745a555b"
+    },
+    "brush.texturePattern": {
+      "coverage": "partial"
+    },
+    "channel.delete": {
+      "coverage": "partial"
+    },
+    "channel.duplicate": {
+      "coverage": "partial"
+    },
+    "channel.list": {
+      "coverage": "partial"
+    },
+    "channel.merge": {
+      "coverage": "partial"
+    },
+    "channel.mergeSpot": {
+      "coverage": "partial"
+    },
+    "channel.move": {
+      "coverage": "partial"
+    },
+    "channel.new": {
+      "coverage": "partial"
+    },
+    "channel.newSpot": {
+      "coverage": "partial"
+    },
+    "channel.options": {
+      "coverage": "partial"
+    },
+    "channel.rename": {
+      "coverage": "partial"
+    },
+    "channel.setVisible": {
+      "coverage": "partial"
+    },
+    "channel.split": {
+      "coverage": "partial"
+    },
+    "channel.target": {
+      "coverage": "partial"
+    },
+    "channel.target.composite": {
+      "coverage": "partial"
+    },
+    "channel.target.layerMask": {
+      "coverage": "partial"
+    },
+    "channel.target.slot3": {
+      "coverage": "partial"
+    },
+    "channel.target.slot4": {
+      "coverage": "partial"
+    },
+    "channel.target.slot5": {
+      "coverage": "partial"
+    },
+    "channel.target.slot6": {
+      "coverage": "partial"
+    },
+    "channel.target.slot7": {
+      "coverage": "partial"
+    },
+    "channel.target.slot8": {
+      "coverage": "partial"
+    },
+    "channel.target.slot9": {
+      "coverage": "partial"
+    },
+    "cloneSource.list": {
+      "coverage": "partial"
+    },
+    "cloneSource.overlay": {
+      "coverage": "partial"
+    },
+    "cloneSource.resetTransform": {
+      "coverage": "partial"
+    },
+    "cloneSource.select": {
+      "coverage": "partial"
+    },
+    "cloneSource.set": {
+      "coverage": "partial"
+    },
+    "color.profileMismatch": {
+      "coverage": "partial"
+    },
+    "command.list": {
+      "coverage": "complete",
+      "schemaSha256": "807f41f4040a325de08f215f9652936fbd5cb1be486f116c432df9872074bec3"
+    },
+    "count.add": {
+      "coverage": "partial"
+    },
+    "count.clear": {
+      "coverage": "partial"
+    },
+    "count.deleteGroup": {
+      "coverage": "partial"
+    },
+    "count.move": {
+      "coverage": "partial"
+    },
+    "count.newGroup": {
+      "coverage": "partial"
+    },
+    "count.remove": {
+      "coverage": "partial"
+    },
+    "count.setGroup": {
+      "coverage": "partial"
+    },
+    "document.activate": {
+      "coverage": "partial"
+    },
+    "document.inspect": {
+      "coverage": "complete",
+      "schemaSha256": "48d7732322f3f31ae0574bd341e0080533fd3c6da5a1a365cc4fa63e2c09479a"
+    },
+    "document.move": {
+      "coverage": "partial"
+    },
+    "document.pixel": {
+      "coverage": "complete",
+      "schemaSha256": "e5dcabb8178244c1f198421ee25fbcdb600b7fd0da897b112c2267a3bd9414df"
+    },
+    "document.presets.delete": {
+      "coverage": "partial"
+    },
+    "document.presets.get": {
+      "coverage": "partial"
+    },
+    "document.presets.list": {
+      "coverage": "partial"
+    },
+    "document.presets.save": {
+      "coverage": "partial"
+    },
+    "document.recent.add": {
+      "coverage": "partial"
+    },
+    "document.recent.list": {
+      "coverage": "partial"
+    },
+    "document.sampleColor": {
+      "coverage": "partial"
+    },
+    "edit.assignProfile": {
+      "coverage": "partial"
+    },
+    "edit.autoAlignLayers": {
+      "coverage": "partial"
+    },
+    "edit.autoBlendLayers": {
+      "coverage": "partial"
+    },
+    "edit.checkSpelling": {
+      "coverage": "partial"
+    },
+    "edit.clear": {
+      "coverage": "partial"
+    },
+    "edit.colorSettings": {
+      "coverage": "partial"
+    },
+    "edit.contentAwareFill": {
+      "coverage": "partial"
+    },
+    "edit.contentAwareScale": {
+      "coverage": "partial"
+    },
+    "edit.convertToProfile": {
+      "coverage": "partial"
+    },
+    "edit.copy": {
+      "coverage": "partial"
+    },
+    "edit.copyMerged": {
+      "coverage": "partial"
+    },
+    "edit.cut": {
+      "coverage": "partial"
+    },
+    "edit.defineBrushPreset": {
+      "coverage": "partial"
+    },
+    "edit.defineCustomShape": {
+      "coverage": "partial"
+    },
+    "edit.definePattern": {
+      "coverage": "partial"
+    },
+    "edit.deleteAndFillSelection": {
+      "coverage": "partial"
+    },
+    "edit.fade": {
+      "coverage": "partial"
+    },
+    "edit.fill": {
+      "coverage": "complete",
+      "schemaSha256": "5c1a99a954e3d9f0f4ae1f14286cb4a2ecf21230ac4a2d69bdbe2d1710877461"
+    },
+    "edit.fillBackground": {
+      "coverage": "partial"
+    },
+    "edit.fillBackgroundPreserve": {
+      "coverage": "partial"
+    },
+    "edit.fillForeground": {
+      "coverage": "partial"
+    },
+    "edit.fillForegroundPreserve": {
+      "coverage": "partial"
+    },
+    "edit.fillHistory": {
+      "coverage": "partial"
+    },
+    "edit.findAndReplaceText": {
+      "coverage": "partial"
+    },
+    "edit.installedProfiles": {
+      "coverage": "partial"
+    },
+    "edit.keyboardShortcuts": {
+      "coverage": "partial"
+    },
+    "edit.menus": {
+      "coverage": "partial"
+    },
+    "edit.paste": {
+      "coverage": "partial"
+    },
+    "edit.pasteSpecial.pasteInPlace": {
+      "coverage": "partial"
+    },
+    "edit.pasteSpecial.pasteInto": {
+      "coverage": "partial"
+    },
+    "edit.pasteSpecial.pasteOutside": {
+      "coverage": "partial"
+    },
+    "edit.perspectiveWarp": {
+      "coverage": "partial"
+    },
+    "edit.preferences.cursors": {
+      "coverage": "partial"
+    },
+    "edit.preferences.enhancedControls": {
+      "coverage": "partial"
+    },
+    "edit.preferences.export": {
+      "coverage": "partial"
+    },
+    "edit.preferences.fileHandling": {
+      "coverage": "partial"
+    },
+    "edit.preferences.general": {
+      "coverage": "partial"
+    },
+    "edit.preferences.guidesGridAndSlices": {
+      "coverage": "partial"
+    },
+    "edit.preferences.historyLog": {
+      "coverage": "partial"
+    },
+    "edit.preferences.integrations": {
+      "coverage": "partial"
+    },
+    "edit.preferences.interface": {
+      "coverage": "partial"
+    },
+    "edit.preferences.performance": {
+      "coverage": "partial"
+    },
+    "edit.preferences.plugIns": {
+      "coverage": "partial"
+    },
+    "edit.preferences.rawDefaults": {
+      "coverage": "partial"
+    },
+    "edit.preferences.scratchDisks": {
+      "coverage": "partial"
+    },
+    "edit.preferences.tools": {
+      "coverage": "partial"
+    },
+    "edit.preferences.transparencyAndGamut": {
+      "coverage": "partial"
+    },
+    "edit.preferences.type": {
+      "coverage": "partial"
+    },
+    "edit.preferences.unitsAndRulers": {
+      "coverage": "partial"
+    },
+    "edit.preferences.workspace": {
+      "coverage": "partial"
+    },
+    "edit.presets.exportImportPresets": {
+      "coverage": "partial"
+    },
+    "edit.presets.migratePresets": {
+      "coverage": "partial"
+    },
+    "edit.presets.presetManager": {
+      "coverage": "partial"
+    },
+    "edit.profileInfo": {
+      "coverage": "partial"
+    },
+    "edit.puppetWarp": {
+      "coverage": "partial"
+    },
+    "edit.purge.all": {
+      "coverage": "partial"
+    },
+    "edit.purge.clipboard": {
+      "coverage": "partial"
+    },
+    "edit.purge.histories": {
+      "coverage": "partial"
+    },
+    "edit.purge.undo": {
+      "coverage": "partial"
+    },
+    "edit.purge.videoCache": {
+      "coverage": "partial"
+    },
+    "edit.redo": {
+      "coverage": "complete",
+      "schemaSha256": "047f671e6a3086226361eff00a9fd6db7a11c8c74a5beb0bd2c5fdf16f9177c8"
+    },
+    "edit.stroke": {
+      "coverage": "partial"
+    },
+    "edit.toggleLastState": {
+      "coverage": "partial"
+    },
+    "edit.toolbar": {
+      "coverage": "partial"
+    },
+    "edit.transform": {
+      "coverage": "complete",
+      "schemaSha256": "d4a5ca52e7b88713bdabccdf8d95ca441f17b90bca2653496ed035594b73886d"
+    },
+    "edit.transform.again": {
+      "coverage": "partial"
+    },
+    "edit.transform.againCopy": {
+      "coverage": "partial"
+    },
+    "edit.transform.flipHorizontal": {
+      "coverage": "partial"
+    },
+    "edit.transform.flipVertical": {
+      "coverage": "partial"
+    },
+    "edit.transform.removeWarpSplit": {
+      "coverage": "partial"
+    },
+    "edit.transform.rotate180": {
+      "coverage": "partial"
+    },
+    "edit.transform.rotate90Ccw": {
+      "coverage": "partial"
+    },
+    "edit.transform.rotate90Cw": {
+      "coverage": "partial"
+    },
+    "edit.transform.splitWarpCrosswise": {
+      "coverage": "partial"
+    },
+    "edit.transform.splitWarpHorizontally": {
+      "coverage": "partial"
+    },
+    "edit.transform.splitWarpVertically": {
+      "coverage": "partial"
+    },
+    "edit.transform.warp": {
+      "coverage": "partial"
+    },
+    "edit.transform.warpGrid": {
+      "coverage": "partial"
+    },
+    "edit.undo": {
+      "coverage": "complete",
+      "schemaSha256": "e9e14aa483b05fd4e0c48310c2c000a74b2187898c42faaa17352bbdd2272753"
+    },
+    "file.approveMemory": {
+      "coverage": "partial"
+    },
+    "file.automate.batch": {
+      "coverage": "partial"
+    },
+    "file.automate.conditionalModeChange": {
+      "coverage": "partial"
+    },
+    "file.automate.contactSheetII": {
+      "coverage": "partial"
+    },
+    "file.automate.createDroplet": {
+      "coverage": "partial"
+    },
+    "file.automate.cropAndStraightenPhotos": {
+      "coverage": "partial"
+    },
+    "file.automate.fitImage": {
+      "coverage": "partial"
+    },
+    "file.automate.lensCorrection": {
+      "coverage": "partial"
+    },
+    "file.automate.mergeToHdrPro": {
+      "coverage": "partial"
+    },
+    "file.automate.photomerge": {
+      "coverage": "partial"
+    },
+    "file.automate.runDroplet": {
+      "coverage": "partial"
+    },
+    "file.close": {
+      "coverage": "partial"
+    },
+    "file.closeAll": {
+      "coverage": "partial"
+    },
+    "file.closeOthers": {
+      "coverage": "partial"
+    },
+    "file.export.artboardsToFiles": {
+      "coverage": "partial"
+    },
+    "file.export.artboardsToPdf": {
+      "coverage": "partial"
+    },
+    "file.export.colorLookupTables": {
+      "coverage": "partial"
+    },
+    "file.export.dataSetsAsFiles": {
+      "coverage": "partial"
+    },
+    "file.export.exportPreferences": {
+      "coverage": "partial"
+    },
+    "file.export.layerCompsToFiles": {
+      "coverage": "partial"
+    },
+    "file.export.layersToFiles": {
+      "coverage": "partial"
+    },
+    "file.export.pathsToIllustrator": {
+      "coverage": "partial"
+    },
+    "file.export.presets.delete": {
+      "coverage": "partial"
+    },
+    "file.export.presets.get": {
+      "coverage": "partial"
+    },
+    "file.export.presets.list": {
+      "coverage": "partial"
+    },
+    "file.export.presets.save": {
+      "coverage": "partial"
+    },
+    "file.export.quickExport": {
+      "coverage": "partial"
+    },
+    "file.export.renderVideo": {
+      "coverage": "partial"
+    },
+    "file.export.saveForWebLegacy": {
+      "coverage": "partial"
+    },
+    "file.exrParts": {
+      "coverage": "partial"
+    },
+    "file.fileInfo": {
+      "coverage": "partial"
+    },
+    "file.generate.imageAssets": {
+      "coverage": "partial"
+    },
+    "file.import.notes": {
+      "coverage": "partial"
+    },
+    "file.import.variableDataSets": {
+      "coverage": "partial"
+    },
+    "file.import.videoFramesToLayers": {
+      "coverage": "partial"
+    },
+    "file.import.wiaSupport": {
+      "coverage": "partial"
+    },
+    "file.new": {
+      "coverage": "complete",
+      "schemaSha256": "2b2633528458f5bcb3b01c8e8b6cc2558ce5a27b8d4efe1d67892871b63cd0a3"
+    },
+    "file.newFromClipboard": {
+      "coverage": "partial"
+    },
+    "file.openAs": {
+      "coverage": "partial"
+    },
+    "file.openExrParts": {
+      "coverage": "partial"
+    },
+    "file.package": {
+      "coverage": "partial"
+    },
+    "file.placeEmbedded": {
+      "coverage": "partial"
+    },
+    "file.placeLinked": {
+      "coverage": "partial"
+    },
+    "file.print": {
+      "coverage": "partial"
+    },
+    "file.print.page": {
+      "coverage": "partial"
+    },
+    "file.print.printers": {
+      "coverage": "partial"
+    },
+    "file.printOneCopy": {
+      "coverage": "partial"
+    },
+    "file.printers": {
+      "coverage": "partial"
+    },
+    "file.revealInFinder": {
+      "coverage": "partial"
+    },
+    "file.revert": {
+      "coverage": "partial"
+    },
+    "file.saveACopy": {
+      "coverage": "partial"
+    },
+    "file.scripts.browse": {
+      "coverage": "partial"
+    },
+    "file.scripts.deleteAllEmptyLayers": {
+      "coverage": "partial"
+    },
+    "file.scripts.flattenAllLayerEffects": {
+      "coverage": "partial"
+    },
+    "file.scripts.flattenAllMasks": {
+      "coverage": "partial"
+    },
+    "file.scripts.imageProcessor": {
+      "coverage": "partial"
+    },
+    "file.scripts.loadFilesIntoStack": {
+      "coverage": "partial"
+    },
+    "file.scripts.scriptEventsManager": {
+      "coverage": "partial"
+    },
+    "file.scripts.statistics": {
+      "coverage": "partial"
+    },
+    "filter.adaptiveWideAngle": {
+      "coverage": "partial"
+    },
+    "filter.blur.average": {
+      "coverage": "partial"
+    },
+    "filter.blur.blur": {
+      "coverage": "complete",
+      "schemaSha256": "a24ab68bd9e45fff7740aa60da6f131eebff6568d94884a2b8f4f723ae560175"
+    },
+    "filter.blur.blurMore": {
+      "coverage": "complete",
+      "schemaSha256": "c17c4799fa648637447d8609d5b269b6e1c29862ccc5a03a48e051ed3075e0e9"
+    },
+    "filter.blur.boxBlur": {
+      "coverage": "complete",
+      "schemaSha256": "191b0c351a951eeafa78ca30d211f3f4a0c3e21915c99a0a0322bb97a21f7bb3"
+    },
+    "filter.blur.gaussianBlur": {
+      "coverage": "complete",
+      "schemaSha256": "4e9ebbf76a88779c9f57255b041d6442ac561c190b1e10ebea7da7825e94b646"
+    },
+    "filter.blur.lensBlur": {
+      "coverage": "partial"
+    },
+    "filter.blur.motionBlur": {
+      "coverage": "complete",
+      "schemaSha256": "35ce898d35e182113200441ed8ebcb73fd4eedad1022083d7230bba96f652efb"
+    },
+    "filter.blur.radialBlur": {
+      "coverage": "complete",
+      "schemaSha256": "62baa5091bd1a3a6b84fd31c1fe78d0ed0ef4636e4f521f8527d5bd1b84bd2f2"
+    },
+    "filter.blur.shapeBlur": {
+      "coverage": "complete",
+      "schemaSha256": "893d451573ff3c67a0e3590ca22077f2acb957261841ee6029404ebc49fef01b"
+    },
+    "filter.blur.smartBlur": {
+      "coverage": "complete",
+      "schemaSha256": "448ed3187880a71a5b4cce8e5629c31b3aeb6257190bfd2bd2318157d3a0c4c4"
+    },
+    "filter.blur.surfaceBlur": {
+      "coverage": "complete",
+      "schemaSha256": "321221174954d40641b7f6113c2e0b547e394f56655b77ce9b980aeca6948669"
+    },
+    "filter.blurGallery.fieldBlur": {
+      "coverage": "partial"
+    },
+    "filter.blurGallery.irisBlur": {
+      "coverage": "partial"
+    },
+    "filter.blurGallery.pathBlur": {
+      "coverage": "partial"
+    },
+    "filter.blurGallery.spinBlur": {
+      "coverage": "partial"
+    },
+    "filter.blurGallery.tiltShift": {
+      "coverage": "partial"
+    },
+    "filter.cameraRaw": {
+      "coverage": "partial"
+    },
+    "filter.convertForSmartFilters": {
+      "coverage": "partial"
+    },
+    "filter.distort.displace": {
+      "coverage": "partial"
+    },
+    "filter.distort.pinch": {
+      "coverage": "complete",
+      "schemaSha256": "898580fd80d299cda6b3c567b57c1605ccdd68adff1ea0e9d13548e3bce0ba59"
+    },
+    "filter.distort.polarCoordinates": {
+      "coverage": "complete",
+      "schemaSha256": "dced9a3bf7de4c2ce234a4c6c0a2e75655bd204b8ceebc3ffde581d0db4588e7"
+    },
+    "filter.distort.ripple": {
+      "coverage": "complete",
+      "schemaSha256": "8430bb54dbe9df9cce8faab5af9f1f871bc771c52d46c2f41f5e1506126b15fe"
+    },
+    "filter.distort.shear": {
+      "coverage": "partial"
+    },
+    "filter.distort.spherize": {
+      "coverage": "complete",
+      "schemaSha256": "1e49899c2d3cd52790c42d4795a6915aa2042ef7695af568f3052396bca07747"
+    },
+    "filter.distort.twirl": {
+      "coverage": "complete",
+      "schemaSha256": "52e261f4e72fe53aa07a55f193d4fc0a52b470371685988ed216337bbf69e9f1"
+    },
+    "filter.distort.wave": {
+      "coverage": "complete",
+      "schemaSha256": "2c7d250bb74e824d408555abaa9395d40ae1898a0e6430c37de497ddee205495"
+    },
+    "filter.distort.zigZag": {
+      "coverage": "partial"
+    },
+    "filter.filterGallery": {
+      "coverage": "partial"
+    },
+    "filter.gallery.accentedEdges": {
+      "coverage": "complete",
+      "schemaSha256": "5883fd46641ec60c482e51fa7ea480213e7b99a2fbfec03afd379d93ab39db6d"
+    },
+    "filter.gallery.angledStrokes": {
+      "coverage": "complete",
+      "schemaSha256": "79d6be08452db78258fd8e193bb8344026188dcde3d4e275f06eea772d043801"
+    },
+    "filter.gallery.basRelief": {
+      "coverage": "complete",
+      "schemaSha256": "5cc8deffbfd001ee3d5840b5a6b2a14d6b081bf1d0795bf2514cedc530cd39b1"
+    },
+    "filter.gallery.chalkCharcoal": {
+      "coverage": "complete",
+      "schemaSha256": "e3e24cf998512da7b0cb62d2347283c966c2b4d8072b6e344dd91672419dfb54"
+    },
+    "filter.gallery.charcoal": {
+      "coverage": "complete",
+      "schemaSha256": "8083a4ba9de4de20d3bbf8169e5b4689c2daeec15d178ace65ac3617745b2176"
+    },
+    "filter.gallery.chrome": {
+      "coverage": "complete",
+      "schemaSha256": "57db374ad6912fb0362e769353b33e6cb465898fdfc2d619c732fd7d1e7df654"
+    },
+    "filter.gallery.coloredPencil": {
+      "coverage": "complete",
+      "schemaSha256": "101237ad8e8c4adc5551af17863a5a4e93316a5ce8fbd8c1640200bc099bb340"
+    },
+    "filter.gallery.conteCrayon": {
+      "coverage": "complete",
+      "schemaSha256": "35c4370f2504151541e7533f185a4c0454058fb12bc5635a71f8cbc839505075"
+    },
+    "filter.gallery.craquelure": {
+      "coverage": "complete",
+      "schemaSha256": "f652ea6e74a5bb46e53602eca9c87c24f0a720138019f3530a2ab6bd7d0319ca"
+    },
+    "filter.gallery.crosshatch": {
+      "coverage": "complete",
+      "schemaSha256": "2a2ba525a3ade54998ce1af42f287b752a51d1ba5378f396ff2af3997265c0af"
+    },
+    "filter.gallery.cutout": {
+      "coverage": "complete",
+      "schemaSha256": "ebbc9516770add17ad50c12e16deba6ceacf72e9c54e44803c16b4e90cd8a86a"
+    },
+    "filter.gallery.darkStrokes": {
+      "coverage": "complete",
+      "schemaSha256": "c589105c6778a76fa068c2d478da76bf26f80ca885cb69de7f152abf47d2e320"
+    },
+    "filter.gallery.diffuseGlow": {
+      "coverage": "complete",
+      "schemaSha256": "89873121afce71fb18ee3abfecc57fe24a25c85e20301fdb65d1d6a61427085f"
+    },
+    "filter.gallery.dryBrush": {
+      "coverage": "complete",
+      "schemaSha256": "a735b56f3e1619e3e706ff58b548735472b6e3db01ceb2a5e77043299f49a115"
+    },
+    "filter.gallery.filmGrain": {
+      "coverage": "complete",
+      "schemaSha256": "327fa69b458a06644c4c40b700e803ca06550da7a1e17a2f388907be396ac9bd"
+    },
+    "filter.gallery.fresco": {
+      "coverage": "complete",
+      "schemaSha256": "3e0acb924eb36b927c8eb8a5bf59af0b3bfec2b85722f4e75519a636150463b7"
+    },
+    "filter.gallery.glass": {
+      "coverage": "complete",
+      "schemaSha256": "648f236b0822c00db684aabc979cf6a66f34e63a86f810656ba056ee332e07eb"
+    },
+    "filter.gallery.glowingEdges": {
+      "coverage": "complete",
+      "schemaSha256": "c68395a6f4c158d61a1bf18d02876ac1fa018a93236b10761202cff0bc8acd67"
+    },
+    "filter.gallery.grain": {
+      "coverage": "complete",
+      "schemaSha256": "40df81762515b2488f40c5c6f0c6472803fe7050a2015ba3b5c39a81bb38f674"
+    },
+    "filter.gallery.graphicPen": {
+      "coverage": "complete",
+      "schemaSha256": "0dd694ad93e3f37fa23ff1cdac62484067b14eef40d3f139948d04bd84b73c44"
+    },
+    "filter.gallery.halftonePattern": {
+      "coverage": "complete",
+      "schemaSha256": "beedb4b3f51f79e5b1047c36acc018127f962c134e957d3e7587943f613d2748"
+    },
+    "filter.gallery.inkOutlines": {
+      "coverage": "complete",
+      "schemaSha256": "b8b33ba88baa1d398f45d29f8c20b199eb45560406cf6ee19e7e6f46f272fe75"
+    },
+    "filter.gallery.mosaicTiles": {
+      "coverage": "complete",
+      "schemaSha256": "9ea7dbf356665c9a4083351aa4ceaedb35ad5bd68a4f190065157b32e63a821f"
+    },
+    "filter.gallery.neonGlow": {
+      "coverage": "complete",
+      "schemaSha256": "7d8ca35ed9d584f705f0a55390f69b8f076ffe0b057990dd32cd2c458996bc7c"
+    },
+    "filter.gallery.notePaper": {
+      "coverage": "complete",
+      "schemaSha256": "0c5f085a97b168a29c8fdc018b4c392e304a02e25a277c802a0a535abeb59970"
+    },
+    "filter.gallery.oceanRipple": {
+      "coverage": "complete",
+      "schemaSha256": "feb2d365d687266ed7673b5c547ee2342acb64c2429328c57446125b047b2ebb"
+    },
+    "filter.gallery.paintDaubs": {
+      "coverage": "complete",
+      "schemaSha256": "1bb0f324e855b079a36fe815cd8b9b344f74cf44033da69040e8360d9e245745"
+    },
+    "filter.gallery.paletteKnife": {
+      "coverage": "complete",
+      "schemaSha256": "5f5810b8097aee3327f0d2c3dc2713eed6dcdb1d6c07dc3fa79b40df69ed89c6"
+    },
+    "filter.gallery.patchwork": {
+      "coverage": "complete",
+      "schemaSha256": "7c3a97701dfae57b3ca52c751b0b88c1ad0be5f5a00fafd1f519c6c29ea28e8f"
+    },
+    "filter.gallery.photocopy": {
+      "coverage": "complete",
+      "schemaSha256": "0d35e144f06d9107dbcb7008a5c8a3452240cde7a1651d4e146f23a210eb7cbb"
+    },
+    "filter.gallery.plaster": {
+      "coverage": "complete",
+      "schemaSha256": "93add680c09ac008db2756c5db57cd081a4b83eeab2dfc92a38b4aedfa50125d"
+    },
+    "filter.gallery.plasticWrap": {
+      "coverage": "complete",
+      "schemaSha256": "520132b16e032544c472caf8c965c7b15cc49f61ed0d83fa6bf0859f3b48feef"
+    },
+    "filter.gallery.posterEdges": {
+      "coverage": "complete",
+      "schemaSha256": "8566197d5398bb25d9f72fe5d9a0e25d96465612175d4e16bbea3057c94a68ac"
+    },
+    "filter.gallery.reticulation": {
+      "coverage": "complete",
+      "schemaSha256": "3eff52e3a47f228529e65171d6191c7f3e024a0db1de095ad4dac29a2306015c"
+    },
+    "filter.gallery.roughPastels": {
+      "coverage": "complete",
+      "schemaSha256": "787d2d6b9f3d041494ae9c1b9e66ec20331fd615123ce4f26f7c36ff637e90c4"
+    },
+    "filter.gallery.smudgeStick": {
+      "coverage": "complete",
+      "schemaSha256": "2a0a629312bbf1560bad7b17df9e91899f3d0b39141c8ae7bbe78f71430cad21"
+    },
+    "filter.gallery.spatter": {
+      "coverage": "complete",
+      "schemaSha256": "66c60dbefdc5d0d8a8a9ec9b623da00e7ca6cdf2c401b8d7fc4eb7d6134dd075"
+    },
+    "filter.gallery.sponge": {
+      "coverage": "complete",
+      "schemaSha256": "fc3ecfccbe7e8cfe3d66dbc580bd5e903dd731b945fd8114baabb27b8f2858f4"
+    },
+    "filter.gallery.sprayedStrokes": {
+      "coverage": "complete",
+      "schemaSha256": "61849fabdad7651ae527fde4d03f5c9fdcabf37b712465f8631333eee5496899"
+    },
+    "filter.gallery.stainedGlass": {
+      "coverage": "complete",
+      "schemaSha256": "15a225b737a7bc44152579ad11e9409dea4ca38b0acce2a799010d6614721d43"
+    },
+    "filter.gallery.stamp": {
+      "coverage": "complete",
+      "schemaSha256": "9d8e1ff05adc5fc11e12e85d89732dea191be600bd4e6c80be036102ee159f09"
+    },
+    "filter.gallery.sumiE": {
+      "coverage": "complete",
+      "schemaSha256": "9e742363ee721c6cec22e6a90608aa6dfbfb661ffa64fb13946ac55a037555ce"
+    },
+    "filter.gallery.texturizer": {
+      "coverage": "complete",
+      "schemaSha256": "7e6042808dfe859054f05ce8aea6fbec9e282885af8ec46d671411b627d8243b"
+    },
+    "filter.gallery.tornEdges": {
+      "coverage": "complete",
+      "schemaSha256": "911df3b220fb5446c3dd6ea403eb6b559f0dc92f3bbaecbb82c20b26ea242a9a"
+    },
+    "filter.gallery.underpainting": {
+      "coverage": "complete",
+      "schemaSha256": "bc106cb2776d4e14b6c90e9409aaa16a6e3020c976e38a63b698a1cd6af99d98"
+    },
+    "filter.gallery.waterPaper": {
+      "coverage": "complete",
+      "schemaSha256": "3110b2fa86cd4a301b330807cd6515899ca8a12d013d8b4cb4cc03ce1365d17b"
+    },
+    "filter.gallery.watercolor": {
+      "coverage": "complete",
+      "schemaSha256": "2d3e7e24275ab052dc22cdfbc088702cd45f43b32298616702076a1b0204c0e7"
+    },
+    "filter.lastFilter": {
+      "coverage": "partial"
+    },
+    "filter.lensCorrection": {
+      "coverage": "partial"
+    },
+    "filter.liquify": {
+      "coverage": "partial"
+    },
+    "filter.noise.addNoise": {
+      "coverage": "complete",
+      "schemaSha256": "77a576f5c345ba55ded88c063f6104e75806178a02db98730a4c6b457e1ce6e6"
+    },
+    "filter.noise.despeckle": {
+      "coverage": "complete",
+      "schemaSha256": "04c8efaae409c196c6102a53fa603c70c3d17ccaf54e81f806c6e73d600a19c2"
+    },
+    "filter.noise.dustAndScratches": {
+      "coverage": "complete",
+      "schemaSha256": "e98b17f7ed541605de7fa64abf96725bb84f45a9e596671c40e7bdb4210e50a1"
+    },
+    "filter.noise.median": {
+      "coverage": "complete",
+      "schemaSha256": "463800422a077ecda2c4898ae719dd5608db08165573153eb56049acd4aa405e"
+    },
+    "filter.noise.reduceNoise": {
+      "coverage": "complete",
+      "schemaSha256": "78ad8ed24d1b1c6f737fc8a9617275049b05633ba7dfdeb06aec206844cd3012"
+    },
+    "filter.other.colorToAlpha": {
+      "coverage": "partial"
+    },
+    "filter.other.custom": {
+      "coverage": "partial"
+    },
+    "filter.other.highPass": {
+      "coverage": "complete",
+      "schemaSha256": "6fb99554a61a9d8c12e73a4b35fad79d04958ef2859e210d47016e9422379d4d"
+    },
+    "filter.other.hsbHsl": {
+      "coverage": "partial"
+    },
+    "filter.other.maximum": {
+      "coverage": "complete",
+      "schemaSha256": "b803fa9e6241b5b6ffa01485bdc314d06c63d294fc501be8aa817015a0162648"
+    },
+    "filter.other.minimum": {
+      "coverage": "complete",
+      "schemaSha256": "6b91d36c6a716039429d35d3191571af34f6ead5cad011a47353f6fb75cb77ca"
+    },
+    "filter.other.offset": {
+      "coverage": "complete",
+      "schemaSha256": "ce5a055a805485c249d991caa7dad67f19039fa144145453844a4a4bbe31010f"
+    },
+    "filter.pixelate.colorHalftone": {
+      "coverage": "partial"
+    },
+    "filter.pixelate.crystallize": {
+      "coverage": "partial"
+    },
+    "filter.pixelate.facet": {
+      "coverage": "partial"
+    },
+    "filter.pixelate.fragment": {
+      "coverage": "partial"
+    },
+    "filter.pixelate.mezzotint": {
+      "coverage": "partial"
+    },
+    "filter.pixelate.mosaic": {
+      "coverage": "complete",
+      "schemaSha256": "bcc470cfeba33d564491ea1971526dfc39ed7eab9062cc115207f23df4e17a76"
+    },
+    "filter.pixelate.pointillize": {
+      "coverage": "partial"
+    },
+    "filter.render.clouds": {
+      "coverage": "partial"
+    },
+    "filter.render.differenceClouds": {
+      "coverage": "partial"
+    },
+    "filter.render.fibers": {
+      "coverage": "partial"
+    },
+    "filter.render.flame": {
+      "coverage": "partial"
+    },
+    "filter.render.lensFlare": {
+      "coverage": "partial"
+    },
+    "filter.render.lightingEffects": {
+      "coverage": "partial"
+    },
+    "filter.render.pictureFrame": {
+      "coverage": "partial"
+    },
+    "filter.render.relight": {
+      "coverage": "partial"
+    },
+    "filter.render.tree": {
+      "coverage": "partial"
+    },
+    "filter.sharpen.sharpen": {
+      "coverage": "complete",
+      "schemaSha256": "965e63eb216fe0e6f7dadc14f0743fb850d626f86e37a80e565d1e5857662c7d"
+    },
+    "filter.sharpen.sharpenEdges": {
+      "coverage": "complete",
+      "schemaSha256": "6d5fc9486d4dd60dcf468bd5c4128e8ccfaa115f9f04a9b0a651f01cc7e08b9b"
+    },
+    "filter.sharpen.sharpenMore": {
+      "coverage": "complete",
+      "schemaSha256": "b73585ecb4daa2b1419f5747d4d2368b39079a8eee7977191527b4d07ec8b10b"
+    },
+    "filter.sharpen.smartSharpen": {
+      "coverage": "complete",
+      "schemaSha256": "04b0b34c231d54ff76cac931bcfa88d5c28979088ef9e47c1d5c5787a9fc97fe"
+    },
+    "filter.sharpen.unsharpMask": {
+      "coverage": "complete",
+      "schemaSha256": "96bb588261e09867ffcc479d451f3207ca8ca887b0fb81bd946ad589375ba8e6"
+    },
+    "filter.stylize.diffuse": {
+      "coverage": "partial"
+    },
+    "filter.stylize.emboss": {
+      "coverage": "complete",
+      "schemaSha256": "f65b26724f2b01273683fe61b5b689146210507778608ff320fc462c9e4002ab"
+    },
+    "filter.stylize.extrude": {
+      "coverage": "partial"
+    },
+    "filter.stylize.findEdges": {
+      "coverage": "complete",
+      "schemaSha256": "a65ebd8c51870f17fedd9540de336d1fc61521546379fe6eb7c5cb3965be71c9"
+    },
+    "filter.stylize.oilPaint": {
+      "coverage": "partial"
+    },
+    "filter.stylize.solarize": {
+      "coverage": "complete",
+      "schemaSha256": "c74928ff424ba334a350f3f7e30e3f2e57ee097a593c91994b40ab24d8203755"
+    },
+    "filter.stylize.tiles": {
+      "coverage": "partial"
+    },
+    "filter.stylize.traceContour": {
+      "coverage": "partial"
+    },
+    "filter.stylize.wind": {
+      "coverage": "partial"
+    },
+    "filter.vanishingPoint": {
+      "coverage": "partial"
+    },
+    "filter.video.deInterlace": {
+      "coverage": "partial"
+    },
+    "filter.video.ntscColors": {
+      "coverage": "partial"
+    },
+    "gradient.fill.create": {
+      "coverage": "partial"
+    },
+    "gradient.fill.get": {
+      "coverage": "partial"
+    },
+    "gradient.fill.set": {
+      "coverage": "partial"
+    },
+    "gradient.fill.stop": {
+      "coverage": "partial"
+    },
+    "gradient.presets.apply": {
+      "coverage": "partial"
+    },
+    "gradient.presets.edit": {
+      "coverage": "partial"
+    },
+    "gradient.presets.importGrd": {
+      "coverage": "partial"
+    },
+    "gradient.presets.list": {
+      "coverage": "partial"
+    },
+    "gradient.presets.new": {
+      "coverage": "partial"
+    },
+    "gradient.presets.reset": {
+      "coverage": "partial"
+    },
+    "gradient.presets.select": {
+      "coverage": "partial"
+    },
+    "gradient.presets.stop": {
+      "coverage": "partial"
+    },
+    "help.checkForUpdates": {
+      "coverage": "partial"
+    },
+    "history.clear": {
+      "coverage": "partial"
+    },
+    "history.deleteSnapshot": {
+      "coverage": "partial"
+    },
+    "history.deleteState": {
+      "coverage": "partial"
+    },
+    "history.newDocument": {
+      "coverage": "partial"
+    },
+    "history.newSnapshot": {
+      "coverage": "partial"
+    },
+    "history.options": {
+      "coverage": "partial"
+    },
+    "history.redo": {
+      "coverage": "partial"
+    },
+    "history.renameSnapshot": {
+      "coverage": "partial"
+    },
+    "history.selectSnapshot": {
+      "coverage": "partial"
+    },
+    "history.selectState": {
+      "coverage": "partial"
+    },
+    "history.setSource": {
+      "coverage": "partial"
+    },
+    "history.stepBackward": {
+      "coverage": "partial"
+    },
+    "history.stepForward": {
+      "coverage": "partial"
+    },
+    "history.undo": {
+      "coverage": "partial"
+    },
+    "image.adjustments.blackWhite": {
+      "coverage": "partial"
+    },
+    "image.adjustments.brightnessContrast": {
+      "coverage": "partial"
+    },
+    "image.adjustments.channelMixer": {
+      "coverage": "partial"
+    },
+    "image.adjustments.colorBalance": {
+      "coverage": "partial"
+    },
+    "image.adjustments.colorLookup": {
+      "coverage": "partial"
+    },
+    "image.adjustments.colorLookup.list": {
+      "coverage": "partial"
+    },
+    "image.adjustments.curves": {
+      "coverage": "partial"
+    },
+    "image.adjustments.desaturate": {
+      "coverage": "partial"
+    },
+    "image.adjustments.equalize": {
+      "coverage": "partial"
+    },
+    "image.adjustments.exposure": {
+      "coverage": "partial"
+    },
+    "image.adjustments.gradientMap": {
+      "coverage": "partial"
+    },
+    "image.adjustments.hdrToning": {
+      "coverage": "partial"
+    },
+    "image.adjustments.hueSaturation": {
+      "coverage": "partial"
+    },
+    "image.adjustments.invert": {
+      "coverage": "partial"
+    },
+    "image.adjustments.levels": {
+      "coverage": "partial"
+    },
+    "image.adjustments.matchColor": {
+      "coverage": "partial"
+    },
+    "image.adjustments.photoFilter": {
+      "coverage": "partial"
+    },
+    "image.adjustments.posterize": {
+      "coverage": "partial"
+    },
+    "image.adjustments.replaceColor": {
+      "coverage": "partial"
+    },
+    "image.adjustments.selectiveColor": {
+      "coverage": "partial"
+    },
+    "image.adjustments.shadowsHighlights": {
+      "coverage": "partial"
+    },
+    "image.adjustments.threshold": {
+      "coverage": "partial"
+    },
+    "image.adjustments.vibrance": {
+      "coverage": "partial"
+    },
+    "image.analysis.countTool": {
+      "coverage": "partial"
+    },
+    "image.analysis.info": {
+      "coverage": "partial"
+    },
+    "image.analysis.placeScaleMarker": {
+      "coverage": "partial"
+    },
+    "image.analysis.recordMeasurements": {
+      "coverage": "partial"
+    },
+    "image.analysis.rulerTool": {
+      "coverage": "partial"
+    },
+    "image.analysis.selectDataPoints": {
+      "coverage": "partial"
+    },
+    "image.analysis.setMeasurementScale": {
+      "coverage": "partial"
+    },
+    "image.analysis.straightenLayer": {
+      "coverage": "partial"
+    },
+    "image.applyDataSet": {
+      "coverage": "partial"
+    },
+    "image.applyImage": {
+      "coverage": "partial"
+    },
+    "image.autoColor": {
+      "coverage": "partial"
+    },
+    "image.autoContrast": {
+      "coverage": "partial"
+    },
+    "image.autoTone": {
+      "coverage": "partial"
+    },
+    "image.calculations": {
+      "coverage": "partial"
+    },
+    "image.canvasSize": {
+      "coverage": "complete",
+      "schemaSha256": "feaac1e9da8dc23ab8c0eed245532f8924bb8f4fb753a86f4a3181b958a8e10d"
+    },
+    "image.crop": {
+      "coverage": "partial"
+    },
+    "image.detectFaces": {
+      "coverage": "partial"
+    },
+    "image.duplicate": {
+      "coverage": "partial"
+    },
+    "image.imageRotation.180": {
+      "coverage": "partial"
+    },
+    "image.imageRotation.90ccw": {
+      "coverage": "partial"
+    },
+    "image.imageRotation.90cw": {
+      "coverage": "partial"
+    },
+    "image.imageRotation.flipCanvasHorizontal": {
+      "coverage": "partial"
+    },
+    "image.imageRotation.flipCanvasVertical": {
+      "coverage": "partial"
+    },
+    "image.imageSize": {
+      "coverage": "complete",
+      "schemaSha256": "ac1b1cb284e9891eddbdc36b6d09e98572b2afd14a9106e2117d67385335604b"
+    },
+    "image.mode.bitmap": {
+      "coverage": "partial"
+    },
+    "image.mode.bits16": {
+      "coverage": "partial"
+    },
+    "image.mode.bits32": {
+      "coverage": "partial"
+    },
+    "image.mode.bits8": {
+      "coverage": "partial"
+    },
+    "image.mode.cmyk": {
+      "coverage": "partial"
+    },
+    "image.mode.colorTable": {
+      "coverage": "partial"
+    },
+    "image.mode.duotone": {
+      "coverage": "partial"
+    },
+    "image.mode.grayscale": {
+      "coverage": "partial"
+    },
+    "image.mode.indexedColor": {
+      "coverage": "partial"
+    },
+    "image.mode.lab": {
+      "coverage": "partial"
+    },
+    "image.mode.multichannel": {
+      "coverage": "partial"
+    },
+    "image.mode.rgb": {
+      "coverage": "partial"
+    },
+    "image.perspectiveCrop": {
+      "coverage": "partial"
+    },
+    "image.revealAll": {
+      "coverage": "partial"
+    },
+    "image.rotation.arbitrary": {
+      "coverage": "partial"
+    },
+    "image.trap": {
+      "coverage": "partial"
+    },
+    "image.trim": {
+      "coverage": "partial"
+    },
+    "image.variables.dataSets": {
+      "coverage": "partial"
+    },
+    "image.variables.define": {
+      "coverage": "partial"
+    },
+    "jobs.cancel": {
+      "coverage": "complete",
+      "schemaSha256": "7d82258e62459561c9c65c454bded12768426c6144bdeae93ca6c5c8d64d8a54"
+    },
+    "jobs.list": {
+      "coverage": "complete",
+      "schemaSha256": "ef7519a458d192afd1ccf680d44a9e86ba43ab5746d7ca280dcf345876a4f725"
+    },
+    "layer.addAboveToSelection": {
+      "coverage": "partial"
+    },
+    "layer.addBelowToSelection": {
+      "coverage": "partial"
+    },
+    "layer.align.bottomEdges": {
+      "coverage": "partial"
+    },
+    "layer.align.horizontalCenters": {
+      "coverage": "partial"
+    },
+    "layer.align.leftEdges": {
+      "coverage": "partial"
+    },
+    "layer.align.rightEdges": {
+      "coverage": "partial"
+    },
+    "layer.align.topEdges": {
+      "coverage": "partial"
+    },
+    "layer.align.verticalCenters": {
+      "coverage": "partial"
+    },
+    "layer.arrange.bringForward": {
+      "coverage": "partial"
+    },
+    "layer.arrange.bringToFront": {
+      "coverage": "partial"
+    },
+    "layer.arrange.reverse": {
+      "coverage": "partial"
+    },
+    "layer.arrange.sendBackward": {
+      "coverage": "partial"
+    },
+    "layer.arrange.sendToBack": {
+      "coverage": "partial"
+    },
+    "layer.artboard.addBeside": {
+      "coverage": "partial"
+    },
+    "layer.artboard.set": {
+      "coverage": "partial"
+    },
+    "layer.combineShapes.excludeOverlappingShapes": {
+      "coverage": "partial"
+    },
+    "layer.combineShapes.intersectShapeAreas": {
+      "coverage": "partial"
+    },
+    "layer.combineShapes.mergeShapeComponents": {
+      "coverage": "partial"
+    },
+    "layer.combineShapes.subtractFrontShape": {
+      "coverage": "partial"
+    },
+    "layer.combineShapes.unite": {
+      "coverage": "partial"
+    },
+    "layer.copyToDocument": {
+      "coverage": "partial"
+    },
+    "layer.createClippingMask": {
+      "coverage": "partial"
+    },
+    "layer.delete": {
+      "coverage": "complete",
+      "schemaSha256": "34f3036d9ef6fd57cbf3155e2164390d0c47a12e731adb850eb9c123e6c9b6f4"
+    },
+    "layer.delete.hiddenLayers": {
+      "coverage": "partial"
+    },
+    "layer.distribute.bottomEdges": {
+      "coverage": "partial"
+    },
+    "layer.distribute.horizontalCenters": {
+      "coverage": "partial"
+    },
+    "layer.distribute.horizontally": {
+      "coverage": "partial"
+    },
+    "layer.distribute.leftEdges": {
+      "coverage": "partial"
+    },
+    "layer.distribute.rightEdges": {
+      "coverage": "partial"
+    },
+    "layer.distribute.topEdges": {
+      "coverage": "partial"
+    },
+    "layer.distribute.verticalCenters": {
+      "coverage": "partial"
+    },
+    "layer.distribute.vertically": {
+      "coverage": "partial"
+    },
+    "layer.duplicate": {
+      "coverage": "complete",
+      "schemaSha256": "afb1b6a952603a2bf6ca25958f3fd2bca4cc8b4facee47c606487988c84ed592"
+    },
+    "layer.exportAs": {
+      "coverage": "partial"
+    },
+    "layer.fill.pattern.set": {
+      "coverage": "partial"
+    },
+    "layer.fill.solidColor.set": {
+      "coverage": "partial"
+    },
+    "layer.flattenImage": {
+      "coverage": "partial"
+    },
+    "layer.groupLayers": {
+      "coverage": "partial"
+    },
+    "layer.hideLayers": {
+      "coverage": "complete",
+      "schemaSha256": "6146617d526cbc3ba7ed5e7620ce43003a975b77c1d5a1956455616dd69c5b6b"
+    },
+    "layer.layerContentOptions": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.apply": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.delete": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.edit": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.enabled": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.fromTransparency": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.hideAll": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.hideSelection": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.linked": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.revealAll": {
+      "coverage": "partial"
+    },
+    "layer.layerMask.revealSelection": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.bevelEmboss": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.blendingOptions": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.clear": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.colorOverlay": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.contours.delete": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.contours.list": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.contours.load": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.contours.new": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.contours.save": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.copyLayerStyle": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.createLayer": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.defaultFor": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.dropShadow": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.globalLight": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.gradientOverlay": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.hideAllEffects": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.innerGlow": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.innerShadow": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.makeDefault": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.outerGlow": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.pasteLayerStyle": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.patternOverlay": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.replace": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.satin": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.scaleEffects": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.showAllEffects": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.stroke": {
+      "coverage": "partial"
+    },
+    "layer.layerStyle.transferEffects": {
+      "coverage": "partial"
+    },
+    "layer.linkLayers": {
+      "coverage": "partial"
+    },
+    "layer.list": {
+      "coverage": "complete",
+      "schemaSha256": "e806fbe2748b32c1325c81f9029f11de8a3b53f7f28024838d871265ead975d4"
+    },
+    "layer.lockLayers": {
+      "coverage": "partial"
+    },
+    "layer.maskAllObjects": {
+      "coverage": "partial"
+    },
+    "layer.matting.colorDecontaminate": {
+      "coverage": "partial"
+    },
+    "layer.matting.defringe": {
+      "coverage": "partial"
+    },
+    "layer.matting.removeBlackMatte": {
+      "coverage": "partial"
+    },
+    "layer.matting.removeWhiteMatte": {
+      "coverage": "partial"
+    },
+    "layer.mergeDown": {
+      "coverage": "partial"
+    },
+    "layer.mergeGroup": {
+      "coverage": "partial"
+    },
+    "layer.mergeLayers": {
+      "coverage": "partial"
+    },
+    "layer.mergeVisible": {
+      "coverage": "partial"
+    },
+    "layer.moveTo": {
+      "coverage": "partial"
+    },
+    "layer.new.artboard": {
+      "coverage": "partial"
+    },
+    "layer.new.artboardFromGroup": {
+      "coverage": "partial"
+    },
+    "layer.new.artboardFromLayers": {
+      "coverage": "partial"
+    },
+    "layer.new.backgroundFromLayer": {
+      "coverage": "partial"
+    },
+    "layer.new.frame": {
+      "coverage": "partial"
+    },
+    "layer.new.frameFromLayers": {
+      "coverage": "partial"
+    },
+    "layer.new.group": {
+      "coverage": "complete",
+      "schemaSha256": "492f0aec99a3bbd79059ba0057ce7ecd7d0b95e761933f0aa5cf9c6c0e3a916e"
+    },
+    "layer.new.groupFromLayers": {
+      "coverage": "partial"
+    },
+    "layer.new.layer": {
+      "coverage": "complete",
+      "schemaSha256": "797558f9ebac407df29e8cc3b06619bc533f51b466cabdfb845f283e8020982b"
+    },
+    "layer.new.layerFromBackground": {
+      "coverage": "partial"
+    },
+    "layer.new.layerViaCopy": {
+      "coverage": "partial"
+    },
+    "layer.new.layerViaCut": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.blackWhite": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.brightnessContrast": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.channelMixer": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.colorBalance": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.colorLookup": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.curves": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.exposure": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.gradientMap": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.hueSaturation": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.invert": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.levels": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.photoFilter": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.posterize": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.selectiveColor": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.threshold": {
+      "coverage": "partial"
+    },
+    "layer.newAdjustmentLayer.vibrance": {
+      "coverage": "partial"
+    },
+    "layer.newFillLayer.gradient": {
+      "coverage": "partial"
+    },
+    "layer.newFillLayer.pattern": {
+      "coverage": "partial"
+    },
+    "layer.newFillLayer.solidColor": {
+      "coverage": "partial"
+    },
+    "layer.newLayerBasedSlice": {
+      "coverage": "partial"
+    },
+    "layer.pickAt": {
+      "coverage": "partial"
+    },
+    "layer.quickExportAsPng": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.allLayers": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.fillContent": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.layer": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.layerStyle": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.shape": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.smartObject": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.type": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.vectorMask": {
+      "coverage": "partial"
+    },
+    "layer.rasterize.video": {
+      "coverage": "partial"
+    },
+    "layer.releaseClippingMask": {
+      "coverage": "partial"
+    },
+    "layer.removeBackground": {
+      "coverage": "partial"
+    },
+    "layer.renameLayer": {
+      "coverage": "complete",
+      "schemaSha256": "2474fcc290f5a44d6b7ab8f46dd772f7b43e1a20b47ce041f90ab92549dc5b70"
+    },
+    "layer.select": {
+      "coverage": "complete",
+      "schemaSha256": "0d9f8b82cc823d7d45c34424389a8c06b5b78cdb15d207a20d524a60627cd55c"
+    },
+    "layer.selectAbove": {
+      "coverage": "partial"
+    },
+    "layer.selectBelow": {
+      "coverage": "partial"
+    },
+    "layer.selectBottom": {
+      "coverage": "partial"
+    },
+    "layer.selectInRect": {
+      "coverage": "partial"
+    },
+    "layer.selectLinkedLayers": {
+      "coverage": "partial"
+    },
+    "layer.selectTop": {
+      "coverage": "partial"
+    },
+    "layer.setAdjustment": {
+      "coverage": "partial"
+    },
+    "layer.setEffectsExpanded": {
+      "coverage": "partial"
+    },
+    "layer.setEffectsVisible": {
+      "coverage": "partial"
+    },
+    "layer.setExpanded": {
+      "coverage": "partial"
+    },
+    "layer.setLabelColor": {
+      "coverage": "partial"
+    },
+    "layer.setProps": {
+      "coverage": "complete",
+      "schemaSha256": "c080af6f61a20110d8bd318c041cd3a83a8351b40cfa57b15f42efc0023344b2"
+    },
+    "layer.showLayers": {
+      "coverage": "complete",
+      "schemaSha256": "f8505693484ea1dfeb52c08a279cd9affcc829d2cc64fb58b19d450ec8fd55da"
+    },
+    "layer.showOnly": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.blendingOptions": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.clearSmartFilters": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.delete": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.deleteFilterMask": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.disableFilterMask": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.disableSmartFilters": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.move": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.setParams": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.setVisible": {
+      "coverage": "partial"
+    },
+    "layer.smartFilter.transfer": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.convertToEmbedded": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.convertToLayers": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.convertToLinked": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.convertToSmartObject": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.editContents": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.exportContents": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.exportSvg": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.newSmartObjectViaCopy": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.perspectiveWarp": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.puppetWarp": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.rasterize": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.relinkToFile": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.replaceContents": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.revealInFinder": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.saveContents": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.entropy": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.kurtosis": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.maximum": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.mean": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.median": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.minimum": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.none": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.range": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.skewness": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.standardDeviation": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.summation": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.stackMode.variance": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.updateAllModifiedContent": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.updateChanged": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.updateModifiedContent": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.updateSvg": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.updateVectorSource": {
+      "coverage": "partial"
+    },
+    "layer.smartObjects.warp": {
+      "coverage": "partial"
+    },
+    "layer.stampDown": {
+      "coverage": "partial"
+    },
+    "layer.stampVisible": {
+      "coverage": "partial"
+    },
+    "layer.toggleLockTransparency": {
+      "coverage": "partial"
+    },
+    "layer.toggleMaskOverlay": {
+      "coverage": "partial"
+    },
+    "layer.translate": {
+      "coverage": "partial"
+    },
+    "layer.ungroupLayers": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.add": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.currentPath": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.delete": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.edit": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.enabled": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.fromPath": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.hideAll": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.info": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.linked": {
+      "coverage": "partial"
+    },
+    "layer.vectorMask.revealAll": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.deleteFrame": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.duplicateFrame": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.insertBlankFrame": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.interpretFootage": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.newBlankVideoLayer": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.newVideoLayerFromFile": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.rasterize": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.reloadFrame": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.replaceFootage": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.restoreAllFrames": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.restoreFrame": {
+      "coverage": "partial"
+    },
+    "layer.videoLayers.showAlteredVideo": {
+      "coverage": "partial"
+    },
+    "layer.xmpMetadata": {
+      "coverage": "partial"
+    },
+    "layerComp.apply": {
+      "coverage": "partial"
+    },
+    "layerComp.delete": {
+      "coverage": "partial"
+    },
+    "layerComp.duplicate": {
+      "coverage": "partial"
+    },
+    "layerComp.list": {
+      "coverage": "partial"
+    },
+    "layerComp.new": {
+      "coverage": "partial"
+    },
+    "layerComp.next": {
+      "coverage": "partial"
+    },
+    "layerComp.previous": {
+      "coverage": "partial"
+    },
+    "layerComp.rename": {
+      "coverage": "partial"
+    },
+    "layerComp.reorder": {
+      "coverage": "partial"
+    },
+    "layerComp.restoreLastDocumentState": {
+      "coverage": "partial"
+    },
+    "layerComp.setComment": {
+      "coverage": "partial"
+    },
+    "layerComp.setOptions": {
+      "coverage": "partial"
+    },
+    "layerComp.update": {
+      "coverage": "partial"
+    },
+    "layerComp.updateWarnings": {
+      "coverage": "partial"
+    },
+    "measurementLog.delete": {
+      "coverage": "partial"
+    },
+    "measurementLog.export": {
+      "coverage": "partial"
+    },
+    "measurementLog.list": {
+      "coverage": "partial"
+    },
+    "notes.add": {
+      "coverage": "partial"
+    },
+    "notes.delete": {
+      "coverage": "partial"
+    },
+    "notes.list": {
+      "coverage": "partial"
+    },
+    "notes.set": {
+      "coverage": "partial"
+    },
+    "paint.artHistoryBrush": {
+      "coverage": "partial"
+    },
+    "paint.backgroundEraser": {
+      "coverage": "partial"
+    },
+    "paint.blur": {
+      "coverage": "partial"
+    },
+    "paint.bucket": {
+      "coverage": "complete",
+      "schemaSha256": "b1c5b1c8835d079678e41ba71616fb5d915cfafe7b404af1a928266d85013dbb"
+    },
+    "paint.burn": {
+      "coverage": "partial"
+    },
+    "paint.cloneStamp": {
+      "coverage": "partial"
+    },
+    "paint.colorReplacement": {
+      "coverage": "partial"
+    },
+    "paint.contentAwareMove": {
+      "coverage": "partial"
+    },
+    "paint.dodge": {
+      "coverage": "partial"
+    },
+    "paint.gradient": {
+      "coverage": "complete",
+      "schemaSha256": "e95612a6a935987d47bfd3a64381580d830d7beaf8ebfe8e2927cbb9bf967594"
+    },
+    "paint.healingBrush": {
+      "coverage": "partial"
+    },
+    "paint.historyBrush": {
+      "coverage": "partial"
+    },
+    "paint.magicEraser": {
+      "coverage": "partial"
+    },
+    "paint.mixerBrush": {
+      "coverage": "partial"
+    },
+    "paint.mixerLoad": {
+      "coverage": "partial"
+    },
+    "paint.patch": {
+      "coverage": "partial"
+    },
+    "paint.patternStamp": {
+      "coverage": "partial"
+    },
+    "paint.pencil": {
+      "coverage": "partial"
+    },
+    "paint.redEye": {
+      "coverage": "partial"
+    },
+    "paint.remove": {
+      "coverage": "partial"
+    },
+    "paint.setSymmetry": {
+      "coverage": "partial"
+    },
+    "paint.sharpen": {
+      "coverage": "partial"
+    },
+    "paint.smudge": {
+      "coverage": "partial"
+    },
+    "paint.sponge": {
+      "coverage": "partial"
+    },
+    "paint.spotHealing": {
+      "coverage": "partial"
+    },
+    "paint.stroke": {
+      "coverage": "complete",
+      "schemaSha256": "1c1946efbc33509a0f054f4c9e5ff6ae4d6ab58ebdf45fa6a7a230ddf787c43d"
+    },
+    "paint.symmetryDisable": {
+      "coverage": "partial"
+    },
+    "paint.symmetryFromPath": {
+      "coverage": "partial"
+    },
+    "path.addAnchor": {
+      "coverage": "partial"
+    },
+    "path.addToSelection": {
+      "coverage": "partial"
+    },
+    "path.bendSegment": {
+      "coverage": "partial"
+    },
+    "path.clippingPath.clear": {
+      "coverage": "complete",
+      "schemaSha256": "c010b06a86ee66800b2719774a01e63028f3c4e8af6389397c00858baf9e822b"
+    },
+    "path.clippingPath.set": {
+      "coverage": "complete",
+      "schemaSha256": "f3ee1b2762b205fe5be03c2a79d644fdefbafff0d5d8865f6322b4913633bf3e"
+    },
+    "path.convertPoint": {
+      "coverage": "partial"
+    },
+    "path.delete": {
+      "coverage": "complete",
+      "schemaSha256": "83f3956f7babf69b9f1c59d8ac4805793c2dd5adec4d75d3c4380f09340203dc"
+    },
+    "path.deleteAnchor": {
+      "coverage": "partial"
+    },
+    "path.fill": {
+      "coverage": "partial"
+    },
+    "path.info": {
+      "coverage": "complete",
+      "schemaSha256": "700311f413d2d9565c06c8b9b5eb316e6a51410700e99862fdf96c152ff1bd3d"
+    },
+    "path.list": {
+      "coverage": "complete",
+      "schemaSha256": "de99f8ebd9599a7acfcd472c3444db7b9d1077c07a5a0710c46c7625a2fda35d"
+    },
+    "path.mergeShapeComponents": {
+      "coverage": "partial"
+    },
+    "path.moveAnchors": {
+      "coverage": "partial"
+    },
+    "path.moveHandle": {
+      "coverage": "partial"
+    },
+    "path.rename": {
+      "coverage": "complete",
+      "schemaSha256": "0da1bd2899b44779482627e6587af4ddc2025b4a8dd3cbc768f065f598577fa8"
+    },
+    "path.set": {
+      "coverage": "complete",
+      "schemaSha256": "3ce706914f71b91b1a3493a5748eeac7853d2be05987d4d1a7f5abaa4ff3f0bd"
+    },
+    "path.setOperation": {
+      "coverage": "partial"
+    },
+    "path.stroke": {
+      "coverage": "partial"
+    },
+    "path.style.copyFill": {
+      "coverage": "partial"
+    },
+    "path.style.copyStroke": {
+      "coverage": "partial"
+    },
+    "path.style.pasteFill": {
+      "coverage": "partial"
+    },
+    "path.style.pasteStroke": {
+      "coverage": "partial"
+    },
+    "path.subtractFromSelection": {
+      "coverage": "partial"
+    },
+    "path.toSelection": {
+      "coverage": "partial"
+    },
+    "path.transform": {
+      "coverage": "partial"
+    },
+    "pattern.delete": {
+      "coverage": "partial"
+    },
+    "pattern.export": {
+      "coverage": "partial"
+    },
+    "pattern.import": {
+      "coverage": "partial"
+    },
+    "pattern.list": {
+      "coverage": "partial"
+    },
+    "pattern.presets.apply": {
+      "coverage": "partial"
+    },
+    "pattern.presets.edit": {
+      "coverage": "partial"
+    },
+    "pattern.presets.list": {
+      "coverage": "partial"
+    },
+    "pattern.presets.new": {
+      "coverage": "partial"
+    },
+    "pattern.presets.select": {
+      "coverage": "partial"
+    },
+    "pattern.rename": {
+      "coverage": "partial"
+    },
+    "plugin.install": {
+      "coverage": "partial"
+    },
+    "plugin.list": {
+      "coverage": "partial"
+    },
+    "plugin.reload": {
+      "coverage": "partial"
+    },
+    "plugin.remove": {
+      "coverage": "partial"
+    },
+    "plugin.run": {
+      "coverage": "partial"
+    },
+    "prefs.get": {
+      "coverage": "partial"
+    },
+    "prefs.reset": {
+      "coverage": "partial"
+    },
+    "prefs.set": {
+      "coverage": "partial"
+    },
+    "select.all": {
+      "coverage": "complete",
+      "schemaSha256": "1338edec4b03dafdb795923683a58b435a08e212ef4c24f927036fd101ade0b6"
+    },
+    "select.allLayers": {
+      "coverage": "partial"
+    },
+    "select.colorRange": {
+      "coverage": "partial"
+    },
+    "select.convertToShape": {
+      "coverage": "partial"
+    },
+    "select.deselect": {
+      "coverage": "complete",
+      "schemaSha256": "84acba1c7ebc469ef29e468b31f53072e9afab31961062bd2ed90416363f980b"
+    },
+    "select.deselectLayers": {
+      "coverage": "partial"
+    },
+    "select.drop": {
+      "coverage": "partial"
+    },
+    "select.editInQuickMaskMode": {
+      "coverage": "partial"
+    },
+    "select.findLayers": {
+      "coverage": "partial"
+    },
+    "select.float": {
+      "coverage": "partial"
+    },
+    "select.focusArea": {
+      "coverage": "partial"
+    },
+    "select.grow": {
+      "coverage": "partial"
+    },
+    "select.inverse": {
+      "coverage": "complete",
+      "schemaSha256": "292865abed9d2bdef4519dae81cb3b1979753daf40fc9fab4675398520b0165d"
+    },
+    "select.isolateLayers": {
+      "coverage": "partial"
+    },
+    "select.lasso": {
+      "coverage": "partial"
+    },
+    "select.loadLuminosity": {
+      "coverage": "partial"
+    },
+    "select.loadSelection": {
+      "coverage": "partial"
+    },
+    "select.magicWand": {
+      "coverage": "partial"
+    },
+    "select.magneticLasso": {
+      "coverage": "partial"
+    },
+    "select.modify.border": {
+      "coverage": "partial"
+    },
+    "select.modify.contract": {
+      "coverage": "partial"
+    },
+    "select.modify.expand": {
+      "coverage": "partial"
+    },
+    "select.modify.feather": {
+      "coverage": "partial"
+    },
+    "select.modify.smooth": {
+      "coverage": "partial"
+    },
+    "select.object": {
+      "coverage": "partial"
+    },
+    "select.quick": {
+      "coverage": "partial"
+    },
+    "select.rect": {
+      "coverage": "complete",
+      "schemaSha256": "6e49894ca138db5f5f368f245327f01008530b7496448936ac62f5f43b74f3c5"
+    },
+    "select.refineEdge": {
+      "coverage": "partial"
+    },
+    "select.reselect": {
+      "coverage": "partial"
+    },
+    "select.saveSelection": {
+      "coverage": "partial"
+    },
+    "select.similar": {
+      "coverage": "partial"
+    },
+    "select.sky": {
+      "coverage": "partial"
+    },
+    "select.subject": {
+      "coverage": "partial"
+    },
+    "select.toWorkPath": {
+      "coverage": "partial"
+    },
+    "select.transformSelection": {
+      "coverage": "partial"
+    },
+    "session.inspect": {
+      "coverage": "partial"
+    },
+    "shape.create": {
+      "coverage": "complete",
+      "schemaSha256": "ecf51df4af4889070fac089a467d754e5ed80b346ae6572f7b54bcae9498d4cf"
+    },
+    "shape.edit": {
+      "coverage": "complete",
+      "schemaSha256": "42dfb6daa8b1bc3365a057d274e1c5231ee7f17dfd47aff75e4e5f56bece8ae4"
+    },
+    "shape.info": {
+      "coverage": "complete",
+      "schemaSha256": "a9d1708dc3a5ab5e8640e92794354377cff86a3a374cfefa46f056018e055dcf"
+    },
+    "shape.presets.edit": {
+      "coverage": "partial"
+    },
+    "shape.presets.list": {
+      "coverage": "partial"
+    },
+    "shape.presets.new": {
+      "coverage": "partial"
+    },
+    "shape.presets.place": {
+      "coverage": "partial"
+    },
+    "shape.presets.reset": {
+      "coverage": "partial"
+    },
+    "shape.rasterize": {
+      "coverage": "partial"
+    },
+    "slice.delete": {
+      "coverage": "partial"
+    },
+    "slice.divide": {
+      "coverage": "partial"
+    },
+    "slice.fromGuides": {
+      "coverage": "partial"
+    },
+    "slice.list": {
+      "coverage": "partial"
+    },
+    "slice.new": {
+      "coverage": "partial"
+    },
+    "slice.promote": {
+      "coverage": "partial"
+    },
+    "slice.set": {
+      "coverage": "partial"
+    },
+    "style.presets.apply": {
+      "coverage": "partial"
+    },
+    "style.presets.edit": {
+      "coverage": "partial"
+    },
+    "style.presets.exportAsl": {
+      "coverage": "partial"
+    },
+    "style.presets.importAsl": {
+      "coverage": "partial"
+    },
+    "style.presets.list": {
+      "coverage": "partial"
+    },
+    "style.presets.new": {
+      "coverage": "partial"
+    },
+    "style.presets.reset": {
+      "coverage": "partial"
+    },
+    "swatches.add": {
+      "coverage": "partial"
+    },
+    "swatches.delete": {
+      "coverage": "partial"
+    },
+    "swatches.deleteGroup": {
+      "coverage": "partial"
+    },
+    "swatches.export": {
+      "coverage": "partial"
+    },
+    "swatches.import": {
+      "coverage": "partial"
+    },
+    "swatches.list": {
+      "coverage": "partial"
+    },
+    "swatches.move": {
+      "coverage": "partial"
+    },
+    "swatches.newGroup": {
+      "coverage": "partial"
+    },
+    "swatches.rename": {
+      "coverage": "partial"
+    },
+    "swatches.renameGroup": {
+      "coverage": "partial"
+    },
+    "swatches.reset": {
+      "coverage": "partial"
+    },
+    "swatches.use": {
+      "coverage": "partial"
+    },
+    "timeline.create": {
+      "coverage": "partial"
+    },
+    "timeline.delete": {
+      "coverage": "partial"
+    },
+    "timeline.info": {
+      "coverage": "partial"
+    },
+    "timeline.nextFrame": {
+      "coverage": "partial"
+    },
+    "timeline.previousFrame": {
+      "coverage": "partial"
+    },
+    "timeline.setFrame": {
+      "coverage": "partial"
+    },
+    "timeline.setProps": {
+      "coverage": "partial"
+    },
+    "tool.presets.edit": {
+      "coverage": "partial"
+    },
+    "tool.presets.list": {
+      "coverage": "partial"
+    },
+    "tool.presets.new": {
+      "coverage": "partial"
+    },
+    "tool.presets.reset": {
+      "coverage": "partial"
+    },
+    "tool.presets.select": {
+      "coverage": "partial"
+    },
+    "tools.decreaseBrushHardness": {
+      "coverage": "partial"
+    },
+    "tools.decreaseBrushSize": {
+      "coverage": "partial"
+    },
+    "tools.defaultColors": {
+      "coverage": "complete",
+      "schemaSha256": "0f0771cf11703ab34bf2e79ec23794d890f3d65862bb2079d39e59b3ae72c691"
+    },
+    "tools.firstBrush": {
+      "coverage": "partial"
+    },
+    "tools.increaseBrushHardness": {
+      "coverage": "partial"
+    },
+    "tools.increaseBrushSize": {
+      "coverage": "partial"
+    },
+    "tools.lastBrush": {
+      "coverage": "partial"
+    },
+    "tools.nextBrush": {
+      "coverage": "partial"
+    },
+    "tools.previousBrush": {
+      "coverage": "partial"
+    },
+    "tools.rotateBrush": {
+      "coverage": "partial"
+    },
+    "tools.setBrush": {
+      "coverage": "complete",
+      "schemaSha256": "1ad458134480dfa4d9be8022e6701183949af80eb45e92ee512c28e63568df68"
+    },
+    "tools.setColors": {
+      "coverage": "complete",
+      "schemaSha256": "12b8425e655eed84c568fdca4fb8468249bf8299e34a977001ad1a801075b28e"
+    },
+    "tools.swapColors": {
+      "coverage": "complete",
+      "schemaSha256": "cdd40ae2c858399dd812a2b50386d5a095033f505a46050d8410d84399d97494"
+    },
+    "type.antiAlias.crisp": {
+      "coverage": "partial"
+    },
+    "type.antiAlias.none": {
+      "coverage": "partial"
+    },
+    "type.antiAlias.sharp": {
+      "coverage": "partial"
+    },
+    "type.antiAlias.smooth": {
+      "coverage": "partial"
+    },
+    "type.antiAlias.strong": {
+      "coverage": "partial"
+    },
+    "type.antiAlias.windows": {
+      "coverage": "partial"
+    },
+    "type.antiAlias.windowsLcd": {
+      "coverage": "partial"
+    },
+    "type.attachToPath": {
+      "coverage": "partial"
+    },
+    "type.caret": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.apply": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.clearOverride": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.delete": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.duplicate": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.list": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.new": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.redefine": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.rename": {
+      "coverage": "partial"
+    },
+    "type.characterStyle.set": {
+      "coverage": "partial"
+    },
+    "type.convertToParagraphText": {
+      "coverage": "partial"
+    },
+    "type.convertToPointText": {
+      "coverage": "partial"
+    },
+    "type.convertToShape": {
+      "coverage": "partial"
+    },
+    "type.create": {
+      "coverage": "complete",
+      "schemaSha256": "834b2ce281d2b23248d04b977e8636b10040c858b814f031678b18ed371a697d"
+    },
+    "type.createSelection": {
+      "coverage": "partial"
+    },
+    "type.createWorkPath": {
+      "coverage": "partial"
+    },
+    "type.decreaseSize": {
+      "coverage": "partial"
+    },
+    "type.decreaseSizeMore": {
+      "coverage": "partial"
+    },
+    "type.detachFromPath": {
+      "coverage": "partial"
+    },
+    "type.edit": {
+      "coverage": "complete",
+      "schemaSha256": "66a9eeea88207fed4a9d1cfa51f29b0e40d14859258d433149e166136f1fa93a"
+    },
+    "type.fillPath": {
+      "coverage": "partial"
+    },
+    "type.font.favorite": {
+      "coverage": "partial"
+    },
+    "type.font.library": {
+      "coverage": "partial"
+    },
+    "type.fonts": {
+      "coverage": "complete",
+      "schemaSha256": "774289764024bc432cfb90d25a0a1dae7f7cd63d809d0a5556d78cc28baa47b0"
+    },
+    "type.hitTest": {
+      "coverage": "partial"
+    },
+    "type.increaseSize": {
+      "coverage": "partial"
+    },
+    "type.increaseSizeMore": {
+      "coverage": "partial"
+    },
+    "type.info": {
+      "coverage": "complete",
+      "schemaSha256": "f877621403070ffaaa955fc93c57b41d99d5646501a90ccb4652b2c4ea5bae8d"
+    },
+    "type.insertText": {
+      "coverage": "partial"
+    },
+    "type.loadDefaultTypeStyles": {
+      "coverage": "partial"
+    },
+    "type.navigate": {
+      "coverage": "partial"
+    },
+    "type.openType.contextualAlternates": {
+      "coverage": "partial"
+    },
+    "type.openType.discretionaryLigatures": {
+      "coverage": "partial"
+    },
+    "type.openType.fractions": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.default": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.lining": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.oldstyle": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.proportional": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.proportionalLining": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.proportionalOldstyle": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.tabular": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.tabularLining": {
+      "coverage": "partial"
+    },
+    "type.openType.numerals.tabularOldstyle": {
+      "coverage": "partial"
+    },
+    "type.openType.oldstyle": {
+      "coverage": "partial"
+    },
+    "type.openType.ordinals": {
+      "coverage": "partial"
+    },
+    "type.openType.ornaments": {
+      "coverage": "partial"
+    },
+    "type.openType.standardLigatures": {
+      "coverage": "partial"
+    },
+    "type.openType.stylisticAlternates": {
+      "coverage": "partial"
+    },
+    "type.openType.swash": {
+      "coverage": "partial"
+    },
+    "type.openType.titlingAlternates": {
+      "coverage": "partial"
+    },
+    "type.orientation.horizontal": {
+      "coverage": "partial"
+    },
+    "type.orientation.vertical": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.apply": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.clearOverride": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.delete": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.duplicate": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.list": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.new": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.redefine": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.rename": {
+      "coverage": "partial"
+    },
+    "type.paragraphStyle.set": {
+      "coverage": "partial"
+    },
+    "type.pasteLoremIpsum": {
+      "coverage": "partial"
+    },
+    "type.rasterize": {
+      "coverage": "partial"
+    },
+    "type.rasterizeTypeLayer": {
+      "coverage": "partial"
+    },
+    "type.replaceAllMissingFonts": {
+      "coverage": "partial"
+    },
+    "type.resolveMissingFonts": {
+      "coverage": "partial"
+    },
+    "type.saveDefaultTypeStyles": {
+      "coverage": "partial"
+    },
+    "type.setStyle": {
+      "coverage": "complete",
+      "schemaSha256": "7b2f1530df43563190a4199cfc317d33bfc3cb8da7c21731f7f07855c874a3c9"
+    },
+    "type.updateAllTextLayers": {
+      "coverage": "partial"
+    },
+    "type.warpText": {
+      "coverage": "partial"
+    },
+    "updates.status": {
+      "coverage": "partial"
+    },
+    "variables.list": {
+      "coverage": "partial"
+    },
+    "view.clearCanvasGuides": {
+      "coverage": "partial"
+    },
+    "view.clearGuides": {
+      "coverage": "partial"
+    },
+    "view.clearSelectedArtboardGuides": {
+      "coverage": "partial"
+    },
+    "view.clearSlices": {
+      "coverage": "partial"
+    },
+    "view.colorSamplers.add": {
+      "coverage": "partial"
+    },
+    "view.colorSamplers.clear": {
+      "coverage": "partial"
+    },
+    "view.colorSamplers.delete": {
+      "coverage": "partial"
+    },
+    "view.colorSamplers.list": {
+      "coverage": "partial"
+    },
+    "view.colorSamplers.move": {
+      "coverage": "partial"
+    },
+    "view.deleteGuide": {
+      "coverage": "partial"
+    },
+    "view.editGuide": {
+      "coverage": "partial"
+    },
+    "view.gamutWarning": {
+      "coverage": "partial"
+    },
+    "view.layerMask": {
+      "coverage": "partial"
+    },
+    "view.lockSlices": {
+      "coverage": "partial"
+    },
+    "view.moveGuide": {
+      "coverage": "partial"
+    },
+    "view.newGuide": {
+      "coverage": "partial"
+    },
+    "view.newGuideLayout": {
+      "coverage": "partial"
+    },
+    "view.newGuidesFromShape": {
+      "coverage": "partial"
+    },
+    "view.proofColors": {
+      "coverage": "partial"
+    },
+    "view.proofSetup": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.colorBlindnessDeuteranopia": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.colorBlindnessProtanopia": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.legacyMacintoshRgb": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.workingBlackPlate": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.workingCmyPlate": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.workingCyanPlate": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.workingMagentaPlate": {
+      "coverage": "partial"
+    },
+    "view.proofSetup.workingYellowPlate": {
+      "coverage": "partial"
+    },
+    "view.resetRulerOrigin": {
+      "coverage": "partial"
+    },
+    "view.setRulerOrigin": {
+      "coverage": "partial"
+    },
+    "view.thirtyTwoBitPreviewOptions": {
+      "coverage": "partial"
+    }
+  }
+}

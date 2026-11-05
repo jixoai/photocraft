@@ -5,6 +5,7 @@
 
 mod corpus;
 mod corpus_pins;
+mod downstream;
 mod i18n_coverage;
 mod ico;
 mod layers;
@@ -23,6 +24,7 @@ usage: cargo xtask <command>
 
 commands:
   layers          enforce the crate dependency layering (docs/architecture.md §3)
+  downstream      check or explicitly record the downstream command-contract baseline
   wasm            cargo check --target wasm32-unknown-unknown for the wasm-safe crates (one call, plus
                   one per optional web feature)
   test            workspace tests (cargo nextest when installed, else cargo test), then doctests
@@ -58,6 +60,7 @@ fn main() -> ExitCode {
     let rest: Vec<&str> = args.iter().skip(1).map(String::as_str).collect();
     let result = match args.first().map(String::as_str) {
         Some("layers") => cmd_layers(),
+        Some("downstream") => downstream::run(&rest),
         Some("wasm") => cmd_wasm(),
         Some("test") => cmd_test().and_then(|()| cmd_doctest()),
         Some("ci") => cmd_ci(),
