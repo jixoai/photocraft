@@ -125,8 +125,9 @@ Bézier paths, common layer operations, text creation/editing/formatting, marque
 bucket/gradient painting, Free Transform, Filter Gallery effects and strictly validated
 filters. Nested `BrushSettings`, `paint.stroke`, brush inspection/settings and common preset
 operations are now audited, as are `edit.fill`, `layer.duplicate`, `image.imageSize` and
-`image.canvasSize`. The production registry has **135 complete and 829 partial contracts**
-out of 964 commands; other legacy families remain migration work, not silently certified
+`image.canvasSize`. After the 2026-11-05 downstream sync, the production registry has
+**135 complete and 855 partial contracts** out of 990 commands. The 26 new upstream commands
+remain partial until audited; other legacy families remain migration work, not silently certified
 contracts. Formal output schemas and per-command browser capability annotations remain separate work.
 
 ### Nested brush settings

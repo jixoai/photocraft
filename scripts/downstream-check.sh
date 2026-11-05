@@ -10,6 +10,11 @@ fi
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/web-validation}"
 LOG_DIR="$ROOT/target/downstream-validation/$MODE"
 mkdir -p "$LOG_DIR/tmp"
+if ! mkdir "$LOG_DIR/running" 2>/dev/null; then
+  echo "Another $MODE gate is running; if it crashed, remove the empty $LOG_DIR/running directory before retrying." >&2
+  exit 1
+fi
+trap 'rmdir "$LOG_DIR/running"' EXIT
 export TMPDIR="$LOG_DIR/tmp/"
 rm -f "$LOG_DIR/passed-revision"
 REVISION="$(git rev-parse HEAD)"
