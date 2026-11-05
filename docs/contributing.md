@@ -27,5 +27,7 @@
    existing state. Keep local `$defs`/`$ref` self-contained, distinguish complete new enum
    payloads from same-variant patches, test execution precedence and serialized-field coverage,
    and verify browser/native MCP discovery preserves the nested definitions.
+   On the agent/web downstream, include reviewed contract-baseline updates with audited
+   changes and newly complete commands; see [Downstream maintenance](downstream-maintenance.md).
 6. **Dialog** (if it has parameters): filters and adjustments get schema-driven dialogs with live preview (`ui-egui/src/filter_dialog.rs`, `dialogs.rs`).
 7. Run `cargo xtask parity` and commit the updated `docs/parity-checklist.md`.
