@@ -3,7 +3,7 @@
 //! by the same tile pipeline. They live under their own key, never next to a texture set.
 
 use super::doc_textures::{catch_gpu_errors, init_buffer, tile_uniform};
-use super::resources::{DocTextures, Resources, Tile, f32_bytes};
+use super::resources::{DocTextures, Tile, f32_bytes};
 use super::texels::{texel_bytes, texels};
 use super::{GpuCanvas, Ordering, wgpu};
 use photocraft_geom::Rect as DRect;
@@ -49,7 +49,7 @@ impl GpuCanvas {
             return false;
         }
         let renderer = self.rs.renderer.read();
-        let Some(res) = renderer.callback_resources.get::<Resources>() else { return false };
+        let Some(res) = renderer.callback_resources.canvas_resources() else { return false };
         let Some(tile) = res.docs.get(&key).and_then(|d| d.tiles.iter().find(|t| t.page.is_some_and(|(id, _)| id == page))) else {
             return false;
         };
@@ -96,7 +96,7 @@ impl GpuCanvas {
         let bytes = u64::from(w) * u64::from(h) * texel_bytes(format);
         let (device, queue) = (&self.rs.device, &self.rs.queue);
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return false };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return false };
         let budget = res.canvas_budget.load(Ordering::Relaxed);
         if res.docs.get(&key).is_none_or(|d| d.size != size || d.format != format || d.tiles.iter().any(|t| t.page.is_none())) {
             res.docs.insert(key, DocTextures { size, format, tiles: Vec::new() });
@@ -165,7 +165,7 @@ impl GpuCanvas {
     /// Drop the pages of `key` not in `live` (all of them, and the key, when `live` is empty).
     pub fn retain_pages(&self, key: u64, live: &[u64]) {
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return };
         if live.is_empty() {
             res.docs.remove(&key);
         } else if let Some(d) = res.docs.get_mut(&key) {
@@ -177,7 +177,7 @@ impl GpuCanvas {
     /// from pages instead: memory the pages are budgeted against.
     pub fn release_texture_set(&self, key: u64) {
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return };
         res.docs.remove(&key);
         if let Some(c) = res.compositor.as_mut() {
             c.forget_doc(photocraft_doc::DocId(key));
@@ -187,7 +187,7 @@ impl GpuCanvas {
     /// The pages of `key` the GPU holds (page ids), and the bytes they take.
     pub fn pages(&self, key: u64) -> (Vec<u64>, u64) {
         let r = self.rs.renderer.read();
-        let Some(d) = r.callback_resources.get::<Resources>().and_then(|res| res.docs.get(&key)) else { return (Vec::new(), 0) };
+        let Some(d) = r.callback_resources.canvas_resources().and_then(|res| res.docs.get(&key)) else { return (Vec::new(), 0) };
         (d.tiles.iter().filter_map(|t| t.page.map(|(id, _)| id)).collect(), d.page_bytes())
     }
 
@@ -197,3 +197,4 @@ impl GpuCanvas {
         self.canvas_budget.load(Ordering::Relaxed)
     }
 }
+use super::resources::CanvasResources as _;

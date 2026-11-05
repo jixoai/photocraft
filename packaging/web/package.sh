@@ -18,6 +18,9 @@ HERE="$ROOT/packaging/web"
 if [[ "${1:-}" != "--skip-build" ]]; then
   command -v trunk >/dev/null || { echo "error: trunk not found (cargo install trunk --locked)" >&2; exit 1; }
   (cd "$ROOT/apps/photocraft-web" && trunk build --release)
+  if [[ "${PHOTOCRAFT_WEB_THREADS:-0}" == "1" ]]; then
+    bash "$HERE/build-threaded.sh"
+  fi
   (cd "$ROOT/apps/photocraft-web-boot" && trunk build --release)
 fi
 
@@ -50,8 +53,14 @@ for wasm in "$APP"/*_bg.wasm; do
 done
 [[ -n "$WASM" ]] || { echo "error: no .wasm in $APP" >&2; exit 1; }
 STEM="$(basename "$WASM" _bg.wasm)" # photocraft-web-<content hash>
-GLUE="$APP/$STEM.js"
-[[ -f "$GLUE" ]] || { echo "error: $GLUE missing" >&2; exit 1; }
+# Trunk 0.22 hashes the glue and Wasm independently; older releases share one hash.
+GLUE=""
+for glue in "$APP"/photocraft-web*.js; do
+  [[ -f "$glue" ]] || continue
+  [[ -z "$GLUE" ]] || { echo "error: more than one app loader in $APP; rebuild a clean dist" >&2; exit 1; }
+  GLUE="$glue"
+done
+[[ -n "$GLUE" ]] || { echo "error: PhotoCraft app loader missing in $APP" >&2; exit 1; }
 
 NAME="photocraft-web-$VERSION"
 WORK="$CARGO_TARGET_DIR/web-package"
@@ -60,6 +69,12 @@ mkdir -p "$WORK/$NAME/app"
 cp -R "$BOOT/." "$WORK/$NAME/"
 # The boot module imports the app's glue by this name (it can't know Trunk's content hash).
 cp "$GLUE" "$WORK/$NAME/app/photocraft-web.js"
+# wasm-bindgen emits dependency-owned modules beside the glue (e.g. eframe's text input
+# activation shim). Keep their relative import paths when relocating the app below app/.
+# Omitting these makes the release zip fail before Wasm starts, even when Trunk's site works.
+if [[ -d "$APP/snippets" ]]; then
+  cp -R "$APP/snippets" "$WORK/$NAME/app/"
+fi
 # The parts keep the content hash, so they can be cached forever. Their extension is one no
 # server knows: a server that recognised gzip might decode it or label it, and the page inflates
 # the parts itself.
@@ -68,6 +83,26 @@ gzip -9 -n -c "$WASM" | (cd "$WORK/$NAME/app" && split -b "$PART_BYTES" - "$STEM
   echo "photocraft-parts 1"
   for part in "$WORK/$NAME/app/$STEM".part-*; do basename "$part"; done
 } >"$WORK/$NAME/app/parts.txt"
+mkdir -p "$WORK/$NAME/app-threaded"
+if [[ -f "$ROOT/dist/web-threaded/index.html" ]]; then
+  threaded_wasm=("$ROOT/dist/web-threaded/"*_bg.wasm)
+  threaded_glue=("$ROOT/dist/web-threaded/photocraft-web"*.js)
+  [[ "${#threaded_wasm[@]}" == 1 && -f "${threaded_wasm[0]}" && "${#threaded_glue[@]}" == 1 && -f "${threaded_glue[0]}" ]] || { echo "error: rebuild a clean dist/web-threaded" >&2; exit 1; }
+  cp "${threaded_glue[0]}" "$WORK/$NAME/app-threaded/photocraft-web.js"
+  if [[ -d "$ROOT/dist/web-threaded/snippets" ]]; then
+    cp -R "$ROOT/dist/web-threaded/snippets" "$WORK/$NAME/app-threaded/"
+  fi
+  threaded_stem="$(basename "${threaded_wasm[0]}" _bg.wasm)"
+  gzip -9 -n -c "${threaded_wasm[0]}" | (cd "$WORK/$NAME/app-threaded" && split -b "$PART_BYTES" - "$threaded_stem.part-")
+  {
+    echo "photocraft-parts 1"
+    for part in "$WORK/$NAME/app-threaded/$threaded_stem".part-*; do basename "$part"; done
+  } > "$WORK/$NAME/app-threaded/parts.txt"
+else
+  cp "$GLUE" "$WORK/$NAME/app-threaded/photocraft-web.js"
+  if [[ -d "$APP/snippets" ]]; then cp -R "$APP/snippets" "$WORK/$NAME/app-threaded/"; fi
+  echo "photocraft-compatibility 1" > "$WORK/$NAME/app-threaded/parts.txt"
+fi
 size() { wc -c <"$1" | tr -d ' '; }
 wasm_bytes=$(size "$WASM")
 gzip_bytes=$(cat "$WORK/$NAME/app/$STEM".part-* | wc -c | tr -d ' ')
@@ -76,6 +111,7 @@ echo "$(basename "$WASM"): $wasm_bytes bytes ($((wasm_bytes / 1048576)) MiB), sh
 # Sample server configs (MIME type, caching, compression); harmless where unused.
 cp "$HERE/_headers" "$HERE/.htaccess" "$WORK/$NAME/"
 cp "$HERE/README.md" "$WORK/$NAME/HOSTING.md"
+cp "$ROOT/docs/webmcp.md" "$WORK/$NAME/WEBMCP.md"
 copy_docs "$WORK/$NAME"
 # Optional served fonts (README.md › Fonts): PHOTOCRAFT_WEB_FONTS_DIR=<a craft-fonts checkout, or any
 # folder with a fonts/manifest.txt in its format> copies the manifest, every font and licence file

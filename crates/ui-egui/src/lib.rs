@@ -71,6 +71,12 @@ pub use file_open::OsEvent;
 pub use state::{Tool, UiState};
 
 mod app;
+fn repaint_from_worker(ctx: &egui::Context) {
+    #[cfg(not(target_arch = "wasm32"))]
+    ctx.request_repaint();
+    #[cfg(target_arch = "wasm32")]
+    let _ = ctx;
+}
 mod input;
 mod prefs;
 mod services;
@@ -506,10 +512,10 @@ pub struct PhotocraftApp {
     /// Live filter preview (proxy document with the filter applied).
     pub(crate) filter_preview: Option<filter_dialog::FilterPreview>,
     pub(crate) smart_filter_targets: smart_filter_dialog::Targets,
-    #[cfg(not(target_arch = "wasm32"))]
     filter_preview_worker: crate::dialogs::filter_preview_worker::Worker,
     /// Full CPU canvas redraws running in the background, by document (#4024).
     pub(crate) redraws: std::collections::HashMap<photocraft_doc::DocId, background_redraw::Redraw>,
+    cpu_redraws: canvas::cpu_redraw::Redraws,
     /// The last finished background redraws, for going back to a state drawn a moment ago (#6528).
     pub(crate) kept: background_redraw::KeptComposites,
     /// Select › Color Range dialog preview (proxy document + mask / image textures).

@@ -11,7 +11,8 @@
 //!   difference.
 //! - [`Session::start`] runs a job-capable command on a worker thread and returns its
 //!   [`JobId`]; [`Session::poll_jobs`] (called every frame by the UI) applies finished jobs.
-//!   On wasm `start` runs inline (same API, written once).
+//!   On wasm `start` uses the initialized shared-memory worker pool, or runs inline in the
+//!   compatibility build (same API, written once).
 //! - [`Session::cancel_job`] sets the flag; the algorithms check it per tile, row band or
 //!   iteration, and the result is discarded. The document is never touched by a worker.
 //! - A job with an effect outside the session (a save replacing its file) calls
@@ -19,7 +20,8 @@
 //!   path ([`Session::try_cancel_job`], [`Session::cancel_all_jobs`], closing its document,
 //!   `jobs.cancel`) leaves it running and says so ([`CancelRefused::Committing`]), so nothing
 //!   reports a job as cancelled after its effect has happened.
-//! - A panic in the worker becomes an error; the document is unchanged.
+//! - With native unwinding, a panic in the worker becomes an error; the document is unchanged.
+//!   Browser Wasm cannot recover from an aborting trap, so worker input must never panic.
 //! - While a job runs on a document, commands that would edit that document are disabled with a
 //!   message naming the job (queries and document-independent commands still run).
 
@@ -325,7 +327,6 @@ impl JobCtx {
         self.shared.batch_preview.lock().unwrap_or_else(PoisonError::into_inner).clone()
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     fn finish_work(&self) {
         self.shared.state.fetch_or(WORK_FINISHED, Ordering::Release);
     }
@@ -340,9 +341,13 @@ impl JobCtx {
         f32::from_bits(self.shared.progress.load(Ordering::Relaxed))
     }
 
-    /// The latest status message.
+    /// The latest status message, or empty while another thread is updating it.
     pub fn message(&self) -> String {
-        self.shared.message.lock().unwrap_or_else(PoisonError::into_inner).clone()
+        match self.shared.message.try_lock() {
+            Ok(message) => message.clone(),
+            Err(std::sync::TryLockError::Poisoned(error)) => error.into_inner().clone(),
+            Err(std::sync::TryLockError::WouldBlock) => String::new(),
+        }
     }
 
     /// Run `f` with an algorithm-level [`Interrupt`] whose progress maps onto `lo..hi` of this
@@ -457,18 +462,10 @@ pub struct JobInfo {
 type Payload = Box<dyn Any + Send>;
 type Apply = Box<dyn FnOnce(&mut Session, Payload) -> Result<Value> + Send>;
 
-/// Wall-clock milliseconds since some fixed point (0 on wasm, where `Instant` is unavailable and
-/// jobs run inline anyway).
+/// Monotonic milliseconds since the first job clock reading.
 fn now_ms() -> f64 {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        static START: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
-        START.get_or_init(std::time::Instant::now).elapsed().as_secs_f64() * 1000.0
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        0.0
-    }
+    static START: std::sync::OnceLock<web_time::Instant> = std::sync::OnceLock::new();
+    START.get_or_init(web_time::Instant::now).elapsed().as_secs_f64() * 1000.0
 }
 
 struct Running {
@@ -496,8 +493,7 @@ struct Running {
     layers: Option<LayerSelection>,
     rx: std::sync::mpsc::Receiver<Result<Payload>>,
     apply: Option<Apply>,
-    #[cfg(not(target_arch = "wasm32"))]
-    handle: Option<std::thread::JoinHandle<()>>,
+    handle: Option<crate::background::Handle>,
 }
 
 /// A document's active layer, selected layers and selection anchor.
@@ -540,9 +536,8 @@ impl Running {
 }
 
 /// A cancelled job's worker that may still be unwinding.
-#[cfg(not(target_arch = "wasm32"))]
 struct Draining {
-    handle: std::thread::JoinHandle<()>,
+    handle: crate::background::Handle,
     doc: Option<DocId>,
     /// Its document closed: the worker still holds that document's snapshot, so the scratch
     /// pool is released again once it exits (the release at close came too early, #10479).
@@ -563,7 +558,6 @@ pub struct Jobs {
     /// The last few ended jobs, for `jobs.list`.
     recent: Vec<JobInfo>,
     /// Workers of cancelled jobs that may still be unwinding (native).
-    #[cfg(not(target_arch = "wasm32"))]
     draining: Vec<Draining>,
     /// The context inline job work runs under (see [`Session::set_inline_job_ctx`]).
     inline: Option<JobCtx>,
@@ -671,7 +665,7 @@ pub fn run<T: Send + 'static>(
     // The job's document: stored paths it follows are resolved against it on any thread.
     let document = s.active().and_then(|d| d.path.as_deref()).map(std::path::PathBuf::from);
     let _document = crate::doc_path::scope(document.as_deref());
-    if !s.jobs.spawn || cfg!(target_arch = "wasm32") {
+    if !s.jobs.spawn || !crate::background::available() {
         let t = work(&s.jobs.inline.clone().unwrap_or_default())?;
         return apply(s, t);
     }
@@ -694,13 +688,12 @@ pub fn run<T: Send + 'static>(
     });
     s.jobs.next += 1;
     let id = JobId(s.jobs.next);
-    #[cfg(not(target_arch = "wasm32"))]
     let handle = {
         let wctx = ctx.clone();
         let label_w = label.to_string();
         // The work closure is moved into the thread. If spawning fails (thread limits), there is
         // no way to get it back, so the error is reported instead.
-        let spawned = std::thread::Builder::new().name(format!("photocraft-job-{}", id.0)).spawn(move || {
+        let spawned = crate::background::spawn(&format!("photocraft-job-{}", id.0), move || {
             let _authorization = AuthorizationScope::enter(authorization);
             let _document = crate::doc_path::scope(document.as_deref());
             let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| work(&wctx).map(|t| Box::new(t) as Payload)))
@@ -711,11 +704,6 @@ pub fn run<T: Send + 'static>(
         });
         Some(spawned.map_err(|e| EngineError::Other(format!("could not start a background job: {e}")))?)
     };
-    #[cfg(target_arch = "wasm32")]
-    {
-        // Unreachable (wasm runs inline above); keep the types used.
-        drop((work, tx));
-    }
     s.jobs.pending = Some(Running {
         id,
         command: String::new(),
@@ -735,7 +723,6 @@ pub fn run<T: Send + 'static>(
         layers,
         rx,
         apply: Some(erased),
-        #[cfg(not(target_arch = "wasm32"))]
         handle,
     });
     Ok(json!({"job": id.0}))
@@ -750,7 +737,7 @@ pub fn edit_job<R: Send + 'static>(
     f: impl FnOnce(&mut Document, &mut Option<LayerId>, &JobCtx) -> Result<R> + Send + 'static,
     finish: impl FnOnce(R) -> Value + Send + 'static,
 ) -> Result<Value> {
-    if !s.jobs.spawn || cfg!(target_arch = "wasm32") {
+    if !s.jobs.spawn || !crate::background::available() {
         // Inline: exactly `Session::edit`, as before jobs existed.
         let ctx = s.jobs.inline.clone().unwrap_or_default();
         let r = s.edit(label, |doc, active| f(doc, active, &ctx))?;
@@ -1250,7 +1237,7 @@ impl Session {
         apply: impl FnOnce(&mut Session, T) -> Result<Value> + Send + 'static,
     ) -> Result<Started> {
         let prev_spawn = self.jobs.spawn;
-        self.jobs.spawn = spawn && !cfg!(target_arch = "wasm32");
+        self.jobs.spawn = spawn && crate::background::available();
         let r = run(self, label, lock_document, work, apply);
         self.jobs.spawn = prev_spawn;
         let pending = self.jobs.pending.take();
@@ -1291,7 +1278,6 @@ impl Session {
                 None => break,
             }
         }
-        #[cfg(not(target_arch = "wasm32"))]
         {
             let mut release = false;
             self.jobs.draining.retain(|d| {
@@ -1352,7 +1338,6 @@ impl Session {
         }
         let job = self.jobs.running.remove(i);
         self.end_job(&job, JobOutcome::Cancelled);
-        #[cfg(not(target_arch = "wasm32"))]
         if let Some(handle) = job.handle {
             self.jobs.draining.push(Draining { handle, doc: job.doc, release: false });
         }
@@ -1463,7 +1448,6 @@ impl Session {
         let ids: Vec<JobId> = self.jobs.running.iter().filter(|r| r.doc == Some(doc)).map(|r| r.id).collect();
         let report = self.cancel_each(ids);
         // Workers cancelled now, or earlier and still unwinding, hold the closing document.
-        #[cfg(not(target_arch = "wasm32"))]
         for d in self.jobs.draining.iter_mut().filter(|d| d.doc == Some(doc)) {
             d.release = true;
         }

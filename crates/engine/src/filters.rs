@@ -14,6 +14,7 @@ use crate::commands::CommandSpec;
 use crate::{EngineError, Result, Session};
 
 mod validation;
+pub(crate) use validation::input_schema;
 pub(crate) use validation::validate_params;
 
 fn f(p: &Value, k: &str, d: f32) -> f32 {

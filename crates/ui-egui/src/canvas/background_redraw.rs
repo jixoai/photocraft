@@ -9,7 +9,7 @@
 //! An edit while it runs restarts the worker on the new document with the blocks still to draw;
 //! the edit's own damage is drawn by the canvas as usual. A full change (a new preview, a new
 //! display transform) starts over. Without background jobs (web, tests) the canvas keeps the
-//! synchronous [`GpuCanvas::upload_composite`].
+//! synchronous [`GpuCanvas::upload_composite`]. Threaded web builds use the same worker path.
 //!
 //! The last finished redraws are kept ([`Kept`]), keyed by the whole document they drew (#6528):
 //! going back to a state drawn a moment ago (⌥-click on an eye and again, an undo and its redo)
@@ -242,7 +242,7 @@ fn keep_cap(app: &PhotocraftApp, doc: DocId) -> u64 {
 
 /// Whether full CPU refreshes run in the background here.
 pub(crate) fn enabled(app: &PhotocraftApp) -> bool {
-    cfg!(not(target_arch = "wasm32")) && app.background_jobs
+    photocraft_engine::background::available() && app.background_jobs
 }
 
 /// `bounds` cut into [`BLOCK`]-sized blocks, row by row.
@@ -486,7 +486,7 @@ fn spawn(app: &mut PhotocraftApp, ctx: &egui::Context, s: Spawn) {
     #[cfg(test)]
     let worker_hold = reached_hold.clone();
     let work = (blocks.clone(), stop.clone(), ctx.clone());
-    let spawned = std::thread::Builder::new().name("canvas-redraw".into()).spawn(move || {
+    let spawned = photocraft_engine::background::spawn("canvas-redraw", move || {
         let (blocks, stop, ctx) = work;
         // A panic stops the redraw: the receiver sees the worker gone and drops it.
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -495,7 +495,7 @@ fn spawn(app: &mut PhotocraftApp, ctx: &egui::Context, s: Spawn) {
             #[cfg(not(test))]
             draw(&doc, display.as_deref(), format, &blocks, &todo, &stop, &tx, &ctx);
         }));
-        ctx.request_repaint();
+        crate::repaint_from_worker(&ctx);
     });
     if let Err(e) = spawned {
         log::warn!("couldn't start the canvas redraw: {e}");
@@ -565,7 +565,7 @@ fn draw(
             if stop.load(Ordering::Relaxed) || tx.send(p).is_err() {
                 return;
             }
-            ctx.request_repaint();
+            crate::repaint_from_worker(ctx);
         }
     }
 }

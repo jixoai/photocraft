@@ -10,10 +10,24 @@ static site in `photocraft-web-<version>/`:
 | `app/photocraft-web-<hash>.part-aa`, `-ab`, … | The app's WebAssembly, gzipped and cut into parts of at most 20 MiB (see [Sizes](#sizes)) |
 | `app/parts.txt` | The parts, in order |
 | `app/photocraft-web.js` | The app's wasm-bindgen glue (generated, ES module) |
+| `app-threaded/` (optional worker payload) | Shared-memory Wasm parts and generated worker helpers; selected only with cross-origin isolation |
 | `_headers`, `.htaccess` | Sample header rules for Netlify/Cloudflare Pages and Apache |
 | `fonts/` (optional) | Fonts loaded on demand, listed in `fonts/manifest.txt` (see [Fonts](#fonts)) |
 
 There is no server-side code. Upload the folder's contents anywhere that serves static files.
+
+## Background CPU workers
+
+Build both variants with `PHOTOCRAFT_WEB_THREADS=1 packaging/web/package.sh` after installing
+`nightly-2026-08-17` with `rust-src`. The dedicated `build-threaded.sh` rebuilds the standard
+library with atomics; the normal Rust toolchain and compatibility build are unchanged.
+The streaming loader uses the worker payload when it is present and `crossOriginIsolated` is
+true. The bundled header rules send COOP `same-origin` and COEP `require-corp`; configure the
+same response headers on other hosts. Without them the compatibility payload still works,
+but heavy CPU work runs inline. Keep fonts/resources same-origin or configure CORS/CORP.
+The worker build reuses two to four workers for engine jobs, path drawing, previews, histograms,
+import/export and CPU redraws. Verify the actual runtime with
+`window.photocraft.backgroundWorkers`. See `WEBMCP.md` for the reproducible layered drawing.
 
 ## Docker
 
@@ -46,7 +60,7 @@ the default Rust version is the stable release CI used when the `Dockerfile` was
 The web build does not embed the optional `craft-fonts` checkout.
 
 The Docker build uses thin LTO and one Cargo build job to reduce peak memory, while keeping
-the web profile's size optimizations and `wasm-opt -Oz`. Its Wasm size may differ from the
+the web profile's size optimizations and `wasm-opt -O3`. Its Wasm size may differ from the
 release zip figures below; NGINX has no 25 MiB file limit. To use the release zip's fat LTO on
 a builder with more memory, pass `--build-arg CARGO_PROFILE_WASM_RELEASE_LTO=fat`.
 `--build-arg CARGO_BUILD_JOBS=4` enables more concurrent compilation on larger builders. A compiler killed with
@@ -80,6 +94,18 @@ such a server labels only the first part, the one that starts with gzip's header
 
 To verify the browser deployment, open the page, open an image and save/export it.
 
+## WebMCP and browser agents
+
+The Rust shell automatically registers six WebMCP tools for command discovery/execution, UI
+inspection/control, file import and export. They operate on the visible editor and share its
+undo history. Both `document.modelContext` (current draft) and `navigator.modelContext`
+(earlier implementations) are supported, when the browser enables WebMCP. No MCP backend,
+Node.js process or handwritten JavaScript is needed. HTTPS or localhost is required.
+
+Browsers without WebMCP expose the same operations at `window.photocraft.callTool`;
+`window.photocraft.webmcp` reports native registration status. See `WEBMCP.md` in the release zip (or [the WebMCP guide](../../docs/webmcp.md) in the
+repository) for arguments, limits, cancellation, measured timings and examples.
+
 ## Sizes
 
 Measured on 2026-10-13 (0.8.2, `packaging/web/package.sh`):
@@ -103,7 +129,7 @@ in `apps/photocraft-web`, or the Docker image above) still has the app in one `.
 without such a cap.
 
 The app is built with the `wasm-release` Cargo profile (fat LTO, size-optimized code with the
-pixel and file-decoding crates kept at speed) plus `wasm-opt -Oz`, and stores the bundled fonts
+pixel and file-decoding crates kept at speed) plus `wasm-opt -O3`, and stores the bundled fonts
 (PhotoCraft's and egui's) and the translation catalogs compressed, unpacked on first use.
 
 ## Any path works

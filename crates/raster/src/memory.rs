@@ -149,23 +149,32 @@ pub fn try_reserve_operation(bytes: u64) -> Result<Reservation, String> {
     // for working sets, so normal-sized operations are never refused by a high RSS sample.
     let evictable = if crate::spill::enabled() { crate::spill::stats().resident_bytes as u64 } else { 0 };
     let untiled = sample.process_resident_bytes.saturating_sub(evictable);
+    #[cfg(not(target_arch = "wasm32"))]
     let available = if sample.total_bytes == 0 { b.transient_bytes } else { b.effective_process_bytes.saturating_sub(untiled).max(b.transient_bytes) };
+    #[cfg(target_arch = "wasm32")]
+    let available = {
+        let _ = (sample, untiled);
+        web_operation_available(b, crate::spill::stats().resident_bytes as u64)
+    };
     let refused = || "not enough working memory for this operation; reduce its region or use a streaming format".to_string();
     if bytes > available {
         return Err(refused());
     }
     // It fits on its own: wait (bounded) for concurrent operations to return their working
     // sets instead of failing an operation that only overlapped another one.
+    let reserve = || RESERVED.try_update(Ordering::AcqRel, Ordering::Relaxed, |n| n.checked_add(bytes).filter(|next| *next <= available));
+    #[cfg(target_arch = "wasm32")]
+    {
+        // No waiting on the browser event loop. Other live reservations are still charged.
+        reserve().map(|_| Reservation(bytes)).map_err(|_| refused())
+    }
     #[cfg(not(target_arch = "wasm32"))]
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
-    loop {
-        if RESERVED.try_update(Ordering::AcqRel, Ordering::Relaxed, |n| n.checked_add(bytes).filter(|next| *next <= available)).is_ok() {
-            return Ok(Reservation(bytes));
-        }
-        #[cfg(target_arch = "wasm32")]
-        return Err(refused());
-        #[cfg(not(target_arch = "wasm32"))]
-        {
+    {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        loop {
+            if reserve().is_ok() {
+                return Ok(Reservation(bytes));
+            }
             let now = std::time::Instant::now();
             if now >= deadline {
                 return Err(refused());
@@ -176,6 +185,18 @@ pub fn try_reserve_operation(bytes: u64) -> Result<Reservation, String> {
             drop(RELEASED.1.wait_timeout(guard, slice).unwrap_or_else(PoisonError::into_inner));
         }
     }
+}
+
+/// Browsers cannot report process RSS and cannot spill tiles to the native scratch store.
+/// Reserving only one eighth of the configured ceiling rejected even a 24 MP RGBA working
+/// buffer (384 MB) under the default 1.5 GiB ceiling. Charge every resident tile, including
+/// undo snapshots, and leave at least 256 MiB for the UI, engine metadata and untracked data.
+/// The remaining ceiling is shared by all operation reservations; it is never raised.
+#[cfg(any(target_arch = "wasm32", test))]
+fn web_operation_available(b: Budgets, resident_tiles: u64) -> u64 {
+    let ceiling = b.effective_process_bytes.min(b.process_ceiling_bytes);
+    let headroom = (ceiling / 8).max(256 * MIB);
+    ceiling.saturating_sub(resident_tiles).saturating_sub(headroom)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -195,6 +216,19 @@ impl Drop for Reservation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn browser_whole_image_work_uses_remaining_ceiling_and_charges_history_tiles() {
+        let b = budgets(Policy { percent: None, absolute_bytes: 1536 * MIB }, Snapshot::default(), 0);
+        let tiles = 6000 * 4000 * 4;
+        let working = 6000 * 4000 * 4 * 4 * 2; // two RGBA f32 buffers
+        assert!(working > b.transient_bytes, "the former browser limit rejected 24 MP filters");
+        let available = web_operation_available(b, tiles * 2); // document plus an undo snapshot
+        assert!(working <= available);
+        assert!(available + tiles * 2 + 256 * MIB <= b.process_ceiling_bytes);
+        assert!(web_operation_available(b, tiles * 8) < working, "many undo tiles must reduce admission");
+        assert_eq!(web_operation_available(b, u64::MAX), 0);
+        assert_eq!(web_operation_available(Budgets { effective_process_bytes: 128 * MIB, process_ceiling_bytes: 128 * MIB, ..b }, 0), 0);
+    }
     #[test]
     fn ceiling_includes_non_tile_memory_and_other_apps() {
         let s = Snapshot { total_bytes: 64 << 30, available_bytes: 10 << 30, process_resident_bytes: 20 << 30, process_virtual_bytes: 100 << 30 };

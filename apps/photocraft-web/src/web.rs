@@ -46,6 +46,9 @@ type Served = Arc<Mutex<ServedFonts>>;
 
 pub fn start() {
     eframe::WebLogger::init(log::LevelFilter::Info).ok();
+    if let Some(performance) = web_sys::window().and_then(|w| w.performance()) {
+        let _ = performance.mark("photocraft.start");
+    }
     wasm_bindgen_futures::spawn_local(async {
         let Some(document) = web_sys::window().and_then(|w| w.document()) else {
             log::error!("no document");
@@ -57,6 +60,16 @@ pub fn start() {
         };
         let q = query();
         let force_cpu = q.contains("cpu");
+        #[cfg(feature = "threads")]
+        if let Err(error) = wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(worker_count())).await {
+            log::error!("PhotoCraft workers could not start: {error:?}");
+            if let Some(loading) = document.get_element_by_id("photocraft_loading") {
+                loading.set_text_content(Some("PhotoCraft workers could not start. Reload the page or use the compatibility build."));
+            }
+            return;
+        }
+        #[cfg(feature = "threads")]
+        photocraft_engine::background::enable_web_workers();
         let mut options = eframe::WebOptions::default();
         photocraft_ui_egui::gpu_canvas::use_adapter_limits(&mut options.wgpu_options.wgpu_setup);
         if q.contains("webgl")
@@ -90,6 +103,9 @@ pub fn start() {
                     preset_warnings.extend(warnings);
                     let drag = listen_drag(&pen_target);
                     let mut app = PhotocraftApp::new(session, services(inbox.clone(), place_inbox.clone(), drag_pos_service(pen_target.clone(), drag)));
+                    app.background_jobs = photocraft_engine::background::available();
+                    let (agents, control) = crate::webmcp::Bridge::new(&cc.egui_ctx);
+                    app = app.with_control(control);
                     if !preset_warnings.is_empty() {
                         photocraft_ui_egui::notices::post(&mut app, i18n::t("Some brush presets could not be loaded"), preset_warnings, true, None);
                     }
@@ -103,17 +119,27 @@ pub fn start() {
                     }
                     let unsaved = Arc::new(AtomicBool::new(false));
                     guard_unload(unsaved.clone());
-                    Ok(Box::new(WebShell { app, inbox, place_inbox, unsaved, served, database, presets, ui_language: "" }))
+                    Ok(Box::new(WebShell { app, agents, inbox, place_inbox, unsaved, served, database, presets, ui_language: "" }))
                 }),
             )
             .await;
         if let Some(el) = document.get_element_by_id("photocraft_loading") {
             match result {
-                Ok(()) => el.remove(),
+                Ok(()) => {
+                    el.remove();
+                    if let Some(performance) = web_sys::window().and_then(|w| w.performance()) {
+                        let _ = performance.mark("photocraft.ready");
+                    }
+                }
                 Err(e) => el.set_inner_html(&format!("<p>PhotoCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
             }
         }
     });
+}
+
+#[cfg(feature = "threads")]
+fn worker_count() -> usize {
+    web_sys::window().map_or(2, |window| (window.navigator().hardware_concurrency() as usize).saturating_sub(1).clamp(2, 4))
 }
 
 /// Pen pressure, tilt, twist and the eraser button from Pointer Events (eframe forwards none of them for pens) into
@@ -264,6 +290,7 @@ async fn fetch_bytes(url: &str, integrity: Option<&str>) -> Result<Vec<u8>, Stri
 /// so the app's own drop path can't handle them) and feed them through the inboxes.
 struct WebShell {
     app: PhotocraftApp,
+    agents: crate::webmcp::Bridge,
     /// Dropped files to open as documents.
     inbox: Inbox,
     /// Dropped files to place on the active document's canvas.
@@ -340,9 +367,7 @@ impl eframe::App for WebShell {
         // A tap reaches eframe as Pointer Events and Touch Events: keep one press per tap, or the
         // twin press closes the menu the first one opened (#2095).
         photocraft_ui_egui::touch_twins::drop_twins(ctx, raw_input);
-        // The browser build has no TCP control server, so `inject_synthetic` finds an empty
-        // queue, but the clipboard key mapping (`Event::PasteImage`), legacy pinch, pen-hold and
-        // titlebar normalization live in the app hook and must run here too.
+        // WebMCP shares the synthetic input queue, clipboard mapping and pen handling.
         eframe::App::raw_input_hook(&mut self.app, ctx, raw_input);
     }
 
@@ -372,7 +397,9 @@ impl eframe::App for WebShell {
             });
         }
         self.serve_fonts(ctx);
+        self.agents.dispatch(&mut self.app, ctx);
         self.app.logic_frame(ctx, frame);
+        self.agents.settle(&mut self.app, ctx);
         self.save_presets(ctx);
         self.app.finish_type_reset_logic(ctx);
     }
@@ -402,6 +429,7 @@ impl eframe::App for WebShell {
             });
         }
         self.app.ui_frame(ui, frame);
+        self.agents.settle(&mut self.app, ui.ctx());
         self.save_presets(ui.ctx());
         self.app.finish_type_reset_pass(ui.ctx());
     }
@@ -409,6 +437,7 @@ impl eframe::App for WebShell {
 
 fn services(inbox: Inbox, place_inbox: Inbox, cursor_pos: photocraft_ui_egui::CursorPosFn) -> Services {
     Services {
+        automation_write: Some(Box::new(download)),
         screen_pick: screen_color_service(),
         import: Some(Box::new(|name: &str, bytes: &[u8], opts: &photocraft_io::ImportOptions| {
             photocraft_io::import_with_options(name, bytes, opts).map(|r| (r.document, r.warnings)).map_err(|e| e.to_string())
@@ -476,7 +505,7 @@ fn local_storage() -> Option<web_sys::Storage> {
 }
 
 /// Trigger a browser download of `bytes` named after the last component of `path`.
-fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
+pub(crate) fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
     let js = |e: wasm_bindgen::JsValue| format!("{e:?}");
     let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "photocraft".into());
     let window = web_sys::window().ok_or("no window")?;
@@ -502,7 +531,7 @@ fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-fn mime_for(name: &str) -> &'static str {
+pub(crate) fn mime_for(name: &str) -> &'static str {
     match name.rsplit('.').next().map(str::to_ascii_lowercase).as_deref() {
         Some("png") => "image/png",
         Some("jpg" | "jpeg") => "image/jpeg",

@@ -43,6 +43,10 @@ impl PhotocraftApp {
         }
         self.last_frame_time = now;
         self.sync_views();
+        self.cpu_redraws.retain(self.session.documents().iter().map(|state| state.doc.id), self.frame);
+        if !self.redraws.is_empty() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(16));
+        }
         crate::type_font_preview::follow_hover(self, ctx);
         self.check_gpu(ctx);
         #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
@@ -82,7 +86,6 @@ impl PhotocraftApp {
         // shortcuts see Esc).
         if !screen_picker::tick(self, ctx) {
             jobs_ui::tick(self, ctx);
-            #[cfg(not(target_arch = "wasm32"))]
             crate::dialogs::filter_preview_worker::discard_closed(self);
             if type_tool::in_ui_pass(ctx) {
                 if self.fonts_ready {

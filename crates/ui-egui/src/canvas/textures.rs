@@ -164,6 +164,9 @@ pub(crate) fn ensure_texture_in_view(
         None => None,
     };
     let preview_key = preview_key ^ display_key;
+    if cfg!(target_arch = "wasm32") && app.background_jobs && photocraft_engine::background::available() {
+        return super::cpu_redraw::ensure(app, ctx, doc, output, revision, preview_key, display, bounds, view);
+    }
     let cache = app.canvases.entry(cache_key(id, output)).or_insert(CanvasCache {
         revision: 0,
         texture: None,

@@ -120,6 +120,12 @@ mod boot {
         async fn start_app(module: JsValue) -> Result<JsValue, JsValue>;
     }
 
+    #[wasm_bindgen(raw_module = "./app-threaded/photocraft-web.js")]
+    extern "C" {
+        #[wasm_bindgen(js_name = default, catch)]
+        async fn start_threaded_app(module: JsValue) -> Result<JsValue, JsValue>;
+    }
+
     // The browser's own inflater. `web-sys` has it only behind its unstable-API flag, which would
     // have to be set for the whole build, so the three members used are declared here.
     #[wasm_bindgen]
@@ -154,11 +160,11 @@ mod boot {
     }
 
     /// Copies each part into `sink` in order, then closes it.
-    async fn feed(parts: Vec<String>, sink: WritableStream, fresh: bool) -> Result<(), JsValue> {
+    async fn feed(root: &str, parts: Vec<String>, sink: WritableStream, fresh: bool) -> Result<(), JsValue> {
         let keep_open = StreamPipeOptions::new();
         keep_open.set_prevent_close(true);
         for part in &parts {
-            let body = fetch(&format!("./app/{part}"), fresh).await?.body().ok_or_else(|| JsValue::from_str("part without a body"))?;
+            let body = fetch(&format!("{root}/{part}"), fresh).await?.body().ok_or_else(|| JsValue::from_str("part without a body"))?;
             JsFuture::from(body.pipe_to_with_options(&sink, &keep_open)).await?;
         }
         JsFuture::from(sink.close()).await?;
@@ -265,7 +271,18 @@ mod boot {
     }
 
     async fn run(fresh: bool) -> Result<(), JsValue> {
-        let list = JsFuture::from(fetch(PARTS, fresh).await?.text()?).await?.as_string().unwrap_or_default();
+        let isolated = js_sys::Reflect::get(&js_sys::global(), &JsValue::from_str("crossOriginIsolated"))?.as_bool().unwrap_or(false);
+        let candidate = if isolated {
+            match fetch("./app-threaded/parts.txt", fresh).await {
+                Ok(response) => JsFuture::from(response.text()?).await?.as_string().unwrap_or_default(),
+                Err(_) => String::new(),
+            }
+        } else {
+            String::new()
+        };
+        let threaded = super::parts(&candidate).is_some();
+        let root = if threaded { "./app-threaded" } else { "./app" };
+        let list = if threaded { candidate } else { JsFuture::from(fetch(PARTS, fresh).await?.text()?).await?.as_string().unwrap_or_default() };
         let parts = super::parts(&list).ok_or_else(|| JsValue::from_str("app/parts.txt is not a parts list"))?;
         let joined = TransformStream::new()?;
         // Why the download stopped: the app's loader only reports that its stream broke.
@@ -273,7 +290,7 @@ mod boot {
         let failed = cause.clone();
         let sink = joined.writable();
         spawn_local(async move {
-            if let Err(e) = feed(parts, sink.clone(), fresh).await {
+            if let Err(e) = feed(root, parts, sink.clone(), fresh).await {
                 let _ = sink.abort_with_reason(&e);
                 failed.replace(Some(e));
             }
@@ -289,7 +306,8 @@ mod boot {
         let response = Response::new_with_opt_readable_stream_and_init(Some(&wasm), &init)?;
         let arg = js_sys::Object::new();
         js_sys::Reflect::set(&arg, &JsValue::from_str("module_or_path"), &response)?;
-        match start_app(arg.into()).await {
+        let started = if threaded { start_threaded_app(arg.into()).await } else { start_app(arg.into()).await };
+        match started {
             Ok(_) => Ok(()),
             Err(e) => Err(cause.take().unwrap_or(e)),
         }

@@ -459,24 +459,18 @@ pub fn update(app: &mut PhotocraftApp, ctx: &egui::Context) {
 /// spawn fails), delivered through `app.hist_job`.
 fn spawn(app: &mut PhotocraftApp, ctx: &egui::Context, doc: Arc<Document>, key: HistKey, source: HistSource, space: ToneSpace) {
     let (tx, rx) = std::sync::mpsc::channel();
-    #[cfg(not(target_arch = "wasm32"))]
-    let spawned = {
+    let spawned = if photocraft_engine::background::available() {
         let doc = doc.clone();
         let tx = tx.clone();
         let ctx = ctx.clone();
-        std::thread::Builder::new()
-            .name("histogram".into())
-            .spawn(move || {
-                let t0 = crate::gpu_canvas::now_ms();
-                let h = Arc::new(tone::compute_histograms_at(&doc, source, space, key.max_level));
-                let _ = tx.send((key, crate::gpu_canvas::now_ms() - t0, h));
-                ctx.request_repaint();
-            })
-            .is_ok()
-    };
-    #[cfg(target_arch = "wasm32")]
-    let spawned = {
-        let _ = ctx;
+        photocraft_engine::background::spawn("histogram", move || {
+            let t0 = crate::gpu_canvas::now_ms();
+            let h = Arc::new(tone::compute_histograms_at(&doc, source, space, key.max_level));
+            let _ = tx.send((key, crate::gpu_canvas::now_ms() - t0, h));
+            crate::repaint_from_worker(&ctx);
+        })
+        .is_ok()
+    } else {
         false
     };
     if !spawned {
@@ -485,6 +479,7 @@ fn spawn(app: &mut PhotocraftApp, ctx: &egui::Context, doc: Arc<Document>, key: 
         let _ = tx.send((key, crate::gpu_canvas::now_ms() - t0, h));
     }
     app.hist_job = Some((key, rx));
+    ctx.request_repaint_after(std::time::Duration::from_millis(30));
 }
 
 /// Uncached Refresh: recount the active document's current state at cache level 1 (every pixel).

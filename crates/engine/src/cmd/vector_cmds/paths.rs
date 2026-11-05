@@ -409,38 +409,45 @@ pub(super) fn path_fill(s: &mut Session, p: &Value) -> Result<Value> {
     let feather = f64p(p, "feather").unwrap_or(0.0) as f32;
     let aa = p.get("antiAlias").and_then(Value::as_bool).unwrap_or(true);
     let id = layer_id(s, p)?;
-    s.edit("Fill Path", |doc, _| {
-        let area = doc.bounds();
-        let r = vector::fill_rasterizer(&path, vector::DEFAULT_TOLERANCE);
-        // The feather reaches 3σ = 3 × radius (σ = radius, as in Photoshop), plus a pixel.
-        let feather_pad = (feather.ceil() as i32).saturating_mul(3).saturating_add(1);
-        let area = r.pixel_bounds().map_or(area, |b| b.inflate(feather_pad).intersect(&area));
-        if area.is_empty() {
-            return Ok(());
-        }
-        let mut cov = r.render(area);
-        if !aa {
-            cov.iter_mut().for_each(|v| *v = if *v >= 0.5 { 1.0 } else { 0.0 });
-        }
-        if feather > 0.0 {
-            cov = sel::feather(&cov, area.width() as usize, area.height() as usize, feather);
-        }
-        // An active selection limits the fill, soft edges included, as every other fill does (#2387).
-        if let Some(selection) = doc.selection.as_ref() {
-            let mask = sel::mask_from_surface(Some(selection), area);
-            cov.iter_mut().zip(&mask).for_each(|(c, m)| *c *= m);
-        }
-        let locks = doc.effective_locks(id);
-        let l = doc.layer_mut(id).ok_or(EngineError::NoLayer(id))?;
-        if locks.pixels || locks.all {
-            return Err(EngineError::Other(format!("Could not complete your request because the layer \"{}\" is locked", l.name)));
-        }
-        let lock = locks.transparency;
-        let surf = l.surface_mut().ok_or_else(|| EngineError::Other("Fill Path needs a pixel layer".into()))?;
-        paint_coverage(surf, area, &cov, src, opacity, mode, lock);
-        Ok(())
-    })?;
-    Ok(Value::Null)
+    crate::jobs::edit_job(
+        s,
+        "Fill Path",
+        move |doc, _, ctx| {
+            ctx.check()?;
+            let area = doc.bounds();
+            let r = vector::fill_rasterizer(&path, vector::DEFAULT_TOLERANCE);
+            // The feather reaches 3σ = 3 × radius (σ = radius, as in Photoshop), plus a pixel.
+            let feather_pad = (feather.ceil() as i32).saturating_mul(3).saturating_add(1);
+            let area = r.pixel_bounds().map_or(area, |b| b.inflate(feather_pad).intersect(&area));
+            if area.is_empty() {
+                return Ok(());
+            }
+            let mut cov = r.render(area);
+            ctx.check()?;
+            if !aa {
+                cov.iter_mut().for_each(|v| *v = if *v >= 0.5 { 1.0 } else { 0.0 });
+            }
+            if feather > 0.0 {
+                cov = sel::feather(&cov, area.width() as usize, area.height() as usize, feather);
+            }
+            // An active selection limits the fill, soft edges included, as every other fill does (#2387).
+            if let Some(selection) = doc.selection.as_ref() {
+                let mask = sel::mask_from_surface(Some(selection), area);
+                cov.iter_mut().zip(&mask).for_each(|(c, m)| *c *= m);
+            }
+            let locks = doc.effective_locks(id);
+            let l = doc.layer_mut(id).ok_or(EngineError::NoLayer(id))?;
+            if locks.pixels || locks.all {
+                return Err(EngineError::Other(format!("Could not complete your request because the layer \"{}\" is locked", l.name)));
+            }
+            let lock = locks.transparency;
+            let surf = l.surface_mut().ok_or_else(|| EngineError::Other("Fill Path needs a pixel layer".into()))?;
+            paint_coverage(surf, area, &cov, src, opacity, mode, lock);
+            ctx.check()?;
+            Ok(())
+        },
+        |()| Value::Null,
+    )
 }
 
 /// Composites `src` × coverage onto a surface over `area` (any pixel format).
@@ -604,32 +611,37 @@ pub(super) fn path_stroke(s: &mut Session, p: &Value) -> Result<Value> {
     let id = layer_id(s, p)?;
     let bg = s.tools.background;
     let channels = crate::color_channels::target(s, p)?.is_some();
-    let dmg = s.edit("Stroke Path", |doc, _| {
-        let sel = doc.selection.clone();
-        let locks = doc.effective_locks(id);
-        let l = doc.layer_mut(id).ok_or(EngineError::NoLayer(id))?;
-        // Pixel and full locks (the layer's own or a parent group's) refuse the stroke, as Fill Path does (#2388).
-        if locks.pixels || locks.all {
-            return Err(EngineError::Other(format!("Could not complete your request because the layer \"{}\" is locked", l.name)));
-        }
-        let lock = locks.transparency;
-        let surf = l.surface_mut().ok_or_else(|| EngineError::Other("Stroke Path needs a pixel layer".into()))?;
-        let mut brush = brush.clone();
-        if brush.erase && (lock || channels) {
-            // Locked transparency (e.g. the Background): the Eraser paints the background colour (#76).
-            brush.erase = false;
-            brush.color = bg;
-        }
-        let mut dmg = Rect::EMPTY;
-        for pl in &lines {
-            let pts = stroke_points(&pl.pts, pl.closed, simulate);
-            if pts.is_empty() {
-                continue;
+    crate::jobs::edit_job(
+        s,
+        "Stroke Path",
+        move |doc, _, ctx| {
+            let sel = doc.selection.clone();
+            let locks = doc.effective_locks(id);
+            let l = doc.layer_mut(id).ok_or(EngineError::NoLayer(id))?;
+            // Pixel and full locks (the layer's own or a parent group's) refuse the stroke, as Fill Path does (#2388).
+            if locks.pixels || locks.all {
+                return Err(EngineError::Other(format!("Could not complete your request because the layer \"{}\" is locked", l.name)));
             }
-            let r = photocraft_paint::apply_stroke(surf, &photocraft_paint::Stroke { brush: brush.clone(), points: pts }, sel.as_ref(), lock);
-            dmg = if dmg.is_empty() { r } else { dmg.union(&r) };
-        }
-        Ok(dmg)
-    })?;
-    Ok(json!({ "damage": [dmg.x0, dmg.y0, dmg.width(), dmg.height()] }))
+            let lock = locks.transparency;
+            let surf = l.surface_mut().ok_or_else(|| EngineError::Other("Stroke Path needs a pixel layer".into()))?;
+            let mut brush = brush.clone();
+            if brush.erase && (lock || channels) {
+                // Locked transparency (e.g. the Background): the Eraser paints the background colour (#76).
+                brush.erase = false;
+                brush.color = bg;
+            }
+            let mut dmg = Rect::EMPTY;
+            for pl in &lines {
+                ctx.check()?;
+                let pts = stroke_points(&pl.pts, pl.closed, simulate);
+                if pts.is_empty() {
+                    continue;
+                }
+                let r = photocraft_paint::apply_stroke(surf, &photocraft_paint::Stroke { brush: brush.clone(), points: pts }, sel.as_ref(), lock);
+                dmg = if dmg.is_empty() { r } else { dmg.union(&r) };
+            }
+            Ok(dmg)
+        },
+        |dmg| json!({ "damage": [dmg.x0, dmg.y0, dmg.width(), dmg.height()] }),
+    )
 }

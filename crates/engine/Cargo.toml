@@ -23,6 +23,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 rayon = { workspace = true }
+web-time = { workspace = true }
 photocraft-paint = { workspace = true }
 photocraft-algo = { workspace = true }
 photocraft-text = { workspace = true }
@@ -60,6 +61,7 @@ winsafe = { version = "=0.0.29", default-features = false, features = ["kernel"]
 photocraft-ipp = { workspace = true }
 
 [dev-dependencies]
+jsonschema = { version = "0.60", default-features = false }
 photocraft-affinity = { workspace = true, features = ["synth"] }
 photocraft-io = { workspace = true, features = ["testgen"] }
 # Synthetic camera raw files for the open tests.

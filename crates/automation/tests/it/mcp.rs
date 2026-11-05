@@ -165,6 +165,12 @@ async fn command_list_filters() {
     let all = json_of(&call(&client, "command_list", json!({})).await);
     let n_all = all.as_array().unwrap().len();
     assert!(n_all > 20);
+    for entry in all.as_array().unwrap() {
+        let id = entry["id"].as_str().unwrap();
+        assert_eq!(entry["inputSchema"], *photocraft_engine::commands::input_schema(id).unwrap(), "{id}");
+        assert_eq!(entry["description"], entry["inputSchema"]["description"], "{id}");
+        assert!(entry["journal"].is_boolean(), "{id}");
+    }
     let blur = json_of(&call(&client, "command_list", json!({"filter": "blur"})).await);
     assert!(!blur.as_array().unwrap().is_empty() && blur.as_array().unwrap().len() < n_all);
     assert!(blur.as_array().unwrap().iter().all(|c| c["params"].is_string()));
@@ -180,6 +186,37 @@ async fn command_list_filters() {
     assert!(layer["disabledReason"].as_str().is_some_and(|r| r.starts_with("no document")), "{layer}");
     let new = all.as_array().unwrap().iter().find(|c| c["id"] == "file.new").unwrap();
     assert_eq!((new["needsDocument"].clone(), new["disabledReason"].clone()), (json!(false), Value::Null), "{new}");
+    client.cancel().await.unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn brush_command_discovery_keeps_self_contained_nested_schemas() {
+    let client = connect(PhotocraftMcp::headless()).await;
+    let rows = json_of(&call(&client, "command_list", json!({"filter":"paint.stroke"})).await);
+    let entry = rows.as_array().unwrap().iter().find(|entry| entry["id"] == "paint.stroke").unwrap();
+    let schema = &entry["inputSchema"];
+    assert_eq!(schema["x-photocraft-coverage"], "complete");
+    assert_eq!(schema["properties"]["brush"]["$ref"], "#/$defs/BrushSettings");
+    assert!(schema["$defs"]["BrushSettings"]["properties"]["scattering"].is_object());
+    assert!(schema["$defs"]["BrushPattern"]["oneOf"].is_array());
+    assert!(schema["$defs"]["BrushSettings"]["properties"]["size"].get("default").is_none());
+    client.cancel().await.unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn command_tool_descriptions_expose_contract_discovery_and_retry_cautions() {
+    let client = connect(PhotocraftMcp::headless()).await;
+    let tools = client.list_all_tools().await.unwrap();
+    for (name, clauses) in [
+        ("command_list", vec!["inputSchema", "legacy", "x-photocraft-coverage", "partial", "filter"]),
+        ("command_run", vec!["inputSchema", "enabled/disabledReason", "command-specific", "inspect before retrying"]),
+    ] {
+        let tool = tools.iter().find(|tool| tool.name == name).unwrap();
+        let description = tool.description.as_deref().unwrap();
+        for clause in clauses {
+            assert!(description.contains(clause), "{name} description omits {clause}: {description}");
+        }
+    }
     client.cancel().await.unwrap();
 }
 

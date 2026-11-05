@@ -54,8 +54,14 @@ fn command_list_replies_are_documented_array_of_objects() {
             let mut keys: Vec<&str> = c.as_object().unwrap().keys().map(String::as_str).filter(|k| *k != "keywords").collect();
             keys.sort_unstable();
             assert!(c.get("keywords").is_none_or(Value::is_string), "{name}: {c}");
-            assert_eq!(keys, ["disabledReason", "enabled", "id", "label", "menu", "needsDocument", "params", "shortcut"], "{name}: {c}");
+            assert_eq!(
+                keys,
+                ["description", "disabledReason", "enabled", "id", "inputSchema", "journal", "label", "menu", "needsDocument", "params", "shortcut"],
+                "{name}: {c}"
+            );
             assert!(c["id"].is_string() && c["label"].is_string() && c["params"].is_string() && c["enabled"].is_boolean(), "{c}");
+            assert!(c["description"].is_string() && c["journal"].is_boolean(), "{c}");
+            assert_eq!(c["inputSchema"], *photocraft_engine::commands::input_schema(c["id"].as_str().unwrap()).unwrap(), "{name}: {c}");
             assert!(c["needsDocument"].is_boolean(), "{c}");
             assert_eq!(c["disabledReason"].is_null(), c["enabled"] == true, "disabledReason is null exactly when enabled: {c}");
             assert!(c["menu"].as_array().unwrap().iter().all(Value::is_string), "{c}");

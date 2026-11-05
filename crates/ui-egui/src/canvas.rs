@@ -20,6 +20,7 @@ pub mod canvas_autoscroll;
 pub(super) mod canvas_popup;
 pub mod canvas_tool_menu;
 pub mod channel_view;
+pub(crate) mod cpu_redraw;
 mod cursors;
 mod display;
 mod drag;

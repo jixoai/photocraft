@@ -17,10 +17,15 @@
 2. **Algorithm** goes in the lowest crate that fits (`algo` for imaging, `paint`, `vector`, `text`, `cms`), with unit tests. It takes depth-agnostic surfaces (`photocraft-raster`), works per tile, and is deterministic (seeded randomness).
 3. **Command** goes in an engine module (`crates/engine/src/<area>_cmds.rs`) exposing `specs()`, registered with `v.extend(...)` in `commands.rs`. Fill in:
    - `id`, `label`, `menu` path and Photoshop's default `shortcut`,
-   - a params doc string such as `{"radius":px=4,"mode":"a|b"="a"}` (this is what agents read through `commands` / `command_list`),
+   - a backward-compatible params doc string such as `{"radius":px=4,"mode":"a|b"="a"}`,
+   - an explicit draft 2020-12 `inputSchema` and semantic description in `crates/engine/src/cmd/schema/` (shared by engine, CLI, control, MCP and WebMCP discovery); describe types, required/optional fields, defaults, ranges/enums, nested variants, units, coordinate conventions, targeting, prerequisites and effects. Prefer deriving from the actual execution parameter rules rather than duplicating them. Do not certify a legacy-prose inference as `complete`,
    - an `enabled` predicate (greys the menu item out),
    - `run`, which returns a JSON result and records exactly **one** history step (use `coalesce` for drags and typing sessions).
 4. **Respect the context:** active selection (feathered), layer vs mask target, locks, the colour model and depth.
-5. **Tests** in the module: behaviour, undo/redo, disabled states, bad params, several depths.
+5. **Tests** in the module: behaviour, undo/redo, disabled states, bad params, several depths. Keep `cmd::schema::tests` green: all schemas must pass the real metaschema, defaults/examples must validate, and representative authoring inputs must agree with execution. Preserve `partial` coverage until the command and all nested parameter forms have been audited.
+   For recursive patch parameters, do not put factory values in `default`: omission preserves
+   existing state. Keep local `$defs`/`$ref` self-contained, distinguish complete new enum
+   payloads from same-variant patches, test execution precedence and serialized-field coverage,
+   and verify browser/native MCP discovery preserves the nested definitions.
 6. **Dialog** (if it has parameters): filters and adjustments get schema-driven dialogs with live preview (`ui-egui/src/filter_dialog.rs`, `dialogs.rs`).
 7. Run `cargo xtask parity` and commit the updated `docs/parity-checklist.md`.

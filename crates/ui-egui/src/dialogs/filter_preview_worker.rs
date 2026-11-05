@@ -48,14 +48,12 @@ impl Worker {
         let (tx, rx) = std::sync::mpsc::sync_channel(1);
         let job = JobCtx::new();
         let work = job.clone();
-        std::thread::Builder::new()
-            .name("filter-preview".into())
-            .spawn(move || {
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| compute(&work))).map_err(|_| "Filter preview failed".to_string());
-                let _ = tx.send(result);
-                ctx.request_repaint();
-            })
-            .map_err(|e| format!("Could not start filter preview: {e}"))?;
+        photocraft_engine::background::spawn("filter-preview", move || {
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| compute(&work))).map_err(|_| "Filter preview failed".to_string());
+            let _ = tx.send(result);
+            crate::repaint_from_worker(&ctx);
+        })
+        .map_err(|e| format!("Could not start filter preview: {e}"))?;
         self.running = Some(Running { key, rx, job });
         Ok(true)
     }

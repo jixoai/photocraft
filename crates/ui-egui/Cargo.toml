@@ -8,6 +8,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+send_wrapper = "0.6"
 craft-print = { workspace = true }
 craft-ui = { workspace = true }
 photocraft-geom = { workspace = true }

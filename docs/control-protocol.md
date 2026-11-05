@@ -224,23 +224,36 @@ set return an unsupported error. See [selected colour editing](multi-channel-edi
 tool `command_list` all reply with a bare JSON array, not an object: there is no
 `{"commands": [...]}` wrapper. On the control channel and `serve` the array is the reply's
 `result` (`{"id":1,"ok":true,"result":[…]}`); the MCP tool returns it as its JSON text.
-Each element describes one command, in registry order:
+Each element describes one command, in registry order. This example abridges
+`inputSchema` for readability; discovery returns the full schema, including field
+descriptions and the applicable common parameters:
 
 ```json
-{"id":"file.new","label":"New…","menu":["File"],"shortcut":"Cmd+N","params":"{\"width\":1..300000=1920,…}","enabled":true,"disabledReason":null,"needsDocument":false}
+{"id":"document.pixel","label":"Read Composite Pixel","description":"Sample the composited active document at a document pixel coordinate. Returns RGBA components in 0–1, not 0–255. This command is not recorded in the session journal. Check enabled and disabledReason before running; inspect the result before retrying an edit.","menu":[],"shortcut":null,"params":"{\"x\":i32,\"y\":i32}","inputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Read Composite Pixel","type":"object","properties":{"x":{"type":"integer","minimum":-2147483648,"maximum":2147483647,"default":0},"y":{"type":"integer","minimum":-2147483648,"maximum":2147483647,"default":0}},"required":[],"additionalProperties":false,"x-photocraft-coverage":"complete"},"enabled":true,"disabledReason":null,"needsDocument":false,"journal":false}
 ```
 
 | Key | Type | Meaning |
 |---|---|---|
 | `id` | string | The id to pass to `engine.execute` / `command_run` |
 | `label` | string | Menu label |
+| `description` | string | Model-oriented purpose, units, targeting, effects and usage cautions |
 | `menu` | array of strings | Menu path above the item (`[]` for commands without a menu item) |
 | `shortcut` | string or `null` | Default shortcut, e.g. `"Cmd+Shift+X"` |
 | `params` | string | Human-readable parameter doc (not a JSON schema) |
+| `inputSchema` | object | Draft 2020-12 parameter schema; inspect `x-photocraft-coverage` (`complete` or `partial`) before relying on coverage |
+| `journal` | boolean | Whether the command is recorded in the session journal; not a read-only or undoability guarantee |
 | `enabled` | boolean | Whether the command can run in the current state |
 | `disabledReason` | string or `null` | Why the command can't run now (`null` when `enabled`) |
 | `needsDocument` | boolean | `true` when it is off because no document is open (#3664) |
 | `keywords` | string, optional | Other names the command is found by (#5060), e.g. `select.rect`'s Elliptical Marquee; only present on commands that have them |
+
+Use `inputSchema` when constructing new command params; `params` remains legacy prose.
+Explicit contracts describe supported authoring forms; partial conversions may omit
+requiredness, nested variants or aliases and are not used for new dispatch rejection.
+Schema validity does not guarantee enablement or the existence of a requested layer,
+mask, path, font or profile. See [command contract coverage](webmcp.md#command-contracts-and-migration-coverage)
+for the migration boundary and unit conventions. Browser discovery wraps these same entries
+in its paginated `{commands,total,offset,nextOffset}` result; it does not change the schemas.
 
 Filtering narrows the same array without changing its elements: `serve`'s `engine.commands
 {filter}` and the MCP tool's `filter` keep commands whose id, label or keywords contain the text

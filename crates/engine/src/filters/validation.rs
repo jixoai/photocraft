@@ -1,6 +1,6 @@
 //! Validate new filter invocations, without changing how old smart-filter records decode.
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::{EngineError, Result};
 
@@ -13,6 +13,17 @@ enum Rule {
 }
 
 impl Rule {
+    fn input_schema(self, key: &str) -> Value {
+        let mut schema = match self {
+            Self::Number(min, max) => json!({"type":"number","minimum":min,"maximum":max}),
+            Self::Unsigned(max) => json!({"type":"integer","minimum":0,"maximum":max}),
+            Self::Choice(choices) => json!({"type":"string","enum":choices.split('|').collect::<Vec<_>>()}),
+            Self::Bool => json!({"type":"boolean"}),
+        };
+        schema["description"] = json!(format!("{key}: {}. Values use the filter dialog's units.", self.expected()));
+        schema
+    }
+
     fn accepts(self, value: &Value) -> bool {
         match self {
             Self::Number(min, max) => value.as_f64().is_some_and(|n| n.is_finite() && (min..=max).contains(&n)),
@@ -31,6 +42,12 @@ impl Rule {
             Self::Bool => "a boolean".into(),
         }
     }
+}
+
+pub(crate) fn input_schema(id: &str) -> Option<Value> {
+    let fields = fields(id)?;
+    let properties: serde_json::Map<String, Value> = fields.iter().map(|(key, rule)| ((*key).into(), rule.input_schema(key))).collect();
+    Some(json!({"type":"object","properties":properties,"required":[],"additionalProperties":false}))
 }
 
 // The bounds and choices are the filters' public dialog-unit contract. Defaults remain in

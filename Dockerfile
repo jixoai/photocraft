@@ -45,7 +45,7 @@ ARG CARGO_BUILD_JOBS=1
 # Left empty, the build reports itself as a dev build.
 ARG PHOTOCRAFT_BUILD_SHA=
 ARG PHOTOCRAFT_BUILD_DATE=
-# index.html selects the wasm-release profile, HEIF support and wasm-opt -Oz.
+# index.html selects the wasm-release profile, HEIF support and wasm-opt -O3.
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/root/.cache/trunk \

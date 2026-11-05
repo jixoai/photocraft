@@ -130,6 +130,7 @@ pub mod render_cmds;
 pub mod retouch_cmds;
 pub mod sample_cmds;
 pub mod sampler_cmds;
+mod schema;
 pub mod select_extra_cmds;
 pub mod selection_cmds;
 pub mod slice_cmds;
@@ -185,9 +186,20 @@ pub fn command_specs() -> &'static [CommandSpec] {
 pub fn list_entry(s: &Session, c: &CommandSpec, reason: Option<String>) -> Value {
     let needs_document =
         s.active().is_none() && reason.as_deref().is_some_and(|r| ["no document", "no active document", "no open document"].iter().any(|p| r.starts_with(p)));
+    let input_schema = input_schema(c.id).cloned().unwrap_or_else(|| schema::input_schema(c));
+    let description = input_schema.get("description").cloned().unwrap_or_else(|| json!(schema::command_description(c)));
     let mut entry = json!({
-        "id": c.id, "label": c.label, "menu": c.menu, "shortcut": c.shortcut, "params": c.params,
-        "enabled": reason.is_none(), "disabledReason": reason, "needsDocument": needs_document,
+        "id": c.id,
+        "label": c.label,
+        "description": description,
+        "menu": c.menu,
+        "shortcut": c.shortcut,
+        "params": c.params,
+        "inputSchema": input_schema,
+        "enabled": reason.is_none(),
+        "disabledReason": reason,
+        "needsDocument": needs_document,
+        "journal": c.journal,
     });
     if let (Some(k), Some(o)) = (search_keywords(c.id), entry.as_object_mut()) {
         o.insert("keywords".into(), json!(k));
@@ -218,9 +230,16 @@ pub fn find(id: &str) -> Option<&'static CommandSpec> {
     registry.by_id.get(id).and_then(|&index| registry.specs.get(index))
 }
 
+pub fn input_schema(id: &str) -> Option<&'static Value> {
+    let registry = registry();
+    let index = *registry.by_id.get(id)?;
+    registry.schemas.get_or_init(|| registry.specs.iter().map(schema::input_schema).collect()).get(index)
+}
+
 struct Registry {
     specs: Vec<CommandSpec>,
     by_id: std::collections::HashMap<&'static str, usize>,
+    schemas: std::sync::OnceLock<Vec<Value>>,
 }
 
 impl Registry {
@@ -230,7 +249,7 @@ impl Registry {
             // Preserve the linear lookup's first-match behavior if an id is duplicated.
             by_id.entry(spec.id).or_insert(index);
         }
-        Self { specs, by_id }
+        Self { specs, by_id, schemas: std::sync::OnceLock::new() }
     }
 }
 

@@ -10,6 +10,7 @@
 mod actions_record;
 pub mod adjust_params;
 mod allocation;
+pub mod background;
 pub mod build_info;
 mod canvas_geom;
 mod channel_clip;

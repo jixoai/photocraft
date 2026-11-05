@@ -260,7 +260,7 @@ pub struct ListParams {
 pub struct RunParams {
     /// Command id, e.g. `layer.new.layer`, `filter.blur.gaussianBlur`.
     pub id: String,
-    /// Command parameters as a JSON object (see the `params` doc in `command_list`).
+    /// Command parameters as a JSON object, following the discovered `inputSchema` in `command_list`.
     #[serde(default)]
     pub params: Option<Value>,
     /// Wait for a long command (filters, Content-Aware Fill, Photomerge, …) to finish (default
@@ -936,8 +936,11 @@ impl PhotocraftMcp {
         }
     }
 
-    #[tool(description = "List engine commands. Returns a JSON array (no wrapper object) of {id, label, menu: [path], \
-        shortcut: string|null, params: doc string, enabled: bool, disabledReason: string|null, needsDocument: bool}. \
+    #[tool(description = "Discover engine commands. Returns a JSON array (no wrapper object) of {id, label, description, \
+        inputSchema, journal, menu: [path], shortcut: string|null, params: legacy doc string, enabled: bool, \
+        disabledReason: string|null, needsDocument: bool}. Construct command_run params from inputSchema, not the legacy \
+        params notation. x-photocraft-coverage distinguishes complete authoring contracts from partial guidance; check \
+        units, required fields, defaults, nested variants and examples. Use filter to avoid loading the whole registry. \
         `disabledReason` says why a command is off (null when enabled); `needsDocument` is true when it is off because no \
         document is open: create or open one first (doc_new, doc_open).")]
     async fn command_list(&self, Parameters(p): Parameters<ListParams>) -> Result<CallToolResult, McpError> {
@@ -965,7 +968,10 @@ impl PhotocraftMcp {
         Ok(ok_json(&Value::Array(items)))
     }
 
-    #[tool(description = "Run an engine command by id with JSON params (see command_list). Returns the command's JSON result. \
+    #[tool(description = "Run an engine command by exact id with JSON-object params following its discovered inputSchema \
+        (see command_list). Read schema coverage and current enabled/disabledReason first; coordinates and opacity units \
+        are command-specific. Returns the command's JSON result. After an error/timeout inspect before retrying, since \
+        the edit may already have applied. \
         Long commands (filters, Content-Aware Fill/Scale, Photomerge, brush import) wait to finish unless `wait` is false: \
         then they run as a background job and the result is {job: id} (see jobs_list, jobs_cancel).")]
     async fn command_run(&self, Parameters(p): Parameters<RunParams>) -> Result<CallToolResult, McpError> {

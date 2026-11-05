@@ -53,7 +53,7 @@ fn start_idle_release() {
                         // Decided under the lock, so `set_idle_release(false)` can't return
                         // while a release it should have stopped is about to start.
                         let old = {
-                            let mut pool = lock();
+                            let Some(mut pool) = lock() else { continue };
                             // A `give` or `take` since `now` was read means the pool is in use.
                             (uses() == now && retained_bytes() > 0 && IDLE_RELEASE.load(Ordering::Relaxed)).then(|| empty(&mut pool))
                         };
@@ -130,8 +130,20 @@ fn bytes_of<T>(v: &Vec<T>) -> usize {
     v.capacity().saturating_mul(std::mem::size_of::<T>())
 }
 
-fn lock() -> std::sync::MutexGuard<'static, Pool> {
-    POOL.lock().unwrap_or_else(PoisonError::into_inner)
+fn cache_lock<State>(cache: &Mutex<State>, blocking: bool) -> Option<std::sync::MutexGuard<'_, State>> {
+    if blocking {
+        Some(cache.lock().unwrap_or_else(PoisonError::into_inner))
+    } else {
+        match cache.try_lock() {
+            Ok(guard) => Some(guard),
+            Err(std::sync::TryLockError::Poisoned(error)) => Some(error.into_inner()),
+            Err(std::sync::TryLockError::WouldBlock) => None,
+        }
+    }
+}
+
+fn lock() -> Option<std::sync::MutexGuard<'static, Pool>> {
+    cache_lock(&POOL, !cfg!(target_arch = "wasm32"))
 }
 
 /// Remove the oldest buffer of capacity `cap` from `list`.
@@ -204,7 +216,7 @@ fn pop<T: Pooled>(len: usize, slack: usize) -> Option<Vec<T>> {
     }
     let mut evicted = Vec::new();
     let hit = {
-        let mut pool = lock();
+        let mut pool = lock()?;
         let max = len.saturating_mul(slack);
         let list = T::list(&mut pool);
         let cap = list.range(len..=max).next().map(|(&cap, _)| cap);
@@ -287,7 +299,7 @@ pub fn give<T: Pooled>(v: Vec<T>) {
     }
     let mut evicted = Vec::new();
     {
-        let mut pool = lock();
+        let Some(mut pool) = lock() else { return };
         // Read under the lock, which `set_budget` also takes, so no insert uses a stale budget.
         let budget = BUDGET.load(Ordering::Relaxed);
         if bytes > budget {
@@ -340,9 +352,12 @@ pub fn uses() -> u64 {
     USES.load(Ordering::Relaxed)
 }
 
-/// Drop every pooled buffer, handing the memory back to the OS.
+/// Drop every pooled buffer, handing the memory back to the OS. On web a busy pool is left for
+/// the next opportunity: allocation and drop paths must never wait for a worker's pool lock.
 pub fn release() {
-    let old = empty(&mut lock());
+    let Some(mut pool) = lock() else { return };
+    let old = empty(&mut pool);
+    drop(pool);
     // Freed outside the lock.
     drop(old);
 }
@@ -380,5 +395,39 @@ impl<T: Pooled> std::ops::DerefMut for Buf<T> {
 impl<T: Pooled> Drop for Buf<T> {
     fn drop(&mut self) {
         give(std::mem::take(&mut self.0));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn web_cache_access_never_waits_for_a_worker() {
+        let cache = std::sync::Arc::new(Mutex::new(vec![1_u8, 2, 3]));
+        let guard = cache.lock().unwrap();
+        let shared = cache.clone();
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || sender.send(cache_lock(&shared, false).is_none()).unwrap());
+        let result = receiver.recv_timeout(std::time::Duration::from_millis(500));
+        drop(guard);
+        worker.join().unwrap();
+        assert!(result.unwrap());
+        assert_eq!(cache_lock(&cache, false).unwrap().as_slice(), [1, 2, 3]);
+    }
+
+    #[test]
+    fn web_cache_access_recovers_a_poisoned_lock() {
+        let cache = std::sync::Arc::new(Mutex::new(42));
+        let shared = cache.clone();
+        assert!(
+            std::thread::spawn(move || {
+                let _guard = shared.lock().unwrap();
+                panic!("test poison");
+            })
+            .join()
+            .is_err()
+        );
+        assert_eq!(*cache_lock(&cache, false).unwrap(), 42);
     }
 }

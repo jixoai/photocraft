@@ -4,6 +4,51 @@ use super::shaders::{CANVAS_WGSL, ENCODE_WGSL, MIP_WGSL};
 use super::texels::LayerFit;
 use super::{FORMAT, FORMAT_HIGH, HashMap, NonZeroU64, TILE_UNIFORM_SIZE, VIEW_FLOATS, VIEW_UNIFORM_SIZE, wgpu};
 
+pub(super) trait CanvasResources {
+    fn canvas_resources(&self) -> Option<&Resources>;
+    fn canvas_resources_mut(&mut self) -> Option<&mut Resources>;
+    fn insert_canvas_resources(&mut self, resources: Resources);
+}
+
+impl CanvasResources for super::CallbackResources {
+    fn canvas_resources(&self) -> Option<&Resources> {
+        #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+        {
+            let resources = self.get::<send_wrapper::SendWrapper<Resources>>()?;
+            if !resources.valid() {
+                return None;
+            }
+            Some(resources)
+        }
+        #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+        {
+            self.get::<Resources>()
+        }
+    }
+
+    fn canvas_resources_mut(&mut self) -> Option<&mut Resources> {
+        #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+        {
+            let resources = self.get_mut::<send_wrapper::SendWrapper<Resources>>()?;
+            if !resources.valid() {
+                return None;
+            }
+            Some(resources)
+        }
+        #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+        {
+            self.get_mut::<Resources>()
+        }
+    }
+
+    fn insert_canvas_resources(&mut self, resources: Resources) {
+        #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+        self.insert(send_wrapper::SendWrapper::new(resources));
+        #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+        self.insert(resources);
+    }
+}
+
 pub(super) struct Resources {
     pub(super) view_bgl: wgpu::BindGroupLayout,
     pub(super) tile_bgl: wgpu::BindGroupLayout,

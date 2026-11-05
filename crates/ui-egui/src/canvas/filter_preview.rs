@@ -74,8 +74,7 @@ pub(crate) fn ensure_filter_preview(app: &mut PhotocraftApp, idx: usize, ctx: &e
     // Every filter's preview computes off the UI thread in the desktop app: Gaussian Blur at
     // 1000 px takes long enough to freeze the window. Once the slider settles, a preview still
     // running for an older value is cancelled.
-    #[cfg(not(target_arch = "wasm32"))]
-    if app.background_jobs {
+    if app.background_jobs && photocraft_engine::background::available() {
         app.filter_preview_worker.supersede(&request, crate::gpu_canvas::now_ms());
         if let Some((finished, computed)) = app.filter_preview_worker.poll() {
             match computed {

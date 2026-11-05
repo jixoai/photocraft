@@ -9,6 +9,10 @@ impl PhotocraftApp {
         if ctx.will_discard() {
             return;
         }
+        if self.session.active().is_some_and(|state| self.cpu_redraws.pending_for(state.doc.id)) {
+            ctx.request_repaint_after(std::time::Duration::from_millis(16));
+            return;
+        }
         let now = crate::screenshot::now();
         let doc = self.document_identity();
         let finished = self.captures.issue(ctx, now, doc, |callback| crate::screenshot::send_command(ctx, callback));

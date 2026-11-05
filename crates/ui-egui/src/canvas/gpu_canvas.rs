@@ -33,6 +33,7 @@ use eframe::egui_wgpu::{self, CallbackResources, CallbackTrait, RenderState, Scr
 use eframe::wgpu;
 
 use crate::render_path::CpuReason;
+use resources::CanvasResources as _;
 
 pub use pages::{MAX_PAGE_SIDE, PageUpload};
 pub use photocraft_gpu::{DeviceHealth, Fault};
@@ -220,7 +221,7 @@ impl GpuCanvas {
         let vram = video_memory(&info);
         res.canvas_budget.store(canvas_budget(physical_memory(), vram), Ordering::Relaxed);
         let budget = res.canvas_budget.clone();
-        rs.renderer.write().callback_resources.insert(res);
+        rs.renderer.write().callback_resources.insert_canvas_resources(res);
         log::info!(
             "gpu canvas: target {:?}, max texture {max}, tile {tile}, 16F canvas {high:?}, video memory {}",
             rs.target_format,
@@ -279,7 +280,7 @@ impl GpuCanvas {
     /// a fault; the paint callback draws nothing from then on.
     pub fn release(&self) {
         let mut r = self.rs.renderer.write();
-        if let Some(res) = r.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = r.callback_resources.canvas_resources_mut() {
             res.compositor = None;
             res.compositor_failed = Some(photocraft_gpu::Unsupported(self.fault().map_or_else(|| "GPU canvas released".into(), |f| f.to_string())));
             res.docs.clear();
@@ -325,7 +326,7 @@ impl GpuCanvas {
     /// Format and GPU bytes (all tiles, all mip levels) of document `key`'s canvas texture.
     pub fn texture_info(&self, key: u64) -> Option<(wgpu::TextureFormat, u64)> {
         let r = self.rs.renderer.read();
-        let d = r.callback_resources.get::<Resources>()?.docs.get(&key)?;
+        let d = r.callback_resources.canvas_resources()?.docs.get(&key)?;
         let bpp = texel_bytes(d.format);
         let bytes = d
             .tiles
@@ -339,7 +340,7 @@ impl GpuCanvas {
     /// [`memory_budget`]); pages beyond it are evicted least recently used first.
     pub fn set_memory_budget(&self, bytes: u64) {
         let mut r = self.rs.renderer.write();
-        if let Some(res) = r.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = r.callback_resources.canvas_resources_mut() {
             res.compositor_budget = Some(bytes);
         }
     }
@@ -347,7 +348,7 @@ impl GpuCanvas {
     /// The compositor's memory budget (`None` until [`GpuCanvas::set_memory_budget`]).
     pub fn memory_budget(&self) -> Option<u64> {
         let r = self.rs.renderer.read();
-        r.callback_resources.get::<Resources>()?.compositor_budget
+        r.callback_resources.canvas_resources()?.compositor_budget
     }
 
     /// Set the GPU bytes the open documents' display textures may take together (see
@@ -374,17 +375,17 @@ impl GpuCanvas {
     pub fn canvas_fit(&self, doc: &photocraft_doc::Document) -> Option<(u64, u64)> {
         let bytes = self.canvas_bytes(doc);
         let r = self.rs.renderer.read();
-        r.callback_resources.get::<Resources>().map(|res| (bytes, res.residency.share(res.canvas_budget.load(Ordering::Relaxed), doc.id.0, bytes)))
+        r.callback_resources.canvas_resources().map(|res| (bytes, res.residency.share(res.canvas_budget.load(Ordering::Relaxed), doc.id.0, bytes)))
     }
 
     /// The documents the app's windows show now, with [`GpuCanvas::canvas_bytes`] of each: they
     /// split [`canvas_budget`] (see [`residency`]), and the textures of documents not among them
     /// are freed first when a shown one needs the room. Cheap when nothing changed.
     pub fn show_documents(&self, shown: &[(u64, u64)]) {
-        if self.rs.renderer.read().callback_resources.get::<Resources>().is_none_or(|res| res.residency.shows(shown)) {
+        if self.rs.renderer.read().callback_resources.canvas_resources().is_none_or(|res| res.residency.shows(shown)) {
             return;
         }
-        if let Some(res) = self.rs.renderer.write().callback_resources.get_mut::<Resources>() {
+        if let Some(res) = self.rs.renderer.write().callback_resources.canvas_resources_mut() {
             res.residency.publish(shown);
         }
     }
@@ -394,7 +395,7 @@ impl GpuCanvas {
     #[cfg(test)]
     pub(crate) fn fail_compositor(&self, msg: &str) {
         let mut r = self.rs.renderer.write();
-        if let Some(res) = r.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = r.callback_resources.canvas_resources_mut() {
             res.compositor = None;
             res.compositor_failed = Some(photocraft_gpu::Unsupported(msg.into()));
         }
@@ -403,7 +404,7 @@ impl GpuCanvas {
     /// Why the compositor couldn't be built, once it couldn't (see [`GpuCanvas::composite`]).
     fn compositor_failed(&self) -> Option<String> {
         let r = self.rs.renderer.read();
-        r.callback_resources.get::<Resources>()?.compositor_failed.as_ref().map(|e| e.0.clone())
+        r.callback_resources.canvas_resources()?.compositor_failed.as_ref().map(|e| e.0.clone())
     }
 
     /// A [`photocraft_gpu::Unsupported`] from [`GpuCanvas::composite`] as a typed reason, with
@@ -429,7 +430,7 @@ impl GpuCanvas {
     /// Cap lower-stack composite reuse; zero disables it for profiling the uncached path.
     pub fn set_composite_cache_budget(&self, bytes: u64) {
         let mut r = self.rs.renderer.write();
-        if let Some(res) = r.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = r.callback_resources.canvas_resources_mut() {
             res.compositor_cache_budget = Some(bytes);
             if let Some(comp) = &mut res.compositor {
                 comp.set_composite_cache_budget(bytes);
@@ -441,7 +442,7 @@ impl GpuCanvas {
     /// are the ones still resident for the edits that follow.
     pub fn set_focus(&self, focus: Option<photocraft_geom::Rect>) {
         let mut r = self.rs.renderer.write();
-        if let Some(res) = r.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = r.callback_resources.canvas_resources_mut() {
             res.compositor_focus = focus;
         }
     }
@@ -452,14 +453,14 @@ impl GpuCanvas {
     /// never be reported. The frame loop calls this so it is.
     pub fn take_gpu_timing(&self) -> Option<photocraft_gpu::GpuTiming> {
         let mut r = self.rs.renderer.write();
-        r.callback_resources.get_mut::<Resources>()?.compositor.as_mut()?.take_gpu_timing()
+        r.callback_resources.canvas_resources_mut()?.compositor.as_mut()?.take_gpu_timing()
     }
 
     /// GPU bytes the wgpu compositor holds: resident layer pages and caches (effect maps and
     /// lower-stack chunks). Keep the scorecard's memory measurements inclusive of reuse.
     pub fn compositor_bytes(&self) -> Option<(u64, usize)> {
         let r = self.rs.renderer.read();
-        let c = r.callback_resources.get::<Resources>()?.compositor.as_ref()?;
+        let c = r.callback_resources.canvas_resources()?.compositor.as_ref()?;
         Some((c.resident_bytes(), c.fx_cache_bytes().saturating_add(usize::try_from(c.composite_cache_bytes()).unwrap_or(usize::MAX))))
     }
 
@@ -467,7 +468,7 @@ impl GpuCanvas {
     /// Memory change shows in the status bar at once). `None` before the compositor exists.
     pub fn measure_fit(&self, doc: &photocraft_doc::Document) -> Option<LayerFit> {
         let mut r = self.rs.renderer.write();
-        let res = r.callback_resources.get_mut::<Resources>()?;
+        let res = r.callback_resources.canvas_resources_mut()?;
         let budget = res.compositor_budget;
         let comp = res.compositor.as_mut()?;
         if let Some(b) = budget {
@@ -483,13 +484,13 @@ impl GpuCanvas {
     /// how much (`None` before the first one).
     pub fn layer_fit(&self) -> Option<LayerFit> {
         let r = self.rs.renderer.read();
-        r.callback_resources.get::<Resources>()?.layer_fit
+        r.callback_resources.canvas_resources()?.layer_fit
     }
 
     /// Set the checkerboard and gamut warning colours.
     pub fn set_style(&self, style: CanvasStyle) {
         let mut r = self.rs.renderer.write();
-        if let Some(res) = r.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = r.callback_resources.canvas_resources_mut() {
             res.style = style;
         }
     }
@@ -497,7 +498,7 @@ impl GpuCanvas {
     /// Whether document `doc` has been uploaded with this size.
     pub fn has(&self, doc: u64, size: [u32; 2]) -> bool {
         let r = self.rs.renderer.read();
-        r.callback_resources.get::<Resources>().and_then(|res| res.docs.get(&doc)).is_some_and(|d| d.size == size)
+        r.callback_resources.canvas_resources().and_then(|res| res.docs.get(&doc)).is_some_and(|d| d.size == size)
     }
 
     /// Whether [`GpuCanvas::composite`] would draw `doc` with the wgpu compositor (rather than
@@ -507,7 +508,7 @@ impl GpuCanvas {
             return false;
         }
         let r = self.rs.renderer.read();
-        let Some(res) = r.callback_resources.get::<Resources>() else { return false };
+        let Some(res) = r.callback_resources.canvas_resources() else { return false };
         if res.compositor_failed.is_some() {
             return false;
         }
@@ -531,7 +532,7 @@ impl GpuCanvas {
         }
         let (device, queue) = (&self.rs.device, &self.rs.queue);
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return };
         if res.docs.get(&doc).is_none_or(|d| d.size != size || d.format != format) {
             let Some(tex) = DocTextures::new_for(device, res, doc, size, self.tile, format) else {
                 res.docs.remove(&doc);
@@ -553,7 +554,7 @@ impl GpuCanvas {
         }
         let (device, queue) = (&self.rs.device, &self.rs.queue);
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return false };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return false };
         let Some(d) = res.docs.get(&doc) else { return false };
         if texels.len() as u64 != size[0] as u64 * size[1] as u64 * texel_bytes(d.format)
             || origin[0].saturating_add(size[0]) > d.size[0]
@@ -572,7 +573,7 @@ impl GpuCanvas {
     /// The texture format of uploaded document `doc`.
     fn format_of(&self, doc: u64) -> Option<wgpu::TextureFormat> {
         let r = self.rs.renderer.read();
-        r.callback_resources.get::<Resources>().and_then(|res| res.docs.get(&doc)).map(|d| d.format)
+        r.callback_resources.canvas_resources().and_then(|res| res.docs.get(&doc)).map(|d| d.format)
     }
 
     /// Upload a CPU composite covering the whole document (a preview of a document of `depth`:
@@ -616,7 +617,7 @@ impl GpuCanvas {
             return Err(photocraft_gpu::Unsupported(f.to_string()));
         }
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return Err(photocraft_gpu::Unsupported("no GPU canvas".into())) };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return Err(photocraft_gpu::Unsupported("no GPU canvas".into())) };
         // A driver that couldn't build the pipelines once won't later: stay on the CPU compositor.
         if let Some(e) = &res.compositor_failed {
             return Err(e.clone());
@@ -777,7 +778,7 @@ impl GpuCanvas {
         if !self.fits_canvas(doc) {
             // Neither compositor can fill textures that are never created: the CPU canvas draws
             // it. A set left from before the canvas grew is stale, so it goes too.
-            if let Some(res) = self.rs.renderer.write().callback_resources.get_mut::<Resources>() {
+            if let Some(res) = self.rs.renderer.write().callback_resources.canvas_resources_mut() {
                 res.docs.remove(&key);
             }
             let (bytes, budget) = self.canvas_fit(doc).unwrap_or_default();
@@ -851,7 +852,7 @@ impl GpuCanvas {
             }
             texels_into(format, &texture_buffer(display, &band).px, &mut rgba);
             let renderer = self.rs.renderer.read();
-            let d = renderer.callback_resources.get::<Resources>().and_then(|r| r.docs.get(&key)).ok_or(())?;
+            let d = renderer.callback_resources.canvas_resources().and_then(|r| r.docs.get(&key)).ok_or(())?;
             d.write(queue, [0, band.rect.y0 as u32], [size[0], band.rect.height()], size[0], &rgba);
             drop(renderer);
             // Flush the staged band so its staging memory is reclaimed while the next renders.
@@ -863,7 +864,7 @@ impl GpuCanvas {
             return;
         }
         let mut renderer = self.rs.renderer.write();
-        if let Some(res) = renderer.callback_resources.get_mut::<Resources>()
+        if let Some(res) = renderer.callback_resources.canvas_resources_mut()
             && let Some(d) = res.docs.get(&key)
         {
             d.regenerate_mips(device, queue, res, [0, 0, size[0], size[1]]);
@@ -879,7 +880,7 @@ impl GpuCanvas {
         }
         let format = self.format_for(doc.depth, size);
         let mut renderer = self.rs.renderer.write();
-        let res = renderer.callback_resources.get_mut::<Resources>()?;
+        let res = renderer.callback_resources.canvas_resources_mut()?;
         if res.docs.get(&key).is_none_or(|d| d.size != size || d.format != format) {
             let Some(tex) = DocTextures::new_for(&self.rs.device, res, key, size, self.tile, format) else {
                 res.docs.remove(&key);
@@ -893,7 +894,7 @@ impl GpuCanvas {
     /// Free textures, display LUTs and their signatures for documents not in `live`.
     pub fn retain(&self, live: &[u64]) {
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return };
         if res.docs.keys().any(|k| !live.contains(k)) {
             res.docs.retain(|k, _| live.contains(k));
         }
@@ -912,19 +913,19 @@ impl GpuCanvas {
 
     pub(crate) fn display_lut_signature(&self, doc: u64, output: u32) -> Option<(u64, u8)> {
         let renderer = self.rs.renderer.read();
-        renderer.callback_resources.get::<Resources>()?.display_lut_signatures.get(&(doc, output)).copied()
+        renderer.callback_resources.canvas_resources()?.display_lut_signatures.get(&(doc, output)).copied()
     }
 
     /// Whether document `doc` has a display LUT for display `output` (tests).
     #[cfg(test)]
     pub(crate) fn has_display_lut(&self, doc: u64, output: u32) -> bool {
         let renderer = self.rs.renderer.read();
-        renderer.callback_resources.get::<Resources>().is_some_and(|r| r.luts.contains_key(&(doc, output)))
+        renderer.callback_resources.canvas_resources().is_some_and(|r| r.luts.contains_key(&(doc, output)))
     }
 
     pub(crate) fn cache_display_lut_signature(&self, doc: u64, output: u32, signature: u64, mode: u8) {
         let mut renderer = self.rs.renderer.write();
-        if let Some(res) = renderer.callback_resources.get_mut::<Resources>() {
+        if let Some(res) = renderer.callback_resources.canvas_resources_mut() {
             res.display_lut_signatures.insert((doc, output), (signature, mode));
         }
     }
@@ -938,7 +939,7 @@ impl GpuCanvas {
         }
         let (device, queue) = (&self.rs.device, &self.rs.queue);
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return };
         res.display_lut_signatures.remove(&(doc, output));
         match rgba {
             None => {
@@ -962,7 +963,7 @@ impl GpuCanvas {
             return;
         }
         let mut renderer = self.rs.renderer.write();
-        let Some(res) = renderer.callback_resources.get_mut::<Resources>() else { return };
+        let Some(res) = renderer.callback_resources.canvas_resources_mut() else { return };
         let bg = lut_bind_group(&self.rs.device, &self.rs.queue, &res.lut_bgl, 2, &identity_lut_bytes(), Some(shaper));
         res.display_lut_signatures.remove(&(doc, output));
         res.luts.insert((doc, output), bg);
@@ -978,7 +979,7 @@ impl GpuCanvas {
         }
         let (device, queue) = (&self.rs.device, &self.rs.queue);
         let renderer = self.rs.renderer.read();
-        let d = renderer.callback_resources.get::<Resources>()?.docs.get(&key)?;
+        let d = renderer.callback_resources.canvas_resources()?.docs.get(&key)?;
         let bpp = texel_bytes(d.format);
         let (w, h) = (d.size[0] as usize, d.size[1] as usize);
         let mut out = vec![[0.0f32; 4]; w.checked_mul(h)?];

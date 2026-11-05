@@ -1,4 +1,5 @@
-use super::resources::{CanvasStyle, Resources, ViewGpu, f32_bytes};
+use super::resources::CanvasResources as _;
+use super::resources::{CanvasStyle, ViewGpu, f32_bytes};
 use super::{CallbackResources, CallbackTrait, ScreenDescriptor, VIEW_FLOATS, VIEW_UNIFORM_SIZE, ViewParams, wgpu};
 
 // ---------------------------------------------------------------------------------------------
@@ -132,7 +133,7 @@ impl CallbackTrait for CanvasCallback {
         _encoder: &mut wgpu::CommandEncoder,
         resources: &mut CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        let Some(res) = resources.get_mut::<Resources>() else { return Vec::new() };
+        let Some(res) = resources.canvas_resources_mut() else { return Vec::new() };
         if !res.health.is_ok() {
             return Vec::new();
         }
@@ -163,7 +164,7 @@ impl CallbackTrait for CanvasCallback {
     }
 
     fn paint(&self, info: egui::PaintCallbackInfo, pass: &mut wgpu::RenderPass<'static>, resources: &CallbackResources) {
-        let Some(res) = resources.get::<Resources>() else { return };
+        let Some(res) = resources.canvas_resources() else { return };
         if !res.health.is_ok() {
             return;
         }

@@ -190,6 +190,22 @@ fn a_panic_in_a_command_becomes_an_error_and_the_document_is_unchanged() {
 }
 
 #[test]
+fn reading_progress_never_waits_for_a_worker_message_lock() {
+    let ctx = JobCtx::new();
+    ctx.progress(0.5, "half");
+    let guard = ctx.shared.message.lock().unwrap();
+    let reading = ctx.clone();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let thread = std::thread::spawn(move || sender.send(reading.message()).unwrap());
+    let result = receiver.recv_timeout(Duration::from_millis(500));
+    drop(guard);
+    thread.join().unwrap();
+    assert_eq!(result.unwrap(), "");
+    assert_eq!(ctx.message(), "half");
+    assert_eq!(ctx.fraction(), 0.5);
+}
+
+#[test]
 fn progress_is_monotonic_and_reaches_one() {
     let ctx = JobCtx::new();
     ctx.progress(0.5, "half");

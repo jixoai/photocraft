@@ -11,3 +11,6 @@ target/
 /craft-fonts
 *.log
 __pycache__/
+/artifacts/acceptance/
+/artifacts/webmcp/command-contracts.json
+/artifacts/webmcp/contract-coverage.json
