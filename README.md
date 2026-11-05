@@ -13,6 +13,10 @@
 
 <h1 align="center">PhotoCraft</h1>
 
+> **Agent/web downstream:** this fork's `agent-web` branch retains browser worker optimizations,
+> shared command JSON Schemas and WebMCP. `main` remains an unmodified upstream mirror.
+> See [WebMCP usage](docs/webmcp.md) and [upstream synchronization](docs/downstream-maintenance.md).
+
 <p align="center">
   <b>Image editing; an open-source, clean-room reimplementation of Adobe Photoshop, rebuilt in pure Rust.</b><br>
   Layers, masks, adjustment layers, layer styles, type, vectors, brushes and real PSD files,<br>
