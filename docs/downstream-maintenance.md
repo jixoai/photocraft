@@ -142,6 +142,8 @@ does not fail an arbitrary fixed command count or percentage floor. Removals, au
 downgrades and audited metadata changes require review. Changed metadata is not
 automatically a breaking change, and unchanged metadata cannot prove unchanged execution:
 runtime tests remain necessary.
+When promoting a command from partial to complete, update the reviewed baseline in the
+same audit commit so subsequent downgrades cannot hide behind its earlier partial status.
 
 The original baseline was generated from the pre-merge 964-command inventory. After
 reviewing the first integration it can advance to include new command IDs and the upstream
