@@ -13,6 +13,10 @@ not a change to upstream's contribution or CI policy.
 | `sync/upstream-*` | Disposable integration branches, retained until their results are reviewed. |
 | `feature/*` | Focused future fixes, contracts, adapters or performance improvements. |
 
+The fork's default branch is `agent-web`, so a normal clone opens the enhanced product.
+Do not use GitHub's **Discard commits** fork-sync action on this branch. Mirror only `main`
+directly; integrate the product through the reviewed workflow below.
+
 `origin` is `https://github.com/jixoai/photocraft.git`. `upstream` is
 `https://github.com/storytold/photocraft`. The initial source checkpoint is tagged
 `agent-web-baseline-20261105`; it predates the first upstream merge and is **not** a
@@ -182,6 +186,11 @@ or successful real threaded-Wasm linking. Before publishing a new web package:
 4. Archive upstream and downstream commit IDs, `Cargo.lock` hash, toolchain versions,
    build flags, contract report, acceptance evidence and package SHA256. Tag the reviewed
    source only after its required release gates pass. Keep a previous package for rollback.
+
+This setup does not change hosting or native updater destinations. Deploy web assets from
+`agent-web`; before distributing a downstream native build, configure its updater/release
+source or disable upstream replacement so an official binary cannot silently replace the
+enhanced one.
 
 Acceptance images/projects and large generated inventories stay local/archived, not in
 source history: `.gitignore` excludes them without deleting them. Source, compact baseline,
