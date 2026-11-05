@@ -8,6 +8,8 @@ if [[ "$#" -gt 1 || ( "$MODE" != quick && "$MODE" != full ) ]]; then
   exit 2
 fi
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target/web-validation}"
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
+export RAYON_NUM_THREADS="${RAYON_NUM_THREADS:-2}"
 LOG_DIR="$ROOT/target/downstream-validation/$MODE"
 mkdir -p "$LOG_DIR/tmp"
 if ! mkdir "$LOG_DIR/running" 2>/dev/null; then
@@ -23,6 +25,7 @@ INITIAL_STATUS="$(git status --porcelain)"
   printf 'mode=%s\nrevision=%s\n' "$MODE" "$REVISION"
   printf 'upstream=%s\n' "$(git rev-parse upstream/main 2>/dev/null || printf unavailable)"
   printf 'platform=%s\n' "$(uname -sm)"
+  printf 'build_jobs=%s\nrayon_threads=%s\n' "$CARGO_BUILD_JOBS" "$RAYON_NUM_THREADS"
   rustc -vV
   cargo --version
   shasum -a 256 Cargo.lock maintenance/command-baseline.json

@@ -123,6 +123,11 @@ bash scripts/downstream-check.sh full
 ```
 
 The default cache is `target/web-validation`; override `CARGO_TARGET_DIR` if needed.
+Code gates default to `CARGO_BUILD_JOBS=2` and `RAYON_NUM_THREADS=2`, both overridable.
+This bounds concurrent build/algorithm working sets independently of the host's core count;
+the upstream 36 MP cancellation fixtures otherwise exceed memory admission on high-core
+machines. It does not raise editor memory limits, skip tests, or change release runtime
+settings. Use the actual release worker configuration for performance acceptance instead.
 Logs and inventory/provenance reports go to `target/downstream-validation/<mode>/`.
 Tests use a canonical, isolated temporary directory there to avoid macOS `/var` alias
 differences. Existing source changes can be tested, but dirty/changed trees receive no
