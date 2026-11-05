@@ -26,6 +26,7 @@ INITIAL_STATUS="$(git status --porcelain)"
   printf 'upstream=%s\n' "$(git rev-parse upstream/main 2>/dev/null || printf unavailable)"
   printf 'platform=%s\n' "$(uname -sm)"
   printf 'build_jobs=%s\nrayon_threads=%s\n' "$CARGO_BUILD_JOBS" "$RAYON_NUM_THREADS"
+  df -Pk "$ROOT"
   rustc -vV
   cargo --version
   shasum -a 256 Cargo.lock maintenance/command-baseline.json

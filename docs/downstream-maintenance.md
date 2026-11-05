@@ -128,6 +128,11 @@ This bounds concurrent build/algorithm working sets independently of the host's 
 the upstream 36 MP cancellation fixtures otherwise exceed memory admission on high-core
 machines. It does not raise editor memory limits, skip tests, or change release runtime
 settings. Use the actual release worker configuration for performance acceptance instead.
+Scratch regression tests also need the editor's real disk reserve: at least the greater of
+1 GiB or 5% of the volume, plus working/build space. Check `df -h .` before a large build.
+If needed, stop Cargo and prune only disposable validation incremental caches; preserve
+source, accepted packages and drawing/project evidence. Do not lower scratch safety limits
+or skip scratch-integrity tests to obtain a passing gate. Disk state is recorded in provenance.
 Logs and inventory/provenance reports go to `target/downstream-validation/<mode>/`.
 Tests use a canonical, isolated temporary directory there to avoid macOS `/var` alias
 differences. Existing source changes can be tested, but dirty/changed trees receive no
