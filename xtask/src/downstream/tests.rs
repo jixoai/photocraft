@@ -120,3 +120,34 @@ fn cli_arguments_cannot_silently_replace_a_baseline() {
     assert!(run(&["baseline", "input", "output", "--force"]).is_err());
     assert!(run(&["check", "missing-inventory.json", "missing-baseline.json"]).is_err());
 }
+
+#[test]
+fn baseline_files_require_explicit_replacement_and_reports_round_trip() {
+    let directory = std::env::temp_dir().join(format!("photocraft-downstream-files-{}", std::process::id()));
+    fs::create_dir(&directory).unwrap();
+    let inventory = directory.join("inventory.json");
+    let baseline = directory.join("baseline.json");
+    let report = directory.join("report.json");
+    write_json(&inventory, &json!([entry("test.command", "complete")])).unwrap();
+    let inventory_path = inventory.to_str().unwrap();
+    let baseline_path = baseline.to_str().unwrap();
+    let report_path = report.to_str().unwrap();
+    run(&["baseline", inventory_path, baseline_path]).unwrap();
+    let original = fs::read(&baseline).unwrap();
+    assert!(run(&["baseline", inventory_path, baseline_path]).is_err());
+    assert_eq!(fs::read(&baseline).unwrap(), original);
+    run(&["check", inventory_path, baseline_path, report_path]).unwrap();
+    assert_eq!(read_json(&report).unwrap()["total"], 1);
+    let mut changed = entry("test.command", "complete");
+    changed["description"] = json!("Reviewed semantic change");
+    write_json(&inventory, &json!([changed])).unwrap();
+    assert!(run(&["check", inventory_path, baseline_path, report_path]).is_err());
+    assert_eq!(read_json(&report).unwrap()["changedContracts"], json!(["test.command"]));
+    assert_eq!(fs::read(&baseline).unwrap(), original);
+    run(&["baseline", inventory_path, baseline_path, "--replace"]).unwrap();
+    run(&["check", inventory_path, baseline_path]).unwrap();
+    for file in [inventory, baseline, report] {
+        fs::remove_file(file).unwrap();
+    }
+    fs::remove_dir(directory).unwrap();
+}
