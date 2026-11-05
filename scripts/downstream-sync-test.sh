@@ -60,4 +60,15 @@ printf '%s\n' "$(git rev-parse HEAD)" > target/downstream-validation/full/passed
 git push -q origin main:agent-web
 refuse promote
 [[ "$(git branch --show-current)" == sync/upstream-remote-change ]]
+cp "$ROOT/scripts/downstream-check.sh" scripts/downstream-check.sh
+mkdir -p target/downstream-validation/quick/running
+if bash scripts/downstream-check.sh quick > "$FIXTURE/locked.log" 2>&1; then
+  echo 'FAIL: overlapping validation was accepted' >&2
+  exit 1
+fi
+grep -q 'Another quick gate is running' "$FIXTURE/locked.log"
+if bash scripts/downstream-check.sh invalid > "$FIXTURE/arguments.log" 2>&1; then
+  echo 'FAIL: invalid validation mode was accepted' >&2
+  exit 1
+fi
 echo 'PASS: dirty/missing/stale/failed gates cannot promote; a passing revision fast-forwards locally without pushing.'

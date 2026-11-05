@@ -123,6 +123,8 @@ Logs and inventory/provenance reports go to `target/downstream-validation/<mode>
 Tests use a canonical, isolated temporary directory there to avoid macOS `/var` alias
 differences. Existing source changes can be tested, but dirty/changed trees receive no
 promotion marker. A quick marker cannot authorize promotion.
+Two checks of the same mode cannot share a log directory concurrently. If a process was
+forcibly terminated, confirm it is gone before removing its empty `running` directory.
 
 - **Quick:** formatting, maintenance unit/sync-safety tests, schema/brush regressions,
   general drawing regression, browser tool tests, native MCP integration, synthetic web
@@ -141,8 +143,10 @@ downgrades and audited metadata changes require review. Changed metadata is not
 automatically a breaking change, and unchanged metadata cannot prove unchanged execution:
 runtime tests remain necessary.
 
-The original baseline is generated from the pre-merge 964-command inventory. To compare
-a fresh inventory or explicitly record a reviewed replacement:
+The original baseline was generated from the pre-merge 964-command inventory. After
+reviewing the first integration it can advance to include new command IDs and the upstream
+duplicate-layer link semantics; original audited commands must not be downgraded. To
+compare a fresh inventory or explicitly record a reviewed replacement:
 
 ```sh
 cargo run --locked --quiet -p photocraft-cli -- commands --json > target/commands.json
