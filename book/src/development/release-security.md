@@ -1,6 +1,6 @@
 # Release security
 
-PhotoCraft's release workflow builds platform packages and a draft GitHub Release from the `release` branch. The authoritative process is [`docs/releasing.md`](https://github.com/storytold/photocraft/blob/main/docs/releasing.md).
+FDE2E Photocraft's release workflow builds platform packages and a draft GitHub Release from the `release` branch. The authoritative process is [`docs/releasing.md`](https://github.com/jixoai/photocraft/blob/agent-web/docs/releasing.md).
 
 ## Implemented workflow elements
 

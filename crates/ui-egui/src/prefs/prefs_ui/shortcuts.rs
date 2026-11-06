@@ -448,7 +448,7 @@ pub(super) fn shortcuts_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, f: &mut
             if ui.button(tl!("Reset All to Defaults")).clicked() {
                 overrides.clear();
                 alt_overrides.clear();
-                message = tl!("All shortcuts reset to PhotoCraft defaults.").into();
+                message = tl!("All shortcuts reset to FDE2E Photocraft defaults.").into();
                 message_warning = false;
             }
             // A Photoshop set (`.kys`) fills the overrides; the file arrives after this frame
@@ -580,7 +580,7 @@ fn set_row(
     // The engine decides what a set holds and when it is modified (not the actions' F-keys).
     let now = ShortcutSet::from_bindings(overrides, alternates);
     let modified = shortcut_sets::differs(&sets, &active, overrides, alternates);
-    let defaults = tl!("PhotoCraft Defaults").to_string();
+    let defaults = tl!("FDE2E Photocraft Defaults").to_string();
     let shown = |name: &str| -> String {
         let base = if name.is_empty() { defaults.clone() } else { name.to_string() };
         if name == active && modified { crate::i18n::fmt(tl!("{set} (modified)"), &[("set", &base)]) } else { base }
@@ -660,7 +660,8 @@ fn set_row(
                     keys: dialog_keys(overrides, alternates, id, def.as_deref()),
                 })
                 .collect();
-            let text = photocraft_engine::kys::write(&set_label, &entries);
+            let interchange_name = if active.is_empty() { shortcut_sets::DEFAULTS_NAME } else { &active };
+            let text = photocraft_engine::kys::write(interchange_name, &entries);
             save_text(app, &format!("{set_label}.kys"), text)
         } else {
             let mut sections: Vec<shortcut_sets::Section> = Vec::new();

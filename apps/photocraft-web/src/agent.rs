@@ -50,7 +50,7 @@ pub fn tools() -> Vec<Value> {
     let entries = [
         (
             TOOL_NAMES[0],
-            "Discover PhotoCraft commands",
+            "Discover FDE2E Photocraft commands",
             "Discover engine commands before editing. Each entry includes its exact id, semantic description, JSON Schema inputSchema, legacy params, journal flag and current enabled/disabledReason. Read inputSchema for parameter types, units, required fields, defaults, nested objects and examples; x-photocraft-coverage distinguishes complete authoring contracts from partial legacy-derived guidance. Page with nextOffset; search to avoid loading the full registry. Execute with photocraft_execute. Shell-only menus: photocraft_control ui.menu.list.",
             object(
                 json!({"search":{"type":"string","maxLength":256},"offset":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":200,"default":50}}),
@@ -60,7 +60,7 @@ pub fn tools() -> Vec<Value> {
         ),
         (
             TOOL_NAMES[1],
-            "Execute PhotoCraft command",
+            "Execute FDE2E Photocraft command",
             "Run an engine or UI command by exact id in the active document. First call photocraft_commands and construct params from that command's inputSchema, not its JSON-like legacy params string. Check schema coverage and enabled/disabledReason; partial schemas are guidance, not complete validation. Changes share the user's undo history. After an error/timeout inspect before retrying, since work may already have applied. Import with photocraft_import; export PNG/project copies with photocraft_export. Native-only commands return errors.",
             object(
                 json!({"command":{"type":"string","minLength":1,"maxLength":256,"description":"Exact discovered command id, e.g. shape.create; not a menu label."},"params":{"type":"object","description":"Command-specific parameters matching the entry's inputSchema from photocraft_commands. Omit for an empty object. Coordinates/opacity units are command-specific; do not assume CSS pixels or percentages."}}),
@@ -70,21 +70,21 @@ pub fn tools() -> Vec<Value> {
         ),
         (
             TOOL_NAMES[2],
-            "Inspect PhotoCraft",
+            "Inspect FDE2E Photocraft",
             "Read open documents, layers, selection, undo history, tools, dialogs, GPU renderer, memory and frame timings. This does not change the document.",
             object(json!({}), &[]),
             true,
         ),
         (
             TOOL_NAMES[3],
-            "Control PhotoCraft interface",
+            "Control FDE2E Photocraft interface",
             "Drive menus, dialogs, tools, pen strokes, keyboard, view state and screenshots through the same control protocol as the desktop. ui.screenshot returns PNG data without a filesystem path; app.save requires a download filename. Pointer coordinates are document pixels; click coordinates are CSS/egui points.",
             object(json!({"method":{"type":"string","enum":CONTROL_METHODS},"params":any_object}), &["method"]),
             false,
         ),
         (
             TOOL_NAMES[4],
-            "Import into PhotoCraft",
+            "Import into FDE2E Photocraft",
             "Open a document, image or preset from base64 bytes (up to 64 MiB). Supports the browser app's formats including PSD, PSB, PNG, JPEG and .pcraft. Returns import warnings and document state. No network or host file access.",
             object(
                 json!({"name":{"type":"string","minLength":1,"maxLength":255},"base64":{"type":"string","maxLength":MAX_FILE_BYTES.div_ceil(3)*4}}),
@@ -94,7 +94,7 @@ pub fn tools() -> Vec<Value> {
         ),
         (
             TOOL_NAMES[5],
-            "Export PhotoCraft document",
+            "Export FDE2E Photocraft document",
             "Export a copy of the active document. The filename extension selects the format (.pcraft preserves the project). download=true triggers a browser download; otherwise returns base64 (up to 64 MiB). Warnings report format limitations. Exporting a copy does not mark unsaved work as saved; app.save downloads and marks a successful save.",
             object(
                 json!({"name":{"type":"string","minLength":1,"maxLength":255},"quality":{"type":"integer","minimum":1,"maximum":100},"download":{"type":"boolean","default":false}}),
@@ -245,7 +245,7 @@ pub fn parse(tool: &str, args: Value) -> Result<Call, String> {
             }
             Ok(Call::Export(p))
         }
-        _ => Err(format!("Unknown PhotoCraft tool: {tool}")),
+        _ => Err(format!("Unknown FDE2E Photocraft tool: {tool}")),
     }
 }
 

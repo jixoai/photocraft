@@ -1,13 +1,11 @@
 # User docs: rules for agents and contributors
 
-Everything in this folder (except this file, CLAUDE.md and README.md) is published at
-https://getartcraft.com/docs/photocraft. The file path is the URL:
-`troubleshooting/taskbar-turns-black.md` → `/docs/photocraft/troubleshooting/taskbar-turns-black`.
-Renaming a file breaks links, so add the old path to `redirect_from` when you rename.
+This folder contains the downstream user documentation. No upstream website publishing or
+community relationship is implied. Preserve relative page paths to avoid breaking local links.
 
 ## Who reads this
 
-Artists using PhotoCraft, Discord mods answering them, and AI assistants looking things up for
+Artists using FDE2E Photocraft, maintainers answering them, and AI assistants looking things up for
 either. Write for an artist, not a developer.
 
 ## Page rules
@@ -16,12 +14,12 @@ either. Write for an artist, not a developer.
 - Plain words, short sentences, numbered steps for anything the reader does.
 - Start the body at `##`. The page title comes from frontmatter.
 - Link to other pages instead of repeating them. Use relative links to the `.md` file:
-  `[Install PhotoCraft](../getting-started/install.md)`.
+  `[Install FDE2E Photocraft](../getting-started/install.md)`.
 - No marketing copy, no "simply", no claims you have not checked in the code or a release.
-- Call the product "PhotoCraft", as the app, its downloads and getartcraft.com do.
+- Call the product "FDE2E Photocraft". Link support to this fork, never upstream social channels.
 - Name UI labels exactly as the app shows them, in **bold**. Menu paths read `File › Open…`.
 - Troubleshooting pages: `## Symptoms`, `## Fix`, `## Why this happens` (optional),
-  `## Still stuck?` (link the issue tracker or Discord).
+  `## Still stuck?` (link the issue tracker for this fork).
 
 ## Frontmatter
 
@@ -50,9 +48,9 @@ drafts and are not published.
 
 ## Check before you push
 
-    node <path to your artcraft-services checkout>/frontend/apps/artcraft-website-next/scripts/docs/core.mjs docs/user
-
-The checker lives in storytold/artcraft-services. A CI check will be added once it is on that repo's main branch.
+Check relative links and UI labels against this checkout. Run `bash scripts/brand-test.sh`.
+The `verified` values inherited from upstream describe upstream PhotoCraft releases, not
+releases published by FDE2E. Do not relabel historical fixes as FDE2E releases.
 
 ## Support PRs
 

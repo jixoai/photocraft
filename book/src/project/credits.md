@@ -1,6 +1,6 @@
 # Credits
 
-PhotoCraft is created and maintained by the ArtCraft team and PhotoCraft contributors. Project ownership, copyright, and licensing remain as stated in the repository's `README.md`, `NOTICE`, and license files. Every merged contribution is credited in the repository history and release notes.
+FDE2E Photocraft is maintained by FDE2E. It is based on PhotoCraft by the upstream team and contributors. Original copyright, licensing and contributor history remain in `NOTICE`, `ATTRIBUTION.md`, the license files and Git history.
 
 ## Documentation
 

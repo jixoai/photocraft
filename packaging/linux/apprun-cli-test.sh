@@ -9,7 +9,7 @@ trap 'rm -rf "$test_dir"' EXIT
 app_dir="$test_dir/PhotoCraft test.AppDir"
 mkdir -p "$app_dir/usr/bin" "$app_dir/usr/share/applications"
 cp "$HERE/AppRun" "$app_dir/AppRun"
-printf '[Desktop Entry]\nType=Application\nName=PhotoCraft\nExec=photocraft %%F\n' \
+printf '[Desktop Entry]\nType=Application\nName=FDE2E Photocraft\nExec=photocraft %%F\n' \
   >"$app_dir/usr/share/applications/ai.storyteller.photocraft.desktop"
 cat >"$app_dir/usr/bin/photocraft" <<'EOF'
 #!/bin/sh

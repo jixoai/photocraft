@@ -1419,8 +1419,10 @@ fn start_screen_buttons_stay_inside_a_narrow_canvas() {
         PhotocraftApp::setup_context(&h.ctx, crate::theme::ThemeKind::default());
         h.state_mut().1 = true;
         h.run_steps(3);
-        for label in ["New document", "Join us on Discord"] {
-            for node in h.query_all_by_label_contains(label) {
+        for label in ["New document", "FDE2E Photocraft on GitHub"] {
+            let nodes: Vec<_> = h.query_all_by_label_contains(label).collect();
+            assert!(!nodes.is_empty(), "missing start-screen action: {label}");
+            for node in nodes {
                 let r = node.rect();
                 assert!(r.left() >= 0.0 && r.right() <= width, "`{label}` is clipped in a {width}-point-wide canvas: {r:?}");
             }

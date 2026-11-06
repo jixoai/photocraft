@@ -1,14 +1,14 @@
 ---
-title: Is PhotoCraft free?
-description: PhotoCraft is free and open source under the MIT or Apache 2.0 license, and works offline.
+title: Is FDE2E Photocraft free?
+description: FDE2E Photocraft is free and open source under the MIT or Apache 2.0 license, and works offline.
 order: 10
 verified: 0.8.2
 ---
 
-Yes. PhotoCraft is one of the Crafting Apps, which the project describes as free, open-source creative tools. The code is licensed under MIT or Apache 2.0, your choice, and is on [GitHub](https://github.com/storytold/photocraft).
+Yes. FDE2E Photocraft is licensed under MIT OR Apache-2.0, at your choice. Source code is available in [this fork](https://github.com/jixoai/photocraft); upstream copyright and third-party notices are retained.
 
-PhotoCraft works offline. Its smart selection tools run on your computer, with no cloud and no account.
+FDE2E Photocraft works offline. Its smart selection tools run on your computer, with no cloud and no account.
 
-The ArtCraft logos in the repository are not open source.
+Upstream trademark logo files are excluded from this downstream. License notices and historical attribution remain.
 
-See [Install PhotoCraft](../getting-started/install.md) to download it.
+See [Install FDE2E Photocraft](../getting-started/install.md) to download it.

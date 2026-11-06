@@ -76,6 +76,7 @@ mod tests {
     #[test]
     fn only_a_macos_app_bundle_skips_the_runtime_icon() {
         use std::path::Path;
+        assert!(in_app_bundle(Path::new("/Applications/FDE2E Photocraft.app/Contents/MacOS/FDE2E Photocraft")));
         assert!(in_app_bundle(Path::new("/Applications/PhotoCraft.app/Contents/MacOS/photocraft")));
         assert!(in_app_bundle(Path::new("/Users/a/Downloads/PhotoCraft Beta.APP/Contents/MacOS/photocraft")));
         assert!(!in_app_bundle(Path::new("/Users/a/src/photocraft/target/release/photocraft")));
@@ -84,6 +85,7 @@ mod tests {
         assert!(!in_app_bundle(Path::new("photocraft")));
         assert!(sets_runtime_icon(None));
         assert!(sets_runtime_icon(Some(Path::new("/usr/bin/photocraft"))));
+        assert_eq!(sets_runtime_icon(Some(Path::new("/Applications/FDE2E Photocraft.app/Contents/MacOS/FDE2E Photocraft"))), !cfg!(target_os = "macos"));
         assert_eq!(sets_runtime_icon(Some(Path::new("/Applications/PhotoCraft.app/Contents/MacOS/photocraft"))), !cfg!(target_os = "macos"));
     }
 

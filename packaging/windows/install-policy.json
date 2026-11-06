@@ -1,6 +1,7 @@
 {
   "id": "photocraft",
-  "name": "PhotoCraft",
+  "name": "FDE2E Photocraft",
+  "registryName": "PhotoCraft",
   "upgradeCode": "D9660F32-2D0A-4ABE-B73D-17BE25F1542C",
   "sources": [
     "photocraft.wxs"

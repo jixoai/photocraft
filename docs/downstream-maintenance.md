@@ -1,4 +1,4 @@
-# Maintaining the PhotoCraft agent/web downstream
+# Maintaining the FDE2E Photocraft downstream
 
 Updated: 2026-11-06. This is the maintenance policy for the `jixoai/photocraft` fork,
 not a change to upstream's contribution or CI policy.
@@ -47,6 +47,9 @@ including previously untracked Rust modules, tests and documentation.
 
 ## Integration boundaries
 
+- Preserve the FDE2E Photocraft identity and fork-owned support/update links. Run
+  `bash scripts/brand-test.sh` after every merge; do not restore upstream logos or community
+  promotions. Keep original copyright, contributor history and pinned dependency provenance.
 - Raster, engine and compositor fixes belong in their owning Rust layers. Keep the web
   worker availability/spawn boundary in `crates/engine/src/background.rs`; native and
   threaded-browser jobs must retain cancellation, draining, scratch release and admission
@@ -201,10 +204,12 @@ or successful real threaded-Wasm linking. Before publishing a new web package:
    build flags, contract report, acceptance evidence and package SHA256. Tag the reviewed
    source only after its required release gates pass. Keep a previous package for rollback.
 
-This setup does not change hosting or native updater destinations. Deploy web assets from
-`agent-web`; before distributing a downstream native build, configure its updater/release
-source or disable upstream replacement so an official binary cannot silently replace the
-enhanced one.
+Hosting configuration is separate. Deploy web assets from `agent-web`. The branded native
+updater and engine release parser use `jixoai/photocraft`, not the official upstream release
+feed; preserve that destination when merging. Upstream launcher version pins are disabled;
+the Flatpak does not request access to the upstream launcher's version directory.
+Source edits do not replace an existing binary
+or deployed site, and a release still needs the acceptance steps above.
 
 Acceptance images/projects and large generated inventories stay local/archived, not in
 source history: `.gitignore` excludes them without deleting them. Source, compact baseline,

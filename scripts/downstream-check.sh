@@ -45,6 +45,7 @@ step() {
   fi
 }
 step fmt cargo fmt --all -- --check
+step branding bash scripts/brand-test.sh
 step maintenance cargo test --locked -p xtask downstream::
 step sync-safety bash scripts/downstream-sync-test.sh
 step contracts cargo test --locked -p photocraft-engine --lib cmd::schema::

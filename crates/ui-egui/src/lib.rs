@@ -13,9 +13,15 @@
 /// prompt shows both, and an AppImage's menu entry gets the icon.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
+    id: "photocraft",
+    name: photocraft_engine::brand::NAME,
+    tagline: "Image editing",
+    repo: photocraft_engine::brand::REPOSITORY,
+    former_ids: &[],
+    former_names: &[],
+    developer: photocraft_engine::brand::DEVELOPER,
     icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.photocraft.png")),
     accent: Some([0x2f, 0x7b, 0xf5]),
-    ..craft_update::suite::PHOTOCRAFT
 };
 
 /// Translate a string literal into the current UI language: `tl!("Image Size…")`.

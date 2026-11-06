@@ -20,7 +20,7 @@ JPEG XL opening remains under review in #2868.
 
 ## WebP
 
-Lossless WebP (VP8L) is encoded and decoded by `image-webp`. Lossy WebP is written by PhotoCraft's own VP8 key-frame encoder in `crates/codecs/src/codecs/vp8`, a clean-room implementation of RFC 6386: BT.601 4:2:0 conversion, 16×16 and 4×4 intra prediction chosen per macroblock by reconstruction error, the forward DCT and Walsh-Hadamard transforms paired with the bit-exact inverse transforms, quantisation on the RFC's `dc_qlookup`/`ac_qlookup` tables, token coding with per-frame probability updates, and skipped macroblocks for flat areas. `EncodeOptions::webp_lossless` picks the encoder and `webp_quality` (0–100, the libwebp scale) sets the quantiser; alpha travels losslessly in an `ALPH` chunk and ICC/EXIF/XMP in their own chunks of the extended (`VP8X`) container. The decoder applies the frame's loop filter; no C library is involved on either side.
+Lossless WebP (VP8L) is encoded and decoded by `image-webp`. Lossy WebP is written by FDE2E Photocraft's own VP8 key-frame encoder in `crates/codecs/src/codecs/vp8`, a clean-room implementation of RFC 6386: BT.601 4:2:0 conversion, 16×16 and 4×4 intra prediction chosen per macroblock by reconstruction error, the forward DCT and Walsh-Hadamard transforms paired with the bit-exact inverse transforms, quantisation on the RFC's `dc_qlookup`/`ac_qlookup` tables, token coding with per-frame probability updates, and skipped macroblocks for flat areas. `EncodeOptions::webp_lossless` picks the encoder and `webp_quality` (0–100, the libwebp scale) sets the quantiser; alpha travels losslessly in an `ALPH` chunk and ICC/EXIF/XMP in their own chunks of the extended (`VP8X`) container. The decoder applies the frame's loop filter; no C library is involved on either side.
 
 Capability details such as sample depth, channel layout, alpha, ICC, EXIF, XMP, DPI, and animation behavior are defined by `crates/codecs/src/format.rs`. Do not infer fidelity from the filename extension alone.
 
@@ -36,7 +36,7 @@ Every route that writes a document to a flat format (Save As, the CLI, MCP `doc_
 
 Flat TIFF and JPEG exports of composited CMYK documents convert the RGB composite back through
 the document's CMYK ICC profile (relative colorimetric with black point compensation) and embed
-that exact profile. Untagged composites use and embed PhotoCraft's synthetic coated CMYK profile;
+that exact profile. Untagged composites use and embed FDE2E Photocraft's synthetic coated CMYK profile;
 invalid, non-CMYK or unusable embedded profiles are rejected before compositing. TIFF retains
 8/16/32f depth and straight alpha; JPEG reduces to 8-bit with a warning and mattes transparency
 over zero-ink white. A plain single raster layer retains its native samples. RGB-only formats use
@@ -58,4 +58,4 @@ Format adapters pass compatible allocation limits into PNG, TIFF, WebP, and `ima
 
 `Limits::none()` exists for callers with a deliberate reason to relax policy. It remains bounded by representable memory sizes, but it removes the default resource policy and should not be used for untrusted input.
 
-Animated containers and multi-page TIFFs are represented as a single decoded frame or page by the current codec API; opening one adds an import warning such as "only the first of 3 frames was imported". A JPEG cut off inside its image data opens with a warning that its data ends early (an error when it holds no image data at all). Refer to [`crates/codecs/README.md`](https://github.com/storytold/photocraft/blob/main/crates/codecs/README.md) and source capability declarations for current behavior.
+Animated containers and multi-page TIFFs are represented as a single decoded frame or page by the current codec API; opening one adds an import warning such as "only the first of 3 frames was imported". A JPEG cut off inside its image data opens with a warning that its data ends early (an error when it holds no image data at all). Refer to [`crates/codecs/README.md`](https://github.com/jixoai/photocraft/blob/agent-web/crates/codecs/README.md) and source capability declarations for current behavior.

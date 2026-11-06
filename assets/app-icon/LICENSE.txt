@@ -1,13 +1,8 @@
-PhotoCraft app icon (photocraft.svg, photocraft-small.svg and every file derived from them in
-this directory: photocraft-1024.png, photocraft.icns, photocraft.ico, hicolor/).
+FDE2E Photocraft app icon (photocraft.svg, photocraft-small.svg and derived PNG, ICO, ICNS and hicolor files).
 
-Original artwork made for this project by the project owner: an engraving-style drawing created
-in ArtCraft, then vectorised. No third-party material. Licensed like the rest of PhotoCraft,
-under either of
+Original geometric artwork authored for the FDE2E downstream. No third-party artwork or fonts.
+Licensed under either the Apache License, Version 2.0 or the MIT license, at your option.
+See ../../LICENSE-APACHE and ../../LICENSE-MIT.
 
-  * Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
-  * MIT license (https://opensource.org/licenses/MIT)
-
-at your option.
-
-Regenerate the derived files with packaging/icons.sh.
+The previous upstream animal artwork has been replaced; its provenance and original license
+remain available in repository history. Regenerate derivatives with packaging/icons.sh.

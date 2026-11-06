@@ -3,9 +3,9 @@ Copyright (c) 2026 ArtCraft Team and the PhotoCraft contributors.
 Licensed under the MIT License or the Apache License, Version 2.0, at your option
 (LICENSE-MIT, LICENSE-APACHE).
 
-The ArtCraft name, wordmark and logos in docs/brand/ are trademarks of the ArtCraft Team. They are
-not open source and are not covered by the license above; their terms are in
-docs/brand/LICENSE-brand.txt.
+This downstream is branded FDE2E Photocraft and maintained by FDE2E. Upstream ArtCraft
+trademark logo files are excluded. Their historical terms remain in docs/brand/LICENSE-brand.txt.
+Original upstream copyright and third-party notices below are retained.
 
 Third-party material
 

@@ -376,9 +376,13 @@ fn write_shim(droplet: &str) -> Result<String> {
     let quoted_abs = format!("'{}'", abs.replace('\'', "'\\''"));
     let body = format!(
         r#"#!/bin/sh
-# PhotoCraft droplet: runs the action on the files given (or dropped).
+# FDE2E Photocraft droplet: runs the action on the files given (or dropped).
 if [ -n "${{PHOTOCRAFT_CLI:-}}" ]; then
   cli="$PHOTOCRAFT_CLI"
+elif [ -x "/Applications/FDE2E Photocraft.app/Contents/MacOS/photocraft-cli" ]; then
+  cli="/Applications/FDE2E Photocraft.app/Contents/MacOS/photocraft-cli"
+elif [ -x "$HOME/Applications/FDE2E Photocraft.app/Contents/MacOS/photocraft-cli" ]; then
+  cli="$HOME/Applications/FDE2E Photocraft.app/Contents/MacOS/photocraft-cli"
 elif [ -x /Applications/PhotoCraft.app/Contents/MacOS/photocraft-cli ]; then
   cli=/Applications/PhotoCraft.app/Contents/MacOS/photocraft-cli
 elif [ -x "$HOME/Applications/PhotoCraft.app/Contents/MacOS/photocraft-cli" ]; then

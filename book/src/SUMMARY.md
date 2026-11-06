@@ -1,6 +1,6 @@
 # Summary
 
-[PhotoCraft Documentation](README.md)
+[FDE2E Photocraft Documentation](README.md)
 
 # Getting started
 

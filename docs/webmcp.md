@@ -1,4 +1,4 @@
-# PhotoCraft in the browser and WebMCP
+# FDE2E Photocraft in the browser and WebMCP
 
 The complete Rust editor runs locally in WebAssembly: documents and pixel processing do not
 go to a server. WebGPU renders the canvas where available, with WebGL2 as the fallback. The

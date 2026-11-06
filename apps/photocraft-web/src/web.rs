@@ -16,7 +16,7 @@ use wasm_bindgen::JsCast as _;
 
 type Inbox = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
 
-/// Everything File › Open reads: PhotoCraft, Photoshop, OpenRaster, Krita and Affinity documents, flat images, and
+/// Everything File › Open reads: FDE2E Photocraft, Photoshop, OpenRaster, Krita and Affinity documents, flat images, and
 /// Photoshop brushes (.abr), gradients (.grd), layer styles (.asl) and swatches (.aco, .act, .ase), which go to the preset libraries.
 const OPEN_EXTS: &[&str] = &[
     "pcraft", "pdn", "ora", "xcf", "xcfgz", "gz", "kra", "krz", "psd", "psb", "psdt", "png", "jpg", "jpeg", "tif", "tiff", "webp", "gif", "bmp", "tga", "ico",
@@ -62,9 +62,9 @@ pub fn start() {
         let force_cpu = q.contains("cpu");
         #[cfg(feature = "threads")]
         if let Err(error) = wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(worker_count())).await {
-            log::error!("PhotoCraft workers could not start: {error:?}");
+            log::error!("FDE2E Photocraft workers could not start: {error:?}");
             if let Some(loading) = document.get_element_by_id("photocraft_loading") {
-                loading.set_text_content(Some("PhotoCraft workers could not start. Reload the page or use the compatibility build."));
+                loading.set_text_content(Some("FDE2E Photocraft workers could not start. Reload the page or use the compatibility build."));
             }
             return;
         }
@@ -131,7 +131,7 @@ pub fn start() {
                         let _ = performance.mark("photocraft.ready");
                     }
                 }
-                Err(e) => el.set_inner_html(&format!("<p>PhotoCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
+                Err(e) => el.set_inner_html(&format!("<p>FDE2E Photocraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
             }
         }
     });

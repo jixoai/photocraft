@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 default-run = "photocraft"
-description = "PhotoCraft: an open-source, native image editor"
+description = "FDE2E Photocraft: an open-source image editor with browser and agent support"
 build = "build.rs"
 
 [features]

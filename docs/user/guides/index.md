@@ -1,6 +1,6 @@
 ---
 title: Guides
-description: Step-by-step guides for the everyday tasks in PhotoCraft.
+description: Step-by-step guides for the everyday tasks in FDE2E Photocraft.
 order: 20
 verified: 0.8.2
 ---

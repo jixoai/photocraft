@@ -1,4 +1,4 @@
-//! Render the full PhotoCraft UI offscreen (no window, no focus stealing) and save a PNG.
+//! Render the full FDE2E Photocraft UI offscreen (no window, no focus stealing) and save a PNG.
 //!
 //! ```sh
 //! cargo run --release -p photocraft-ui-egui --example snapshot -- \
@@ -91,7 +91,7 @@ fn main() {
                 app.session.updates.status = photocraft_engine::updates_cmds::Status::Available {
                     release: photocraft_engine::updates_cmds::Release {
                         version: "99.0.0".into(),
-                        url: "https://github.com/storytold/photocraft/releases/tag/v99.0.0".into(),
+                        url: format!("{}/tag/v99.0.0", photocraft_engine::brand::RELEASES),
                     },
                 };
             }

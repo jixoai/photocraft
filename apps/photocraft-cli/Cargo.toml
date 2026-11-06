@@ -1,6 +1,6 @@
 [package]
 name = "photocraft-cli"
-description = "Headless PhotoCraft: convert, inspect, run commands, batch, MCP server"
+description = "Headless FDE2E Photocraft: convert, inspect, run commands, batch, MCP server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -44,4 +44,3 @@ clap_mangen = { workspace = true }
 [build-dependencies]
 # Icon + VERSIONINFO for photocraft-cli.exe; build.rs only uses it when targeting Windows.
 winresource = "0.1"
-

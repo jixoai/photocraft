@@ -138,9 +138,9 @@ fn member(object: &JsValue, key: &str) -> Option<JsValue> {
 
 fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: JsValue, options: JsValue) -> Promise {
     let prepared = (|| -> Result<_, JsValue> {
-        let q = queue.try_borrow().map_err(|_| error("PhotoCraft is busy"))?;
+        let q = queue.try_borrow().map_err(|_| error("FDE2E Photocraft is busy"))?;
         if q.count >= MAX_PENDING {
-            return Err(error("PhotoCraft's request queue is full; wait for an outstanding call"));
+            return Err(error("FDE2E Photocraft's request queue is full; wait for an outstanding call"));
         }
         drop(q);
         let signal = member(&options, "signal").and_then(|v| v.dyn_into::<web_sys::AbortSignal>().ok());
@@ -170,11 +170,11 @@ fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: J
     let mut call = Some(call);
     Promise::new(&mut |resolve, reject| {
         let Ok(mut q) = queue.try_borrow_mut() else {
-            let _ = reject.call1(&JsValue::NULL, &error("PhotoCraft is busy"));
+            let _ = reject.call1(&JsValue::NULL, &error("FDE2E Photocraft is busy"));
             return;
         };
         if q.count >= MAX_PENDING || q.bytes.saturating_add(bytes) > MAX_QUEUED_BYTES {
-            let _ = reject.call1(&JsValue::NULL, &error("PhotoCraft's request queue is full; wait for an outstanding call"));
+            let _ = reject.call1(&JsValue::NULL, &error("FDE2E Photocraft's request queue is full; wait for an outstanding call"));
             return;
         }
         q.bytes = q.bytes.saturating_add(bytes);
@@ -189,7 +189,7 @@ impl Bridge {
         let (sender, receiver) = std::sync::mpsc::channel();
         let bridge = Self { queue: Rc::default(), sender, active: None, auxiliary: Vec::new(), work: None };
         if let Err(e) = bridge.install(ctx) {
-            log::warn!("PhotoCraft WebMCP setup: {e:?}");
+            log::warn!("FDE2E Photocraft WebMCP setup: {e:?}");
         }
         (bridge, receiver)
     }
@@ -234,7 +234,7 @@ impl Bridge {
                 if let Err(e) = result {
                     let message = member(&e, "message").and_then(|m| m.as_string()).unwrap_or_else(|| format!("{e:?}"));
                     let _ = set(&status, "error", &JsValue::from_str(&message));
-                    log::warn!("PhotoCraft WebMCP registration: {message}");
+                    log::warn!("FDE2E Photocraft WebMCP registration: {message}");
                 }
             });
         }
@@ -366,6 +366,6 @@ async fn register(context: &JsValue, tools: &js_sys::Array, status: &JsValue) ->
         wasm_bindgen_futures::JsFuture::from(Promise::resolve(&result)).await?;
         set(status, "registered", &JsValue::from_f64((index + 1) as f64))?;
     }
-    log::info!("PhotoCraft: registered {} WebMCP tools", tools.length());
+    log::info!("FDE2E Photocraft: registered {} WebMCP tools", tools.length());
     Ok(())
 }
