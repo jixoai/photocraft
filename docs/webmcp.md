@@ -417,6 +417,15 @@ successful save. The browser decides whether to allow downloads; keep the downlo
 No tool reads a host path or fetches a remote document. Linked files must be embedded or
 provided through the browser. Warnings describe format-specific losses.
 
+`download: true` acknowledges a download trigger, not permission approval or a completed file.
+A browser download-authorization prompt can outlast an automation event wait. If authorization
+is pending, explain the prompt and let the user grant the relevant permission; do not bypass it
+or change global browser policies. After authorization, check existing downloads before retrying
+to avoid duplicate files. Verify the saved bytes and distinguish user-confirmed completion from
+an automatically observed download receipt. When browser-download verification is not required,
+`download: false` can return up to 64 MiB of bytes for the host to save and validate separately;
+report that delivery path explicitly rather than claiming a verified browser download.
+
 Editing requests are serialized, with one admitted tool dispatched per editor frame. A following call
 sees completed synthetic input, screenshot or command work. There are at most 16 outstanding
 requests and a bounded aggregate argument budget; normal requests are limited to 1 MiB of

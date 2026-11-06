@@ -115,8 +115,13 @@ editing with an unchanged neighbor, and undo/redo all passed. Native PNG/project
 bytes saved as local artifacts, and the PNG was opened and visually inspected. These simple
 geometry artifacts validate transport/document behavior only, not artistic quality.
 
-Browser-download triggering returned success, but the browser automation download-event wait
-timed out, so receipt of that download is **not verified**. The user's takeover then stopped
-browser work; no control was reclaimed or existing user tabs closed. Browser reimport was not
-completed after takeover; native 8/16/32-bit project reimport/editability regressions did pass.
-The final independent drawing agent and user still perform the held-out visual acceptance.
+The browser automation download-event wait timed out while download authorization was pending.
+The user subsequently confirmed that granting authorization completed the download. Follow-up
+local verification also found the earlier browser-downloaded `download-verification.png`: a valid
+240×160, 16-bit PNG whose SHA-256 matched the base64 export artifact. This distinguishes a
+permission-gated download from an export failure; no export-code change was needed for this case.
+The later download's completion is user-confirmed, not an automatically captured event receipt
+or a separate file-content check. Browser work stopped on user takeover; no control was reclaimed
+or existing user tabs closed. Browser reimport was not completed after takeover; native
+8/16/32-bit project reimport/editability regressions did pass. The final independent drawing
+agent and user still perform the held-out visual acceptance.

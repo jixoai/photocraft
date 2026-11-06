@@ -89,6 +89,13 @@ equating a browser download request with a successful save. Send preview bytes t
 browser tool's image output, not the text transcript. Do not claim visual acceptance
 without actually viewing the image.
 
+For browser downloads, arm the download-event wait before triggering export and record the
+tool reply separately. If the wait times out, check for pending download authorization and
+existing files before retrying. Let the user approve any required permission; do not bypass
+the prompt or change global browser policies. After approval, verify the file and report whether
+completion was automatically observed or user-confirmed. For exports up to 64 MiB, base64 bytes
+saved by the host are an alternative delivery path, not proof that browser downloads work.
+
 For independent acceptance, use the [held-out evaluation protocol](../../../docs/webmcp-acceptance.md).
 Separate tool reliability, visual quality, editability, recovery and instruction compliance;
 keep previous scene scripts/artifacts out of the acceptance agent's examples.
