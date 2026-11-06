@@ -86,9 +86,37 @@ roundtrip, undo/redo and exported appearance at multiple document bit depths.
 
 ## 5. Visual feedback and independent evaluation
 
-Pending. Minimize inspect payloads, deliver images as images rather than base64 transcript
-text, and review composition before adding details. Use independent, previously unseen
-subjects and keep same-subject examples/old exports outside the acceptance agent's context.
+Implemented: additive `photocraft_inspect` scopes (`session`, compact `document`, paginated
+metadata `layers`/`history`, running `jobs`) bypass full UI serialization. Default `{}` still
+returns the original complete UI inspection. Layer pagination uses bounded-depth iterative
+traversal and does not compute raster bounds or include vector path payloads. Responses carry
+document identity/revision so agents can reject mixed-revision pages. Dedicated object-info
+commands retain access to editable details. A synthetic 8-layer test measures about 200 bytes
+for compact document metadata against 10.4 KB for full UI state (about 98% less payload), without
+changing the document. This compares different projections, not equivalent-data compression
+or a claim about renderer speed.
+
+The skill uses existing PNG export/editor screenshots for actual image feedback rather than
+adding another renderer. It teaches bounded composition/silhouette/detail reviews and actual
+image delivery, not base64 transcript text. [Independent acceptance](webmcp-acceptance.md)
+defines a fresh-brief prompt template, held-out comparisons and separate reliability,
+integrity/recovery, visual communication, delivery and instruction-compliance evidence.
+No fixed scene or previous acceptance exports are supplied to the evaluating agent.
 
 Measure tool success, visual quality, editability, recovery and instruction compliance
 separately. A command count or layer count alone is not a visual-quality acceptance gate.
+The protocol and technical browser checks prepare independent acceptance; they do not replace
+the user's final visual review or claim that another agent has already judged unseen artwork.
+
+Integrated browser verification (isolated local release build): native WebMCP discovery,
+tracked admission/duplicate submission/status completion, compact/full inspection and layer
+pagination, original-name 16-bit restore, a new automatically scheduled checkpoint, local shape
+editing with an unchanged neighbor, and undo/redo all passed. Native PNG/project export returned
+bytes saved as local artifacts, and the PNG was opened and visually inspected. These simple
+geometry artifacts validate transport/document behavior only, not artistic quality.
+
+Browser-download triggering returned success, but the browser automation download-event wait
+timed out, so receipt of that download is **not verified**. The user's takeover then stopped
+browser work; no control was reclaimed or existing user tabs closed. Browser reimport was not
+completed after takeover; native 8/16/32-bit project reimport/editability regressions did pass.
+The final independent drawing agent and user still perform the held-out visual acceptance.

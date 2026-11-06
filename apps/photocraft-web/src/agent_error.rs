@@ -209,7 +209,7 @@ mod tests {
         for (tool, args, path) in [
             ("photocraft_commands", json!({"limit":300}), "/limit"),
             ("photocraft_control", json!({}), "/method"),
-            ("photocraft_inspect", json!({"scope":"document"}), "/scope"),
+            ("photocraft_inspect", json!({"scope":"unknown"}), "/scope"),
             ("photocraft_export", json!({"format":"png","scale":1}), "/name"),
             ("photocraft_execute", json!({"command":"file.new","params":[]}), "/params"),
             ("photocraft_control", json!({"method":"app.quit"}), "/method"),

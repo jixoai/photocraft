@@ -272,6 +272,33 @@ This namespaced bridge does not impersonate or polyfill `modelContext`.
 
 ## Files, ordering and cancellation
 
+### Efficient inspection and image feedback
+
+`photocraft_inspect {}` keeps the original full UI snapshot. Add `scope` for smaller reads:
+
+| Scope | Result | Pagination |
+| --- | --- | --- |
+| `full` (default) | Complete legacy UI snapshot, including dialogs/tools/renderer | No |
+| `session` | Open-document metadata and shared colors/history options | No |
+| `document` | Active document ID, name, dimensions, depth, revision, dirty flag, active layer, top-level layer count and undo/redo availability | No |
+| `layers` | Flat depth-first display-order layer metadata: ID, name, kind, parent ID, depth, visibility, opacity | `offset`, `limit` |
+| `history` | Undo labels with row indices, revision and undo/redo availability | `offset`, `limit` |
+| `jobs` | Currently running jobs only, not recent completed results or exports | No |
+
+Pages default to 50 rows; `limit` is 1–200. `nextOffset: null` ends pagination. Check that
+`documentId` and `revision` remain unchanged between layer/history pages; otherwise restart.
+No active document yields `document: null` for the summary or an error for layers/history.
+Pagination fields on other scopes are rejected rather than silently ignored. Scoped reads
+do not construct full UI state. Layer reads traverse metadata with a 256-level depth guard,
+without raster-bound scans, vector path payloads or thumbnails. Use `shape.info`/`type.info`
+for selected object details. A compact summary is not an image or a visual-quality check.
+
+Use `photocraft_export` with a PNG name for canvas artwork, `ui.screenshot` for editor chrome,
+and the browser tool's image output to actually view results. Never paste base64 into the
+conversation as a substitute for an image. Stage visual feedback before details and preserve
+editable project copies. See the [acceptance protocol and reusable prompt](webmcp-acceptance.md)
+for held-out evaluation that separates model judgment, skill strategy and editor reliability.
+
 ### Browser document recovery
 
 Browser-local recovery uses IndexedDB, independently of brush preset storage and request

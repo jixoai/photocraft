@@ -75,8 +75,20 @@ recovery. A new origin/profile cannot see the previous origin's checkpoints.
 
 ## Preserve the result
 
+Prefer `photocraft_inspect {scope:"document"}` for identity/revision and small metadata,
+`{scope:"layers",offset:0,limit:50}` for paged object IDs, `{scope:"history"}` for undo labels,
+`{scope:"session"}` for open tabs and `{scope:"jobs"}` for running work. Only layers/history
+accept pagination. Keep document ID/revision constant between pages; restart on a change.
+The default `{}` remains the full UI snapshot; use it for dialogs/tools/renderer diagnostics,
+not after every small edit. Compact layer rows omit paths and raster bounds; use an object's
+dedicated info command when those details matter.
+
 Deliver artwork PNG separately from the editor screenshot. Export `.pcraft` when editable
 content is requested, keep the final tab open, and verify downloaded files rather than
 equating a browser download request with a successful save. Send preview bytes to the
 browser tool's image output, not the text transcript. Do not claim visual acceptance
 without actually viewing the image.
+
+For independent acceptance, use the [held-out evaluation protocol](../../../docs/webmcp-acceptance.md).
+Separate tool reliability, visual quality, editability, recovery and instruction compliance;
+keep previous scene scripts/artifacts out of the acceptance agent's examples.

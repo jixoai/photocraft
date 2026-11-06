@@ -29,6 +29,9 @@ mod agent_error;
 mod agent_requests;
 
 #[cfg(any(target_arch = "wasm32", test))]
+mod agent_inspect;
+
+#[cfg(any(target_arch = "wasm32", test))]
 mod recovery_bridge;
 
 #[cfg(test)]

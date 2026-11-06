@@ -113,8 +113,11 @@ pub fn tools() -> Vec<Value> {
         (
             TOOL_NAMES[2],
             "Inspect FDE2E Photocraft",
-            "Read open documents, layers, selection, undo history, tools, dialogs, GPU renderer, memory and frame timings. This does not change the document.",
-            object(json!({}), &[]),
+            "Inspect without editing. Omit scope (or full) for the backward-compatible complete UI snapshot. Prefer session for open-document metadata, document for active document ID/revision/dimensions/depth/dirty/history availability, layers for a paginated flat metadata tree (display-order depth-first, no paths or raster bounds), history for paginated undo labels, jobs for currently running jobs only. Only layers/history accept offset/limit (1-200, default 50). Scoped results bypass full UI inspection and raster-bound scans. Keep documentId/revision constant while paging; restart if they change. Use shape.info/type.info for one object's editable data, photocraft_export PNG for artwork previews and ui.screenshot for editor UI. Does not contain image pixels.",
+            object(
+                json!({"scope":{"type":"string","enum":["full","session","document","layers","history","jobs"],"default":"full"},"offset":{"type":"integer","minimum":0,"description":"Starting row for layers/history only; default 0."},"limit":{"type":"integer","minimum":1,"maximum":200,"default":50,"description":"Page size for layers/history only."}}),
+                &[],
+            ),
             true,
         ),
         (
@@ -228,6 +231,7 @@ pub enum Call {
     Export(Export),
     Tracked { id: String, instance: String, command: String, params: Value },
     RequestStatus(RequestStatus),
+    Inspect(crate::agent_inspect::Query),
 }
 
 fn decode<T: serde::de::DeserializeOwned>(value: Value) -> Result<T, Failure> {
@@ -272,7 +276,17 @@ pub fn parse(tool: &str, args: Value) -> Result<Call, Failure> {
             }
             Ok(Call::Control { method: "engine.execute".into(), params: json!({"command":p.command,"params":p.params}) })
         }
-        "photocraft_inspect" => Ok(Call::Control { method: "ui.inspect".into(), params: args }),
+        "photocraft_inspect" => {
+            let query: crate::agent_inspect::Query = decode(args.clone())?;
+            if !matches!(query.scope.as_str(), "layers" | "history") && (args.get("offset").is_some() || args.get("limit").is_some()) {
+                return Err(Failure::invalid(
+                    if args.get("offset").is_some() { "/offset" } else { "/limit" },
+                    json!({"paginationScopes":["layers","history"]}),
+                    "offset and limit are only supported for layers/history scopes",
+                ));
+            }
+            if query.scope == "full" { Ok(Call::Control { method: "ui.inspect".into(), params: json!({}) }) } else { Ok(Call::Inspect(query)) }
+        }
         "photocraft_control" => {
             let p: Control = decode(args)?;
             if matches!(p.method.as_str(), "recovery.restore" | "recovery.discard") && !p.params["key"].as_str().is_some_and(crate::recovery_bridge::valid_key)

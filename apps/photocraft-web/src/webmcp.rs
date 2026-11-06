@@ -23,7 +23,7 @@ const DEADLINE_MS: f64 = 60_000.0;
 
 fn diagnostic(call: Option<&Call>) -> bool {
     match call {
-        Some(Call::Commands(_) | Call::RequestStatus(_)) => true,
+        Some(Call::Commands(_) | Call::RequestStatus(_) | Call::Inspect(_)) => true,
         Some(Call::Control { method, .. }) => {
             matches!(method.as_str(), "jobs.list" | "jobs.cancel" | "ui.inspect" | "engine.commands" | "document.inspect" | "recovery.list")
         }
@@ -386,6 +386,7 @@ impl Bridge {
                 return;
             }
             Call::Commands(query) => Ok(agent::commands(app,&query)),
+            Call::Inspect(query) => crate::agent_inspect::inspect(&app.session,&query),
             Call::Import {name,bytes} => agent::import(app,&name,&bytes),
             Call::Export(options) => agent::export(app,&options).and_then(|(bytes,warnings)| {
                 let mut result = json!({"name":options.name,"bytes":bytes.len(),"mimeType":crate::web::mime_for(&options.name),"warnings":warnings,"download":options.download});
