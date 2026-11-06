@@ -31,6 +31,9 @@ mod agent_requests;
 #[cfg(any(target_arch = "wasm32", test))]
 mod recovery_bridge;
 
+#[cfg(test)]
+mod editable_tests;
+
 #[cfg(target_arch = "wasm32")]
 mod indexed_recovery;
 

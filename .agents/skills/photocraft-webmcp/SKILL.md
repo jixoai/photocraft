@@ -1,9 +1,9 @@
 ---
 name: photocraft-webmcp
-description: Operate the PhotoCraft web editor through native WebMCP, with tracked editing requests and safe continuation after browser automation interruptions.
+description: Operate FDE2E Photocraft through native WebMCP, including editable object drawing, local revisions, visual review, checkpoints and safe continuation after browser automation interruptions.
 ---
 
-# PhotoCraft WebMCP
+# FDE2E Photocraft WebMCP
 
 Use the available browser skill to connect to the requested editor. Reuse its existing
 tab/target; inspect before navigating. Do not refresh a user's working canvas to recover
@@ -49,6 +49,15 @@ For multi-step edits, use tracked `photocraft_execute` calls when supported. See
 If tracking is unavailable, execute small ordered chunks, persist the last confirmed
 result, and inspect before retrying any ambiguous mutation. Do not claim exactly-once
 execution across page reloads or transactional rollback of a sequence.
+
+## Draw and revise editable objects
+
+For drawing or revising artwork, read [editable drawing](references/editable-drawing.md).
+Plan semantic objects and overlaps, keep paths/shapes/text editable, and discover the exact
+schemas for `shape.create`, `shape.edit`, `shape.info`, grouping and transforms. Store returned
+IDs, patch only the intended object, verify an unchanged neighbor, undo/redo and project
+roundtrip. Review actual images at composition, silhouette and finishing milestones.
+Do not confuse more primitives, successful calls or many layers with better visual quality.
 
 ## Checkpoint and recover
 

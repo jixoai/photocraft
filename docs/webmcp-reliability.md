@@ -70,10 +70,16 @@ Final rebuilt-browser checks also cover the monotonic autosave scheduler and res
 
 ## 4. Editable drawing workflow
 
-Pending. Prefer existing `shape.create`, `shape.edit`, `shape.info`, groups and transformations
-over rasterizing every object into a small number of broad layers. Stable IDs are obtained
-from results, not guessed. Teach the workflow in a general-purpose skill before adding
-engine features already available in the command registry.
+Implemented as a general-purpose skill using existing commands, not a subject-specific engine
+generator. Semantic decomposition, appropriate live primitives/Bézier paths, grouping/overlap,
+returned IDs, local patches, unchanged-neighbor checks, staged image review and project-copy
+delivery are agent strategy. Precise shape mutation, shared history and editable project
+serialization remain application capabilities and receive real control-path regression tests.
+
+The Web suite revises an explicitly addressed shape without changing its backdrop/accent,
+checks undo/redo against exported PNG bytes, and reopens `.pcraft` at 8/16/32 bits with vector
+types and exported appearance preserved. The reopened object can be edited again. No new
+engine drawing feature or scene template is required for these already-supported operations.
 
 Acceptance: revise one object without reconstructing unrelated objects; verify project
 roundtrip, undo/redo and exported appearance at multiple document bit depths.
