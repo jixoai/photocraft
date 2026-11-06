@@ -272,6 +272,83 @@ This namespaced bridge does not impersonate or polyfill `modelContext`.
 
 ## Files, ordering and cancellation
 
+### Tracked editing and safe continuation
+
+`photocraft_execute` accepts optional paired `requestId` and `instanceId` fields. Without
+them, existing synchronous/waiting behavior is unchanged. With them, the tool **immediately
+returns admission/status**, while the same editor control path executes the edit in order.
+Acknowledgement is not success. This avoids holding a single browser evaluation open while
+a large plan runs.
+
+First discover the current page identity:
+
+```json
+{"method":"requests.status","params":{}}
+```
+
+The result contains `instanceId`, current `tracked` count, `maxRequests` (1024), `maxBytes`
+(16 MiB reserved ledger budget), `maxReplyBytes` (16 KiB) and `persistent: false`. Secure
+browser UUID generation is required; failure disables tracking rather than sharing a
+fallback identity. This identity is not an authentication token.
+
+Submit one edit through `photocraft_execute`:
+
+```json
+{
+  "command":"layer.new.layer",
+  "params":{"name":"foreground object"},
+  "requestId":"unique-plan:step-0001",
+  "instanceId":"<identity returned by requests.status>"
+}
+```
+
+Poll with `photocraft_control`:
+
+```json
+{
+  "method":"requests.status",
+  "params":{"requestId":"unique-plan:step-0001","instanceId":"<same identity>"}
+}
+```
+
+Submission and query results have the same shape:
+
+```json
+{
+  "instanceId":"<same identity>",
+  "requestId":"unique-plan:step-0001",
+  "state":"succeeded",
+  "reply":{"ok":true,"result":{"layer":8}},
+  "replyTruncated":false
+}
+```
+
+States are `queued`, `running`, `succeeded`, `failed` and `unknown`. A normal error whose
+side effects cannot be proven absent is `unknown`; it is terminal for that request ID.
+Stop on either failure state, inspect and reconcile before deciding on another edit.
+Queue/deadline/AbortSignal behavior still applies; aborting an admitted request does not
+automatically allocate a retry. Status queries bypass pending edits and full queues.
+
+Repeating an identical submission returns its existing status **without dispatching again**,
+even when the queue is full. A different command/params under the same ID returns
+`REQUEST_ID_CONFLICT`; an old page identity returns `INSTANCE_MISMATCH`. IDs are page-local,
+case-sensitive, bounded to 128 UTF-8 bytes and are never automatically evicted or reset.
+`LEDGER_FULL` rejects new edits before dispatch. `REQUEST_NOT_FOUND` does not itself authorize
+replay; verify the saved instance and original submission. `TRACKING_UNAVAILABLE` means the
+secure page identity could not be obtained. Oversized completion replies retain state but
+set `replyTruncated: true` and omit `reply`; inspect object IDs/state instead of re-executing
+to obtain a large result. The budget reserves reply space at admission.
+
+This is **at-most-once dispatch within one page instance**, not persistence, an atomic batch,
+or an exactly-once promise across reloads. The ledger does not reverse manual edits/undo or
+track whether an earlier result remains in the current document. After user edits, undo,
+navigation, document switching or recovery, reconcile the plan against the actual document.
+Save the plan, stable step IDs, completed prefix and returned object IDs on the host; use
+short polling windows rather than a long `page.evaluate` loop. A generic reusable workflow
+is provided in [the WebMCP skill](../.agents/skills/photocraft-webmcp/SKILL.md).
+
+### File operations
+
 Import accepts base64 file bytes up to 64 MiB. Use the browser file picker for larger files.
 Export's extension selects the format, including `.pcraft`, PSD/PSB and flat image formats.
 With `download: true`, no base64 response limit applies. Export is a copy and leaves the

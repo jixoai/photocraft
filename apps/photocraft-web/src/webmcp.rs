@@ -15,6 +15,7 @@ use wasm_bindgen::{JsCast as _, JsValue, closure::Closure};
 
 use crate::agent::{self, Call};
 use crate::agent_error::{self, Failure};
+use crate::agent_requests::Ledger;
 
 const MAX_PENDING: usize = 16;
 const MAX_QUEUED_BYTES: usize = agent::MAX_IMPORT_JSON_BYTES;
@@ -22,7 +23,7 @@ const DEADLINE_MS: f64 = 60_000.0;
 
 fn diagnostic(call: Option<&Call>) -> bool {
     match call {
-        Some(Call::Commands(_)) => true,
+        Some(Call::Commands(_) | Call::RequestStatus(_)) => true,
         Some(Call::Control { method, .. }) => matches!(method.as_str(), "jobs.list" | "jobs.cancel" | "ui.inspect" | "engine.commands" | "document.inspect"),
         _ => false,
     }
@@ -81,12 +82,12 @@ fn start_file_job(app: &mut PhotocraftApp, call: Call) -> Result<photocraft_engi
     }
 }
 
-#[derive(Default)]
 struct Queue {
     pending: VecDeque<Pending>,
     /// Includes the active request until its reply settles.
     bytes: usize,
     count: usize,
+    ledger: Ledger,
 }
 
 struct Pending {
@@ -96,6 +97,7 @@ struct Pending {
     signal: Option<web_sys::AbortSignal>,
     admitted: f64,
     bytes: usize,
+    tracked: Option<String>,
 }
 
 struct Active {
@@ -182,13 +184,43 @@ fn prepare(tool: &str, input: JsValue) -> Result<(Call, usize), Failure> {
     Ok((agent::parse(tool, value)?, bytes))
 }
 
+fn page_identity() -> Result<String, JsValue> {
+    let crypto = Reflect::get(&js_sys::global(), &JsValue::from_str("crypto"))?;
+    let uuid = Reflect::get(&crypto, &JsValue::from_str("randomUUID"))?.dyn_into::<Function>()?;
+    uuid.call0(&crypto)?.as_string().filter(|value| !value.is_empty()).ok_or_else(|| error("Secure page identity unavailable"))
+}
+
+fn admit(queue: &mut Queue, mut pending: Pending) -> Result<Option<Value>, Failure> {
+    let tracking = if let Some(Call::Tracked { id, instance, command, params }) = pending.call.as_ref() {
+        let fingerprint = Ledger::fingerprint(command, params)?;
+        if let Some(status) = queue.ledger.existing(instance, id, &fingerprint)? {
+            return Ok(Some(status));
+        }
+        Some((id.clone(), instance.clone(), fingerprint))
+    } else {
+        None
+    };
+    if queue.count >= MAX_PENDING || queue.bytes.saturating_add(pending.bytes) > MAX_QUEUED_BYTES {
+        return Err(busy());
+    }
+    let status = if let Some((id, instance, fingerprint)) = tracking {
+        let status = queue.ledger.reserve(&instance, &id, fingerprint)?;
+        if let Some(Call::Tracked { command, params, .. }) = pending.call.take() {
+            pending.call = Some(Call::Control { method: "engine.execute".into(), params: json!({"command":command,"params":params}) });
+        }
+        pending.tracked = Some(id);
+        Some(status)
+    } else {
+        None
+    };
+    queue.bytes = queue.bytes.saturating_add(pending.bytes);
+    queue.count = queue.count.saturating_add(1);
+    queue.pending.push_back(pending);
+    Ok(status)
+}
+
 fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: JsValue, options: JsValue) -> Promise {
     let prepared = (|| -> Result<_, Failure> {
-        let q = queue.try_borrow().map_err(|_| busy())?;
-        if q.count >= MAX_PENDING {
-            return Err(busy());
-        }
-        drop(q);
         let signal = member(&options, "signal").and_then(|v| v.dyn_into::<web_sys::AbortSignal>().ok());
         if signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) {
             return Err(Failure::interrupted("Cancelled before dispatch; no changes applied", true));
@@ -205,19 +237,34 @@ fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: J
             };
         }
     };
+    if let Call::RequestStatus(status) = &call {
+        let result = queue.try_borrow().map_err(|_| busy()).and_then(|queue| queue.ledger.status(status.instance_id.as_deref(), status.request_id.as_deref()));
+        let reply = result.map_or_else(|failure| failure.reply(), |result| json!({"ok":true,"result":result}));
+        return match js(&reply) {
+            Ok(value) => Promise::resolve(&value),
+            Err(error) => Promise::reject(&error),
+        };
+    }
     let mut call = Some(call);
     Promise::new(&mut |resolve, reject| {
         let Ok(mut q) = queue.try_borrow_mut() else {
             resolve_failure(&resolve, &reject, busy());
             return;
         };
-        if q.count >= MAX_PENDING || q.bytes.saturating_add(bytes) > MAX_QUEUED_BYTES {
-            resolve_failure(&resolve, &reject, busy());
-            return;
+        let pending =
+            Pending { call: call.take(), resolve: resolve.clone(), reject: reject.clone(), signal: signal.clone(), admitted: now(), bytes, tracked: None };
+        match admit(&mut q, pending) {
+            Ok(Some(status)) => match js(&json!({"ok":true,"result":status})) {
+                Ok(value) => {
+                    let _ = resolve.call1(&JsValue::NULL, &value);
+                }
+                Err(error) => {
+                    let _ = reject.call1(&JsValue::NULL, &error);
+                }
+            },
+            Ok(None) => {}
+            Err(failure) => resolve_failure(&resolve, &reject, failure),
         }
-        q.bytes = q.bytes.saturating_add(bytes);
-        q.count = q.count.saturating_add(1);
-        q.pending.push_back(Pending { call: call.take(), resolve, reject, signal: signal.clone(), admitted: now(), bytes });
         ctx.request_repaint();
     })
 }
@@ -225,7 +272,12 @@ fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: J
 impl Bridge {
     pub fn new(ctx: &egui::Context) -> (Self, Receiver<ControlRequest>) {
         let (sender, receiver) = std::sync::mpsc::channel();
-        let bridge = Self { queue: Rc::default(), sender, active: None, auxiliary: Vec::new(), work: None };
+        let instance = page_identity().unwrap_or_else(|error| {
+            log::warn!("Request tracking unavailable: {error:?}");
+            String::new()
+        });
+        let queue = Rc::new(RefCell::new(Queue { pending: VecDeque::new(), bytes: 0, count: 0, ledger: Ledger::new(instance) }));
+        let bridge = Self { queue, sender, active: None, auxiliary: Vec::new(), work: None };
         if let Err(e) = bridge.install(ctx) {
             log::warn!("FDE2E Photocraft WebMCP setup: {e:?}");
         }
@@ -307,6 +359,11 @@ impl Bridge {
             self.finish(pending, Err("Missing browser request".into()));
             return;
         };
+        if let Some(id) = pending.tracked.as_deref()
+            && let Ok(mut queue) = self.queue.try_borrow_mut()
+        {
+            queue.ledger.started(id);
+        }
         if photocraft_engine::background::available() && file_work(&call) {
             match start_file_job(app, call) {
                 Ok(photocraft_engine::jobs::Started::Job(job)) => self.work = Some(Work { pending, job }),
@@ -332,6 +389,7 @@ impl Bridge {
                 else { result["base64"] = json!(base64::engine::general_purpose::STANDARD.encode(bytes)); }
                 Ok(result)
             }),
+            Call::Tracked {..} | Call::RequestStatus(_) => Err("Internal request routing error".into()),
         };
         self.finish(pending, result.map(|result| json!({"ok":true,"result":result})).map_err(Failure::execution));
         ctx.request_repaint();
@@ -388,11 +446,17 @@ impl Bridge {
     }
 
     fn finish(&self, pending: Pending, result: Result<Value, Failure>) {
+        let value = agent_error::enrich(result.unwrap_or_else(|failure| failure.reply()));
         if let Ok(mut q) = self.queue.try_borrow_mut() {
             q.count = q.count.saturating_sub(1);
             q.bytes = q.bytes.saturating_sub(pending.bytes);
+            if let Some(id) = pending.tracked.as_deref() {
+                q.ledger.finish(id, value.clone());
+            }
         }
-        let value = agent_error::enrich(result.unwrap_or_else(|failure| failure.reply()));
+        if pending.tracked.is_some() {
+            return;
+        }
         match js(&value) {
             Ok(value) => {
                 let _ = pending.resolve.call1(&JsValue::NULL, &value);

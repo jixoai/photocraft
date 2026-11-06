@@ -99,7 +99,14 @@ pub fn validate(tool: &str, args: &Value) -> Result<(), Failure> {
         .iter()
         .find(|definition| definition["name"] == tool)
         .ok_or_else(|| Failure::rejected("UNKNOWN_TOOL", "Unknown browser tool", "Discover tools and use an exact registered tool name."))?;
-    validate_node(args, &definition["inputSchema"], "")
+    validate_node(args, &definition["inputSchema"], "")?;
+    if tool == "photocraft_control"
+        && args["method"] == "requests.status"
+        && let Some(params) = args.get("params")
+    {
+        validate_node(params, &definition["inputSchema"]["allOf"][0]["then"]["properties"]["params"], "/params")?;
+    }
+    Ok(())
 }
 
 fn validate_node(value: &Value, schema: &Value, path: &str) -> Result<(), Failure> {
@@ -150,6 +157,7 @@ fn validate_text(value: &Value, schema: &Value, path: &str) -> Result<(), Failur
 }
 
 fn validate_object(value: &Value, schema: &Value, path: &str) -> Result<(), Failure> {
+    validate_dependencies(value, schema, path)?;
     if let Some(fields) = value.as_object() {
         if let Some(required) = schema.get("required").and_then(Value::as_array) {
             for field in required.iter().filter_map(Value::as_str) {
@@ -167,6 +175,22 @@ fn validate_object(value: &Value, schema: &Value, path: &str) -> Result<(), Fail
                     json!({"allowedProperties":schema["properties"].as_object().map(|fields| fields.keys().collect::<Vec<_>>())}),
                     "Unknown argument field",
                 ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_dependencies(value: &Value, schema: &Value, path: &str) -> Result<(), Failure> {
+    let Some(fields) = value.as_object() else { return Ok(()) };
+    let Some(dependencies) = schema.get("dependentRequired").and_then(Value::as_object) else { return Ok(()) };
+    for (trigger, dependencies) in dependencies {
+        if !fields.contains_key(trigger) {
+            continue;
+        }
+        for field in dependencies.as_array().into_iter().flatten().filter_map(Value::as_str) {
+            if !fields.contains_key(field) {
+                return Err(Failure::invalid(pointer(path, field), schema["properties"][field].clone(), format!("{trigger} requires {field}")));
             }
         }
     }

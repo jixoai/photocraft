@@ -23,11 +23,16 @@ update a running tab or an existing release package.
 
 ## 2. Resumable execution
 
-Pending. Start with bounded, time-budgeted client chunks and stop on the first error.
-Add durable execution progress/request identity only with explicit semantics for partial
-completion and safe replay. An outer browser automation timeout does not cancel editor
-work. Existing headless `batch` is not currently exposed by the WebMCP control whitelist;
-do not assume it is a browser transaction or reuse it without checking browser semantics.
+Implemented in source: optional paired request/page IDs on execute, immediate admission,
+out-of-band status queries, bounded completion receipts and duplicate/conflict detection.
+The ledger is page-local and never silently evicts IDs. A new page rejects the old instance;
+unknown outcomes are terminal rather than automatically replayed. This is not durable
+execution state across reloads or a transaction. A reusable WebMCP skill covers host-side
+plan checkpoints, short polling windows and stop-on-error reconciliation.
+
+An outer browser automation timeout does not cancel editor work. Existing headless `batch`
+is not currently exposed by the WebMCP control whitelist; do not assume it is a browser
+transaction or reuse it without checking browser semantics.
 
 Acceptance: interrupt a multi-step edit, query its completed prefix and continue without
 duplicating layers or strokes. Unknown outcomes require inspection, never blind replay.

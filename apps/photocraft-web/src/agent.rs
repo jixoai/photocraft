@@ -36,6 +36,7 @@ pub const CONTROL_METHODS: &[&str] = &[
     "ui.type",
     "ui.screenshot",
     "app.save",
+    "requests.status",
 ];
 
 pub const TOOL_NAMES: &[&str] =
@@ -45,10 +46,26 @@ fn object(properties: Value, required: &[&str]) -> Value {
     json!({"type":"object", "properties":properties, "required":required, "additionalProperties":false})
 }
 
+fn control_schema() -> Value {
+    let mut schema = object(json!({"method":{"type":"string","enum":CONTROL_METHODS},"params":{"type":"object"}}), &["method"]);
+    let mut status = object(
+        json!({
+            "requestId":{"type":"string","minLength":1,"maxLength":128},
+            "instanceId":{"type":"string","minLength":1,"maxLength":128}
+        }),
+        &[],
+    );
+    status["dependentRequired"] = json!({"requestId":["instanceId"]});
+    schema["allOf"] = json!([{
+        "if":{"properties":{"method":{"const":"requests.status"}},"required":["method"]},
+        "then":{"properties":{"params":status}}
+    }]);
+    schema
+}
+
 /// A small, stable tool surface exposes the entire evolving registry without registering
 /// thousands of callbacks or sending thousands of command descriptions to every agent turn.
 pub fn tools() -> Vec<Value> {
-    let any_object = json!({"type":"object"});
     let entries = [
         (
             TOOL_NAMES[0],
@@ -65,7 +82,7 @@ pub fn tools() -> Vec<Value> {
             "Execute FDE2E Photocraft command",
             "Run an engine or UI command by exact id in the active document. First call photocraft_commands and construct params from that command's inputSchema, not its JSON-like legacy params string. Check schema coverage and enabled/disabledReason; partial schemas are guidance, not complete validation. Changes share the user's undo history. Check ok, not Promise resolution. Failures include errorInfo.execution and retrySafe; unknown execution requires inspection before replay because work may already have applied. retrySafe is duplicate-edit safety, not an instruction to automatically retry unchanged arguments. Import with photocraft_import; export PNG/project copies with photocraft_export. Native-only commands return errors.",
             object(
-                json!({"command":{"type":"string","minLength":1,"maxLength":256,"description":"Exact discovered command id, e.g. shape.create; not a menu label."},"params":{"type":"object","description":"Command-specific parameters matching the entry's inputSchema from photocraft_commands. Omit for an empty object. Coordinates/opacity units are command-specific; do not assume CSS pixels or percentages."}}),
+                json!({"command":{"type":"string","minLength":1,"maxLength":256,"description":"Exact discovered command id, e.g. shape.create; not a menu label."},"params":{"type":"object","description":"Command-specific parameters matching the entry's inputSchema from photocraft_commands. Omit for an empty object. Coordinates/opacity units are command-specific; do not assume CSS pixels or percentages."},"requestId":{"type":"string","minLength":1,"maxLength":128,"description":"Optional unique step ID. Requires instanceId; returns an admission/status acknowledgement, not completion. Resubmitting identical arguments never executes this step twice within the same page instance."},"instanceId":{"type":"string","minLength":1,"maxLength":128,"description":"Required with requestId. Obtain from photocraft_control requests.status. A new page invalidates the old instance; reconcile before replaying."}}),
                 &["command"],
             ),
             false,
@@ -80,8 +97,8 @@ pub fn tools() -> Vec<Value> {
         (
             TOOL_NAMES[3],
             "Control FDE2E Photocraft interface",
-            "Drive menus, dialogs, tools, pen strokes, keyboard, view state and screenshots through the same control protocol as the desktop. ui.screenshot returns PNG data without a filesystem path; app.save requires a download filename. Pointer coordinates are document pixels; click coordinates are CSS/egui points.",
-            object(json!({"method":{"type":"string","enum":CONTROL_METHODS},"params":any_object}), &["method"]),
+            "Drive menus, dialogs, tools, pen strokes, keyboard, view state and screenshots through the same control protocol as the desktop. requests.status with empty params returns the page instanceId and tracking limits; params {instanceId,requestId} queries one admitted edit without waiting behind it. Tracked execute acknowledgements are not completion: require state=succeeded before the next dependent edit. Stop on failed/unknown. ui.screenshot returns PNG data without a filesystem path; app.save requires a download filename. Pointer coordinates are document pixels; click coordinates are CSS/egui points.",
+            control_schema(),
             false,
         ),
         (
@@ -107,7 +124,10 @@ pub fn tools() -> Vec<Value> {
     ];
     entries
         .into_iter()
-        .map(|(name, title, description, schema, read_only)| {
+        .map(|(name, title, description, mut schema, read_only)| {
+            if name == "photocraft_execute" {
+                schema["dependentRequired"] = json!({"requestId":["instanceId"],"instanceId":["requestId"]});
+            }
             json!({
                 "name":name,"title":title,"description":description,"inputSchema":schema,
                 "annotations":{"readOnlyHint":read_only}
@@ -140,6 +160,17 @@ struct Execute {
     command: String,
     #[serde(default = "empty_object")]
     params: Value,
+    #[serde(rename = "requestId")]
+    request_id: Option<String>,
+    #[serde(rename = "instanceId")]
+    instance_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct RequestStatus {
+    pub request_id: Option<String>,
+    pub instance_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -172,6 +203,8 @@ pub enum Call {
     Control { method: String, params: Value },
     Import { name: String, bytes: Vec<u8> },
     Export(Export),
+    Tracked { id: String, instance: String, command: String, params: Value },
+    RequestStatus(RequestStatus),
 }
 
 fn decode<T: serde::de::DeserializeOwned>(value: Value) -> Result<T, Failure> {
@@ -200,11 +233,41 @@ pub fn parse(tool: &str, args: Value) -> Result<Call, Failure> {
             if p.command.is_empty() || p.command.len() > 256 {
                 return Err(Failure::invalid("/command", json!({"minBytes":1,"maxBytes":256}), "command must contain 1–256 UTF-8 bytes"));
             }
+            if p.request_id.is_some() || p.instance_id.is_some() {
+                let id = p
+                    .request_id
+                    .ok_or_else(|| Failure::invalid("/requestId", json!({"type":"string"}), "requestId and instanceId must be supplied together"))?;
+                let instance = p
+                    .instance_id
+                    .ok_or_else(|| Failure::invalid("/instanceId", json!({"type":"string"}), "requestId and instanceId must be supplied together"))?;
+                for (field, value) in [("requestId", &id), ("instanceId", &instance)] {
+                    if value.len() > 128 {
+                        return Err(Failure::invalid(format!("/{field}"), json!({"maxBytes":128}), "Request identity must be at most 128 UTF-8 bytes"));
+                    }
+                }
+                return Ok(Call::Tracked { id, instance, command: p.command, params: p.params });
+            }
             Ok(Call::Control { method: "engine.execute".into(), params: json!({"command":p.command,"params":p.params}) })
         }
         "photocraft_inspect" => Ok(Call::Control { method: "ui.inspect".into(), params: args }),
         "photocraft_control" => {
             let p: Control = decode(args)?;
+            if p.method == "requests.status" {
+                let status: RequestStatus = decode(p.params)?;
+                if status.request_id.is_some() && status.instance_id.is_none() {
+                    return Err(Failure::invalid("/params/instanceId", json!({"type":"string"}), "An individual request query requires its page instanceId"));
+                }
+                for (field, value) in [("requestId", &status.request_id), ("instanceId", &status.instance_id)] {
+                    if value.as_ref().is_some_and(|value| value.is_empty() || value.len() > 128) {
+                        return Err(Failure::invalid(
+                            format!("/params/{field}"),
+                            json!({"minBytes":1,"maxBytes":128}),
+                            "Request identity must contain 1–128 UTF-8 bytes",
+                        ));
+                    }
+                }
+                return Ok(Call::RequestStatus(status));
+            }
             if p.method == "ui.screenshot" && p.params.get("path").is_some_and(|v| !v.is_null()) {
                 return Err(Failure::invalid("/params/path", json!({"type":"null"}), "Browser screenshots return PNG data; omit path"));
             }
@@ -431,6 +494,70 @@ mod tests {
             let reply = parse(tool, args).unwrap_err().reply();
             assert_eq!(reply["errorInfo"]["path"], path);
             assert_eq!(reply["errorInfo"]["execution"], "not_started");
+        }
+    }
+
+    #[test]
+    fn tracked_requests_parse_without_changing_legacy_execution() {
+        let Call::Tracked { id, instance, command, params } = parse(
+            "photocraft_execute",
+            json!({
+                "requestId":"plan:1","instanceId":"page-a","command":"layer.new.layer","params":{"name":"object"}
+            }),
+        )
+        .unwrap() else {
+            panic!("tracked")
+        };
+        assert_eq!((id.as_str(), instance.as_str(), command.as_str()), ("plan:1", "page-a", "layer.new.layer"));
+        assert_eq!(params["name"], "object");
+        let Call::RequestStatus(status) =
+            parse("photocraft_control", json!({"method":"requests.status","params":{"requestId":"plan:1","instanceId":"page-a"}})).unwrap()
+        else {
+            panic!("status")
+        };
+        assert_eq!(status.request_id.as_deref(), Some("plan:1"));
+        assert_eq!(status.instance_id.as_deref(), Some("page-a"));
+        assert!(parse("photocraft_control", json!({"method":"requests.status"})).is_ok());
+        for args in [
+            json!({"command":"file.new","requestId":"plan:1"}),
+            json!({"command":"file.new","instanceId":"page-a"}),
+            json!({"command":"file.new","instanceId":"page-a","requestId":"中".repeat(128)}),
+        ] {
+            assert!(parse("photocraft_execute", args).is_err());
+        }
+        assert!(parse("photocraft_control", json!({"method":"requests.status","params":{"requestId":"plan:1"}})).is_err());
+        assert!(parse("photocraft_control", json!({"method":"requests.status","params":{"unused":true}})).is_err());
+        assert!(parse("photocraft_control", json!({"method":"requests.status","params":{"requestId":null}})).is_err());
+    }
+
+    #[test]
+    fn interrupted_client_resumes_a_command_prefix_without_duplicate_layers() {
+        let mut app = app();
+        app.run("file.new", json!({"width":32,"height":24})).unwrap();
+        let ctx = egui::Context::default();
+        let mut ledger = crate::agent_requests::Ledger::new("page-a".into());
+        let mut dispatched = 0usize;
+        for prefix in [1, 2, 2] {
+            for index in 0..prefix {
+                let id = format!("plan:{index}");
+                let params = json!({"name":format!("object-{index}")});
+                let fingerprint = crate::agent_requests::Ledger::fingerprint("layer.new.layer", &params).unwrap();
+                if ledger.existing("page-a", &id, &fingerprint).unwrap().is_some() {
+                    continue;
+                }
+                ledger.reserve("page-a", &id, fingerprint).unwrap();
+                ledger.started(&id);
+                let (request, _) = ControlRequest::new("engine.execute", json!({"command":"layer.new.layer","params":params}));
+                let Outcome::Done(reply) = photocraft_ui_egui::control::handle(&mut app, &ctx, &request) else { panic!("synchronous") };
+                ledger.finish(&id, crate::agent_error::enrich(reply));
+                dispatched += 1;
+            }
+        }
+        assert_eq!(dispatched, 2);
+        let doc = &app.session.active().unwrap().doc;
+        for index in 0..2 {
+            assert_eq!(doc.layers.iter().filter(|layer| layer.name == format!("object-{index}")).count(), 1);
+            assert_eq!(ledger.status(Some("page-a"), Some(&format!("plan:{index}"))).unwrap()["state"], "succeeded");
         }
     }
 
