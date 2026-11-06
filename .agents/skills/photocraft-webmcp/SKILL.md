@@ -50,6 +50,20 @@ If tracking is unavailable, execute small ordered chunks, persist the last confi
 result, and inspect before retrying any ambiguous mutation. Do not claim exactly-once
 execution across page reloads or transactional rollback of a sequence.
 
+## Checkpoint and recover
+
+Use `photocraft_control` `recovery.checkpoint` between completed milestones, then poll
+`recovery.list` for the matching entry revision with no pending/queued operation or error.
+An admission is not a committed checkpoint. Browser storage can be blocked or evicted;
+also export `.pcraft` at important milestones. Never clear storage to fix an error.
+
+After an intentional reload, list available snapshots and explicitly restore the selected
+key using `recovery.restore`. It opens a new dirty copy and retains the source. Poll for
+`restored[key]`, inspect the document and obtain the new request instance before replanning.
+Do not replay old receipts. Discard requires `confirm: true`; do not delete another tab's
+snapshot or retry an ambiguous restore with a different key. Restore is not undo-history
+recovery. A new origin/profile cannot see the previous origin's checkpoints.
+
 ## Preserve the result
 
 Deliver artwork PNG separately from the editor screenshot. Export `.pcraft` when editable

@@ -24,7 +24,9 @@ const DEADLINE_MS: f64 = 60_000.0;
 fn diagnostic(call: Option<&Call>) -> bool {
     match call {
         Some(Call::Commands(_) | Call::RequestStatus(_)) => true,
-        Some(Call::Control { method, .. }) => matches!(method.as_str(), "jobs.list" | "jobs.cancel" | "ui.inspect" | "engine.commands" | "document.inspect"),
+        Some(Call::Control { method, .. }) => {
+            matches!(method.as_str(), "jobs.list" | "jobs.cancel" | "ui.inspect" | "engine.commands" | "document.inspect" | "recovery.list")
+        }
         _ => false,
     }
 }
@@ -117,6 +119,7 @@ pub struct Bridge {
     active: Option<Active>,
     auxiliary: Vec<Active>,
     work: Option<Work>,
+    recovery: crate::recovery_bridge::Bridge,
 }
 
 fn now() -> f64 {
@@ -184,7 +187,7 @@ fn prepare(tool: &str, input: JsValue) -> Result<(Call, usize), Failure> {
     Ok((agent::parse(tool, value)?, bytes))
 }
 
-fn page_identity() -> Result<String, JsValue> {
+pub(crate) fn page_identity() -> Result<String, JsValue> {
     let crypto = Reflect::get(&js_sys::global(), &JsValue::from_str("crypto"))?;
     let uuid = Reflect::get(&crypto, &JsValue::from_str("randomUUID"))?.dyn_into::<Function>()?;
     uuid.call0(&crypto)?.as_string().filter(|value| !value.is_empty()).ok_or_else(|| error("Secure page identity unavailable"))
@@ -270,14 +273,14 @@ fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: J
 }
 
 impl Bridge {
-    pub fn new(ctx: &egui::Context) -> (Self, Receiver<ControlRequest>) {
+    pub fn new(ctx: &egui::Context, recovery: crate::recovery_bridge::Bridge) -> (Self, Receiver<ControlRequest>) {
         let (sender, receiver) = std::sync::mpsc::channel();
         let instance = page_identity().unwrap_or_else(|error| {
             log::warn!("Request tracking unavailable: {error:?}");
             String::new()
         });
         let queue = Rc::new(RefCell::new(Queue { pending: VecDeque::new(), bytes: 0, count: 0, ledger: Ledger::new(instance) }));
-        let bridge = Self { queue, sender, active: None, auxiliary: Vec::new(), work: None };
+        let bridge = Self { queue, sender, active: None, auxiliary: Vec::new(), work: None, recovery };
         if let Err(e) = bridge.install(ctx) {
             log::warn!("FDE2E Photocraft WebMCP setup: {e:?}");
         }
@@ -373,6 +376,7 @@ impl Bridge {
             return;
         }
         let result = match call {
+            Call::Control {method,params} if method.starts_with("recovery.") => self.recovery.control(&app.session, &method, &params),
             Call::Control {method,params} => {
                 let (request,receiver) = ControlRequest::new(method,params);
                 let dispatch = request.dispatch.clone();

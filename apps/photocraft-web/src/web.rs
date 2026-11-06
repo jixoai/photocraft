@@ -87,6 +87,7 @@ pub fn start() {
                 (None, bridge, Vec::new())
             }
         };
+        let recovery = crate::web_recovery::Recovery::load().await;
         let pen_target = canvas.clone();
         let result = eframe::WebRunner::new()
             .start(
@@ -102,9 +103,16 @@ pub fn start() {
                     let (session, warnings) = crate::preset_bridge::session(presets.clone());
                     preset_warnings.extend(warnings);
                     let drag = listen_drag(&pen_target);
-                    let mut app = PhotocraftApp::new(session, services(inbox.clone(), place_inbox.clone(), drag_pos_service(pen_target.clone(), drag)));
+                    let mut platform = services(inbox.clone(), place_inbox.clone(), drag_pos_service(pen_target.clone(), drag));
+                    let save = recovery.bridge.clone();
+                    platform.autosave = Some(Box::new(move |document, revision, _| save.save(document, revision).map(|_| ())));
+                    let results = recovery.bridge.clone();
+                    platform.autosave_results = Some(Box::new(move || results.results()));
+                    let discard = recovery.bridge.clone();
+                    platform.discard_autosave = Some(Box::new(move |document| discard.discard_document(document)));
+                    let mut app = PhotocraftApp::new(session, platform);
                     app.background_jobs = photocraft_engine::background::available();
-                    let (agents, control) = crate::webmcp::Bridge::new(&cc.egui_ctx);
+                    let (agents, control) = crate::webmcp::Bridge::new(&cc.egui_ctx, recovery.bridge.clone());
                     app = app.with_control(control);
                     if !preset_warnings.is_empty() {
                         photocraft_ui_egui::notices::post(&mut app, i18n::t("Some brush presets could not be loaded"), preset_warnings, true, None);
@@ -119,7 +127,7 @@ pub fn start() {
                     }
                     let unsaved = Arc::new(AtomicBool::new(false));
                     guard_unload(unsaved.clone());
-                    Ok(Box::new(WebShell { app, agents, inbox, place_inbox, unsaved, served, database, presets, ui_language: "" }))
+                    Ok(Box::new(WebShell { app, agents, inbox, place_inbox, unsaved, served, database, presets, recovery, ui_language: "" }))
                 }),
             )
             .await;
@@ -300,6 +308,7 @@ struct WebShell {
     served: Served,
     database: Option<web_sys::IdbDatabase>,
     presets: crate::preset_bridge::Bridge,
+    recovery: crate::web_recovery::Recovery,
     /// The interface language whose served script font was last asked for.
     ui_language: &'static str,
 }
@@ -398,13 +407,66 @@ impl eframe::App for WebShell {
         }
         self.serve_fonts(ctx);
         self.agents.dispatch(&mut self.app, ctx);
+        self.recovery.schedule(&mut self.app, ctx);
         self.app.logic_frame(ctx, frame);
+        self.recovery.tick(&mut self.app, ctx);
+        if self.app.ui.views.len() != self.app.session.documents().len() {
+            self.app.sync_views();
+        }
         self.agents.settle(&mut self.app, ctx);
         self.save_presets(ctx);
         self.app.finish_type_reset_logic(ctx);
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        egui::Panel::top("browser_document_recovery").show(ui, |ui| {
+            let bridge = &self.recovery.bridge;
+            ui.collapsing(i18n::t("Browser document recovery"), |ui| {
+                ui.label(i18n::t("Recovery snapshots stay in this browser, not in your downloads. Export a project copy for a durable backup."));
+                ui.horizontal_wrapped(|ui| {
+                    if ui
+                        .add_enabled(self.recovery.database.is_some() && self.app.session.active().is_some(), egui::Button::new(i18n::t("Checkpoint now")))
+                        .clicked()
+                        && let Err(error) = bridge.control(&self.app.session, "recovery.checkpoint", &serde_json::json!({}))
+                    {
+                        bridge.unavailable(error);
+                    }
+                    if self.recovery.database.is_some() && ui.button(i18n::t("Retry recovery storage")).clicked() {
+                        bridge.retry();
+                    }
+                });
+                egui::ScrollArea::vertical().max_height(ui.spacing().interact_size.y * 6.0).show(ui, |ui| {
+                    for entry in bridge.recoverable() {
+                        ui.push_id(&entry.key, |ui| {
+                            ui.horizontal_wrapped(|ui| {
+                                ui.label(format!("{} · {} KiB", entry.name, entry.bytes.div_ceil(1024)));
+                                if ui.button(i18n::t("Restore copy")).clicked()
+                                    && let Err(error) = bridge.request(&entry.key, true)
+                                {
+                                    bridge.unavailable(error);
+                                }
+                                ui.menu_button(i18n::t("Discard…"), |ui| {
+                                    ui.label(i18n::t("This permanently deletes the stored snapshot, not an open document."));
+                                    if ui.button(i18n::t("Delete snapshot permanently")).clicked() {
+                                        if let Err(error) = bridge.request(&entry.key, false) {
+                                            bridge.unavailable(error);
+                                        }
+                                        ui.close();
+                                    }
+                                });
+                            });
+                        });
+                    }
+                });
+            });
+            if let Some(error) = bridge.error() {
+                let tokens = photocraft_ui_egui::theme::Tokens::for_kind(self.app.ui.theme);
+                ui.colored_label(
+                    tokens.warning,
+                    i18n::fmt(i18n::t("Document recovery unavailable: {error}. Keep this tab open and export your work."), &[("error", &error)]),
+                );
+            }
+        });
         // Only while a preset change is unsaved. Storage the browser denies from the start (a
         // sandboxed iframe, blocked site data) loses nothing until the first change, and that
         // change brings the banner with the reason.

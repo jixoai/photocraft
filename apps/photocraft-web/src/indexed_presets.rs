@@ -42,12 +42,12 @@ impl Drop for Listeners {
     }
 }
 
-struct Pending {
-    promise: Promise,
+pub(crate) struct Pending {
+    pub(crate) promise: Promise,
     _listeners: Listeners,
 }
 
-fn request(request: &IdbRequest) -> Pending {
+pub(crate) fn request(request: &IdbRequest) -> Pending {
     let mut listeners = Listeners::new();
     let promise = Promise::new(&mut |resolve, reject| {
         let req = request.clone();
@@ -74,8 +74,31 @@ fn request(request: &IdbRequest) -> Pending {
     Pending { promise, _listeners: listeners }
 }
 
+pub(crate) fn transaction(tx: &web_sys::IdbTransaction) -> Pending {
+    let mut listeners = Listeners::new();
+    let target: EventTarget = tx.clone().into();
+    let promise = Promise::new(&mut |resolve, reject| {
+        if let Err(error) = listeners.add(&target, "complete", move |_| {
+            let _ = resolve.call0(&JsValue::NULL);
+        }) {
+            let _ = reject.call1(&JsValue::NULL, &error);
+        }
+        for event in ["abort", "error"] {
+            let failed = reject.clone();
+            let tx = tx.clone();
+            if let Err(error) = listeners.add(&target, event, move |_| {
+                let error = tx.error().map(JsValue::from).unwrap_or_else(|| JsValue::from_str("Recovery transaction aborted"));
+                let _ = failed.call1(&JsValue::NULL, &error);
+            }) {
+                let _ = reject.call1(&JsValue::NULL, &error);
+            }
+        }
+    });
+    Pending { promise, _listeners: listeners }
+}
+
 /// A single deadline bounds the whole startup read, not ten seconds per record.
-async fn before(promise: &Promise, deadline: f64) -> Result<JsValue, String> {
+pub(crate) async fn before(promise: &Promise, deadline: f64) -> Result<JsValue, String> {
     let window = web_sys::window().ok_or("no window")?;
     let mut timer = None;
     let mut callback = None;
@@ -97,8 +120,12 @@ async fn before(promise: &Promise, deadline: f64) -> Result<JsValue, String> {
 }
 
 async fn open(deadline: f64) -> Result<IdbDatabase, String> {
+    open_database(DATABASE, deadline).await
+}
+
+pub(crate) async fn open_database(database: &str, deadline: f64) -> Result<IdbDatabase, String> {
     let factory = web_sys::window().ok_or("no window")?.indexed_db().map_err(js)?.ok_or("IndexedDB unavailable")?;
-    let req = factory.open_with_u32(DATABASE, 1).map_err(js)?;
+    let req = factory.open_with_u32(database, 1).map_err(js)?;
     let mut upgrade = Listeners::new();
     let upgrade_req = req.clone();
     upgrade

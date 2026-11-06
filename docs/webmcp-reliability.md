@@ -39,12 +39,34 @@ duplicating layers or strokes. Unknown outcomes require inspection, never blind 
 
 ## 3. Web document recovery
 
-Pending. IndexedDB currently persists presets, not a document-recovery checkpoint stream.
-Define bounded storage, dirty-state semantics, retention, quota errors and explicit restore
-selection before adding checkpoints. A changed browser task/tab is not proof of an app crash.
+Implemented: atomic IndexedDB `.pcraft` + metadata checkpoints, separate from brush presets.
+The existing autosave service checks dirty revisions every 30 seconds while autosave is on;
+the browser may throttle background tabs. Manual `recovery.checkpoint` is also available.
+Acknowledgements mean queued, not durable: poll `recovery.list` for the matching revision,
+an empty pending/queued set and no error. Encoding uses the engine job path and COW snapshots.
+
+Storage is capped at 16 documents, 64 MiB per project and 256 MiB total, including metadata.
+No silent eviction. Quota/denial/timeout keeps the old atomic checkpoint and the live editor;
+the recovery panel warns the user to export. Browser eviction or cleared site data can still
+remove checkpoints; they are not a substitute for downloaded project copies.
+
+Every page owns unique snapshot keys. Explicit restore creates a fresh, dirty document copy,
+keeps the original stored snapshot and synchronizes editor views before rendering. Closing
+the copy never automatically removes another page's source. Owned snapshots are removed when
+their document is saved or closed; foreign entries require explicit confirmed deletion.
+The catalog is loaded at startup; another tab's later writes are discovered on a new page.
+Recovery does not revive the old page-local execution ledger or authorize replaying an old plan.
 
 Acceptance: reload an isolated test document and restore the latest completed checkpoint;
 storage failures must leave the current document usable and visible to the user.
+
+Verified on an isolated local origin: all six native `document.modelContext` tools registered,
+a 16-bit vector checkpoint survived reload and opened as a dirty editable copy, and an injected
+second-record quota exception retained the old stored metadata/revision while the live shape
+remained editable. Explicit retry completed a later checkpoint. Browser testing found and fixed
+a missing view synchronization after inline restore. Native recovery regressions include the
+status-bar render, ownership, ordered cleanup, validation and 8/16/32-bit project roundtrips.
+Final rebuilt-browser checks also cover the monotonic autosave scheduler and restored name.
 
 ## 4. Editable drawing workflow
 

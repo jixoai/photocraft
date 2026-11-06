@@ -272,6 +272,38 @@ This namespaced bridge does not impersonate or polyfill `modelContext`.
 
 ## Files, ordering and cancellation
 
+### Browser document recovery
+
+Browser-local recovery uses IndexedDB, independently of brush preset storage and request
+receipts. With autosave enabled, dirty revisions are considered every 30 seconds (background
+tabs can be throttled). Open **Browser document recovery** above the menu bar for manual
+checkpoints, restore-copy selection and confirmed deletion. The same operations are available
+through `photocraft_control`:
+
+```json
+{"method":"recovery.list","params":{}}
+{"method":"recovery.checkpoint","params":{}}
+{"method":"recovery.restore","params":{"key":"<exact key from recovery.list>"}}
+{"method":"recovery.discard","params":{"key":"<exact key>","confirm":true}}
+{"method":"recovery.retry","params":{}}
+```
+
+Mutations return admission, not completion. Poll `recovery.list`: require no `pending` or
+`queued` key, no `error`, and the saved entry's expected `revision` or a `restored[key]`
+document ID. Snapshots are complete editable `.pcraft` documents, not rendered PNGs. Restore
+always opens a dirty copy with a fresh document ID and retains the source. Saving/closing a
+document only automatically deletes checkpoints owned by this page; foreign snapshots need
+explicit discard. The catalog is hydrated at page startup, not continuously across tabs.
+
+Limits: 16 document pairs, 64 MiB per project, 4 KiB metadata and 256 MiB total. Replacement
+and quota checks share one read/write transaction, including across tabs. Failure retains
+the previous committed snapshot; nothing is silently evicted to make room. `recovery.retry`
+clears the visible error for another explicit attempt, but cannot grant blocked storage.
+Export your document before troubleshooting an unavailable database. Site-data clearing,
+browser eviction and a different origin/profile can make recovery unavailable. A checkpoint
+does not mark the document saved, verify a download, persist undo history or restore request
+receipts. After a reload, inspect and reconcile the restored document before continuing edits.
+
 ### Tracked editing and safe continuation
 
 `photocraft_execute` accepts optional paired `requestId` and `instanceId` fields. Without
@@ -369,7 +401,7 @@ by another browser event while it occupies the main thread in the compatibility 
 workers, registry/inspection queries and `jobs.cancel` can bypass a waiting edit, so an agent can
 observe progress and cancel without waiting behind the operation it wants to stop. Edits remain
 ordered. File import/export runs on a document snapshot in a worker; cancelled imports never
-add their document and cancelled exports never trigger a download. There is no idle polling timer.
+add their document and cancelled exports never trigger a download. The WebMCP transport adds no idle polling timer; browser recovery separately schedules its 30-second autosave checks.
 
 ## Performance and limits
 

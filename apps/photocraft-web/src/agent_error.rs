@@ -101,10 +101,13 @@ pub fn validate(tool: &str, args: &Value) -> Result<(), Failure> {
         .ok_or_else(|| Failure::rejected("UNKNOWN_TOOL", "Unknown browser tool", "Discover tools and use an exact registered tool name."))?;
     validate_node(args, &definition["inputSchema"], "")?;
     if tool == "photocraft_control"
-        && args["method"] == "requests.status"
-        && let Some(params) = args.get("params")
+        && let Some(conditions) = definition["inputSchema"]["allOf"].as_array()
     {
-        validate_node(params, &definition["inputSchema"]["allOf"][0]["then"]["properties"]["params"], "/params")?;
+        for condition in conditions {
+            if args["method"] == condition["if"]["properties"]["method"]["const"] {
+                validate_node(args.get("params").unwrap_or(&json!({})), &condition["then"]["properties"]["params"], "/params")?;
+            }
+        }
     }
     Ok(())
 }

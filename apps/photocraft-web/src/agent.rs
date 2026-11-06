@@ -37,6 +37,11 @@ pub const CONTROL_METHODS: &[&str] = &[
     "ui.screenshot",
     "app.save",
     "requests.status",
+    "recovery.list",
+    "recovery.checkpoint",
+    "recovery.restore",
+    "recovery.discard",
+    "recovery.retry",
 ];
 
 pub const TOOL_NAMES: &[&str] =
@@ -60,6 +65,24 @@ fn control_schema() -> Value {
         "if":{"properties":{"method":{"const":"requests.status"}},"required":["method"]},
         "then":{"properties":{"params":status}}
     }]);
+    if let Some(conditions) = schema["allOf"].as_array_mut() {
+        for method in ["recovery.list", "recovery.checkpoint", "recovery.restore", "recovery.discard", "recovery.retry"] {
+            let keyed = matches!(method, "recovery.restore" | "recovery.discard");
+            let mut fields = json!({});
+            let mut required = Vec::new();
+            if keyed {
+                fields["key"] = json!({"type":"string","minLength":1,"maxLength":128,"pattern":"^[A-Za-z0-9_-]+$","description":"Exact snapshot key from recovery.list; restore creates a new dirty document and retains the original snapshot."});
+                required.push("key");
+            }
+            if method == "recovery.discard" {
+                fields["confirm"] = json!({"type":"boolean","enum":[true],"description":"Explicit permission to permanently delete this stored snapshot, not the open document."});
+                required.push("confirm");
+            }
+            conditions.push(
+                json!({"if":{"properties":{"method":{"const":method}},"required":["method"]},"then":{"properties":{"params":object(fields, &required)}}}),
+            );
+        }
+    }
     schema
 }
 
@@ -97,7 +120,7 @@ pub fn tools() -> Vec<Value> {
         (
             TOOL_NAMES[3],
             "Control FDE2E Photocraft interface",
-            "Drive menus, dialogs, tools, pen strokes, keyboard, view state and screenshots through the same control protocol as the desktop. requests.status with empty params returns the page instanceId and tracking limits; params {instanceId,requestId} queries one admitted edit without waiting behind it. Tracked execute acknowledgements are not completion: require state=succeeded before the next dependent edit. Stop on failed/unknown. ui.screenshot returns PNG data without a filesystem path; app.save requires a download filename. Pointer coordinates are document pixels; click coordinates are CSS/egui points.",
+            "Drive menus, dialogs, tools, pen strokes, keyboard, view state and screenshots through the same control protocol as the desktop. requests.status with empty params returns the page instanceId and tracking limits; params {instanceId,requestId} queries one admitted edit without waiting behind it. Tracked execute acknowledgements are not completion: require state=succeeded before the next dependent edit. Stop on failed/unknown. recovery.list returns browser-local checkpoints, pending/queued keys, restored document IDs and error. recovery.checkpoint queues the active document; recovery.restore {key} opens a dirty copy and retains the source; recovery.discard {key,confirm:true} permanently deletes that stored snapshot. Poll recovery.list after admissions, require no pending/queued key, no error and matching entry revision/restored ID; browser storage may be denied or evicted, so also export a project. recovery.retry clears the error for an explicit retry, not a reload. ui.screenshot returns PNG data without a filesystem path; app.save requires a download filename. Pointer coordinates are document pixels; click coordinates are CSS/egui points.",
             control_schema(),
             false,
         ),
@@ -252,6 +275,14 @@ pub fn parse(tool: &str, args: Value) -> Result<Call, Failure> {
         "photocraft_inspect" => Ok(Call::Control { method: "ui.inspect".into(), params: args }),
         "photocraft_control" => {
             let p: Control = decode(args)?;
+            if matches!(p.method.as_str(), "recovery.restore" | "recovery.discard") && !p.params["key"].as_str().is_some_and(crate::recovery_bridge::valid_key)
+            {
+                return Err(Failure::invalid(
+                    "/params/key",
+                    json!({"pattern":"^[A-Za-z0-9_-]+$","maxLength":128}),
+                    "Use an exact recovery key from recovery.list",
+                ));
+            }
             if p.method == "requests.status" {
                 let status: RequestStatus = decode(p.params)?;
                 if status.request_id.is_some() && status.instance_id.is_none() {
