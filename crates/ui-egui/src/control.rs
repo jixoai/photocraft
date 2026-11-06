@@ -116,7 +116,11 @@ impl Dispatch {
     /// The transport stops waiting: the error to reply with, [`expired_error`] when the command
     /// can no longer run and [`timeout_error`] when it was dispatched and may still apply.
     pub fn give_up(&self) -> String {
-        if self.settle(ABANDONED) == DISPATCHED { timeout_error() } else { expired_error() }
+        if self.abandon_before_dispatch() { expired_error() } else { timeout_error() }
+    }
+
+    pub fn abandon_before_dispatch(&self) -> bool {
+        self.settle(ABANDONED) != DISPATCHED
     }
 
     /// Moves a queued request to `to`; returns the state it ends in.

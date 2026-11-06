@@ -85,7 +85,71 @@ const response = JSON.parse(await context.executeTool(execute, {
 ```
 
 Responses use the editor's `{ok: true, result: ...}` or `{ok: false, error: ...}` envelope.
-Invalid tool arguments reject the execution before editing. Do not infer success from a
+
+### Structured error diagnostics
+
+Application-controlled failures preserve the string `error` for existing integrations and
+add `errorInfo`. Argument validation happens before queue admission or editing:
+
+```json
+{
+  "ok": false,
+  "error": "/limit: maximum is 200",
+  "errorInfo": {
+    "code": "INVALID_ARGUMENTS",
+    "message": "/limit: maximum is 200",
+    "execution": "not_started",
+    "retrySafe": true,
+    "hint": "Correct the indicated field using the tool inputSchema, then retry.",
+    "path": "/limit",
+    "expected": {"type": "integer", "minimum": 1, "maximum": 200, "default": 50}
+  }
+}
+```
+
+`path` is a JSON Pointer (empty for the root). `expected` contains the relevant constraint;
+semantic filename, UTF-8 byte and decoded-file limits may use diagnostic keys such as
+`maxBytes` or `maxDecodedBytes`, rather than a complete JSON Schema. Neither field is
+required for execution/transport failures.
+
+| `errorInfo.code` | Meaning |
+| --- | --- |
+| `INVALID_ARGUMENTS` | Invalid envelope, field, filename or encoded file; no dispatch |
+| `UNKNOWN_TOOL` | No registered tool with that name; no dispatch |
+| `REQUEST_TOO_LARGE` | Request exceeds the browser transport limit; no dispatch |
+| `QUEUE_FULL` | Queue admission failed; wait for an outstanding request |
+| `REQUEST_INTERRUPTED` | Aborted/expired before dispatch, or a worker result was discarded |
+| `EXECUTION_UNCERTAIN` | Aborted/expired after control dispatch; changes may still apply |
+| `EXECUTION_FAILED` | Editor/file operation failed; inspect before replaying |
+
+`execution` is `not_started`, `not_applied` (discarded worker result), or `unknown`.
+`retrySafe` only describes duplicate-edit safety, not whether unchanged arguments will
+succeed or whether the agent should retry automatically. Correct invalid arguments first.
+An ordinary engine error is conservatively `unknown`, because an operation can fail after
+some state has changed. Existing error response fields are retained.
+
+These failures resolve to the error envelope rather than intentionally rejecting the tool
+callback's Promise. The browser can still reject a native WebMCP invocation *before* the
+callback runs (for example its own input-schema validation), and transport failures can
+still reject. For a generic browser `UnknownError`, use the non-mutating same-page diagnostic:
+
+```javascript
+window.photocraft.validateTool("photocraft_commands", {limit: 300})
+```
+
+It synchronously returns the same argument-error envelope, or
+`{ok: true, result: {valid: true}}`. It shares parsing and size limits with the actual
+callback, never queues a request or edits a document, and does not echo submitted payloads.
+A successful validation checks the tool envelope and its browser-specific semantics, **not**
+the engine command's parameters, enabled state or eventual execution outcome. Continue to
+discover command schemas before editing. This helper does not replace native WebMCP execution.
+
+The phased reliability work and remaining acceptance gates are tracked in
+[WebMCP reliability](webmcp-reliability.md).
+
+### Discovering commands
+
+Invalid tool arguments fail before editing. Do not infer success from a
 resolved promise alone: check `ok`. A disabled or unsupported command returns an error.
 Every engine command entry now includes a draft 2020-12 JSON Schema in `inputSchema`,
 alongside a semantic `description` and `journal` flag. The legacy `params` string remains

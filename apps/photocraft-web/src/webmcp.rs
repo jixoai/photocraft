@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 use wasm_bindgen::{JsCast as _, JsValue, closure::Closure};
 
 use crate::agent::{self, Call};
+use crate::agent_error::{self, Failure};
 
 const MAX_PENDING: usize = 16;
 const MAX_QUEUED_BYTES: usize = agent::MAX_IMPORT_JSON_BYTES;
@@ -136,45 +137,82 @@ fn member(object: &JsValue, key: &str) -> Option<JsValue> {
     Reflect::get(object, &JsValue::from_str(key)).ok().filter(|v| !v.is_null() && !v.is_undefined())
 }
 
+fn busy() -> Failure {
+    Failure::rejected("QUEUE_FULL", "The editor request queue is busy or full", "Wait for an outstanding call to settle, then retry.")
+}
+
+fn resolve_failure(resolve: &Function, reject: &Function, failure: Failure) {
+    match js(&failure.reply()) {
+        Ok(value) => {
+            let _ = resolve.call1(&JsValue::NULL, &value);
+        }
+        Err(error) => {
+            let _ = reject.call1(&JsValue::NULL, &error);
+        }
+    }
+}
+
+fn interrupted(active: &Active) -> Failure {
+    let message = if active.pending.signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) { "Request aborted" } else { "Request deadline exceeded" };
+    Failure::interrupted(message, active.dispatch.abandon_before_dispatch())
+}
+
+fn prepare(tool: &str, input: JsValue) -> Result<(Call, usize), Failure> {
+    let input = if input.is_undefined() { Object::new().into() } else { input };
+    let encoded = js_sys::JSON::stringify(&input)
+        .map_err(|_| Failure::invalid("", json!({"type":"object"}), "Arguments must be JSON serializable; cyclic objects and BigInt are unsupported"))?;
+    let limit = if tool == "photocraft_import" { agent::MAX_IMPORT_JSON_BYTES } else { agent::MAX_JSON_BYTES };
+    if encoded.length() as usize > limit {
+        return Err(Failure::rejected(
+            "REQUEST_TOO_LARGE",
+            "Tool arguments exceed the browser request limit",
+            "Split the operation into smaller requests or use the browser file picker.",
+        ));
+    }
+    let encoded = encoded.as_string().ok_or_else(|| Failure::invalid("", json!({"type":"object"}), "Arguments must be JSON serializable"))?;
+    let bytes = encoded.len();
+    if bytes > limit {
+        return Err(Failure::rejected(
+            "REQUEST_TOO_LARGE",
+            "Tool arguments exceed the browser request limit",
+            "Split the operation into smaller requests or use the browser file picker.",
+        ));
+    }
+    let value = serde_json::from_str(&encoded).map_err(|error| Failure::invalid("", json!({"type":"object"}), format!("Invalid JSON arguments: {error}")))?;
+    Ok((agent::parse(tool, value)?, bytes))
+}
+
 fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: JsValue, options: JsValue) -> Promise {
-    let prepared = (|| -> Result<_, JsValue> {
-        let q = queue.try_borrow().map_err(|_| error("FDE2E Photocraft is busy"))?;
+    let prepared = (|| -> Result<_, Failure> {
+        let q = queue.try_borrow().map_err(|_| busy())?;
         if q.count >= MAX_PENDING {
-            return Err(error("FDE2E Photocraft's request queue is full; wait for an outstanding call"));
+            return Err(busy());
         }
         drop(q);
         let signal = member(&options, "signal").and_then(|v| v.dyn_into::<web_sys::AbortSignal>().ok());
         if signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) {
-            return Err(error("Cancelled before dispatch; no changes applied"));
+            return Err(Failure::interrupted("Cancelled before dispatch; no changes applied", true));
         }
-        let input = if input.is_undefined() { Object::new().into() } else { input };
-        let encoded = js_sys::JSON::stringify(&input)?;
-        let limit = if tool == "photocraft_import" { agent::MAX_IMPORT_JSON_BYTES } else { agent::MAX_JSON_BYTES };
-        // Check the JS string length before copying into Wasm, then the UTF-8 length too.
-        if encoded.length() as usize > limit {
-            return Err(error("Tool arguments exceed the browser request limit"));
-        }
-        let encoded = encoded.as_string().ok_or_else(|| error("Arguments must be JSON serializable"))?;
-        let bytes = encoded.len();
-        if bytes > limit {
-            return Err(error("Tool arguments exceed the browser request limit"));
-        }
-        let value = serde_json::from_str(&encoded).map_err(|e| error(format!("Invalid JSON arguments: {e}")))?;
-        let call = agent::parse(tool, value).map_err(error)?;
+        let (call, bytes) = prepare(tool, input)?;
         Ok((call, signal, bytes))
     })();
     let (call, signal, bytes) = match prepared {
         Ok(p) => p,
-        Err(e) => return Promise::reject(&e),
+        Err(failure) => {
+            return match js(&failure.reply()) {
+                Ok(value) => Promise::resolve(&value),
+                Err(error) => Promise::reject(&error),
+            };
+        }
     };
     let mut call = Some(call);
     Promise::new(&mut |resolve, reject| {
         let Ok(mut q) = queue.try_borrow_mut() else {
-            let _ = reject.call1(&JsValue::NULL, &error("FDE2E Photocraft is busy"));
+            resolve_failure(&resolve, &reject, busy());
             return;
         };
         if q.count >= MAX_PENDING || q.bytes.saturating_add(bytes) > MAX_QUEUED_BYTES {
-            let _ = reject.call1(&JsValue::NULL, &error("FDE2E Photocraft's request queue is full; wait for an outstanding call"));
+            resolve_failure(&resolve, &reject, busy());
             return;
         }
         q.bytes = q.bytes.saturating_add(bytes);
@@ -210,6 +248,14 @@ impl Bridge {
         // implemented WebMCP. This is not a network endpoint or a modelContext polyfill.
         let api = Object::new();
         set(&api, "tools", &js(&json!(definitions))?)?;
+        let validate = Closure::<dyn FnMut(String, JsValue) -> Result<JsValue, JsValue>>::new(move |name: String, input| {
+            let reply = match prepare(&name, input) {
+                Ok(_) => json!({"ok":true,"result":{"valid":true}}),
+                Err(failure) => failure.reply(),
+            };
+            js(&reply)
+        });
+        set(&api, "validateTool", &validate.into_js_value())?;
         set(&api, "ready", &JsValue::TRUE)?;
         set(&api, "backgroundWorkers", &JsValue::from_bool(photocraft_engine::background::available()))?;
         let queue = self.queue.clone();
@@ -254,7 +300,7 @@ impl Bridge {
         });
         let Some(mut pending) = pending else { return };
         if pending.signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) || now() - pending.admitted > DEADLINE_MS {
-            self.finish(pending, Err("Cancelled or expired before dispatch; no changes applied".into()));
+            self.finish(pending, Err(Failure::interrupted("Cancelled or expired before dispatch; no changes applied", true)));
             return;
         }
         let Some(call) = pending.call.take() else {
@@ -265,7 +311,7 @@ impl Bridge {
             match start_file_job(app, call) {
                 Ok(photocraft_engine::jobs::Started::Job(job)) => self.work = Some(Work { pending, job }),
                 Ok(photocraft_engine::jobs::Started::Done(result)) => self.finish(pending, Ok(json!({"ok":true,"result":result}))),
-                Err(error) => self.finish(pending, Err(error)),
+                Err(error) => self.finish(pending, Err(error.into())),
             }
             return;
         }
@@ -287,7 +333,7 @@ impl Bridge {
                 Ok(result)
             }),
         };
-        self.finish(pending, result.map(|result| json!({"ok":true,"result":result})));
+        self.finish(pending, result.map(|result| json!({"ok":true,"result":result})).map_err(Failure::execution));
         ctx.request_repaint();
     }
 
@@ -298,7 +344,7 @@ impl Bridge {
                 Err(TryRecvError::Disconnected) => self.finish(active.pending, Err("Editor closed before replying".into())),
                 Err(TryRecvError::Empty) => {
                     if active.pending.signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) || now() - active.pending.admitted > DEADLINE_MS {
-                        let reason = active.dispatch.give_up();
+                        let reason = interrupted(&active);
                         self.finish(active.pending, Err(reason));
                     } else {
                         self.auxiliary.push(active);
@@ -311,11 +357,11 @@ impl Bridge {
             if let Some(job) = job.filter(|job| job.state != "running") {
                 match job.result {
                     Some(result) => self.finish(work.pending, Ok(json!({"ok":true,"result":result}))),
-                    None => self.finish(work.pending, Err(job.error.unwrap_or_else(|| "Operation cancelled; no changes applied".into()))),
+                    None => self.finish(work.pending, Err(job.error.unwrap_or_else(|| "Operation cancelled; no changes applied".into()).into())),
                 }
             } else if work.pending.signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) || now() - work.pending.admitted > DEADLINE_MS {
                 app.session.cancel_job(work.job);
-                self.finish(work.pending, Err("Operation cancelled; its result will not be applied".into()));
+                self.finish(work.pending, Err(Failure::discarded("Operation cancelled; its result will not be applied")));
             } else {
                 self.work = Some(work);
             }
@@ -328,7 +374,7 @@ impl Bridge {
                     if active.pending.signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) || now() - active.pending.admitted > DEADLINE_MS {
                         // A dispatched operation can still finish; never tell the caller it is
                         // safe to retry. Queued requests are atomically abandoned before editing.
-                        let reason = active.dispatch.give_up();
+                        let reason = interrupted(&active);
                         self.finish(active.pending, Err(reason));
                     } else {
                         self.active = Some(active);
@@ -341,12 +387,12 @@ impl Bridge {
         }
     }
 
-    fn finish(&self, pending: Pending, result: Result<Value, String>) {
+    fn finish(&self, pending: Pending, result: Result<Value, Failure>) {
         if let Ok(mut q) = self.queue.try_borrow_mut() {
             q.count = q.count.saturating_sub(1);
             q.bytes = q.bytes.saturating_sub(pending.bytes);
         }
-        let value = result.unwrap_or_else(|e| json!({"ok":false,"error":e}));
+        let value = agent_error::enrich(result.unwrap_or_else(|failure| failure.reply()));
         match js(&value) {
             Ok(value) => {
                 let _ = pending.resolve.call1(&JsValue::NULL, &value);

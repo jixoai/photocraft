@@ -587,6 +587,21 @@ fn a_transport_that_gives_up_learns_whether_the_command_can_still_run() {
 }
 
 #[test]
+fn abandoning_a_request_reports_whether_it_can_still_apply() {
+    let queued = super::Dispatch::default();
+    assert!(queued.abandon_before_dispatch());
+    assert!(queued.abandon_before_dispatch());
+    assert!(!queued.start());
+    assert_eq!(queued.give_up(), super::expired_error());
+
+    let started = super::Dispatch::default();
+    assert!(started.start());
+    assert!(!started.abandon_before_dispatch());
+    assert!(!started.abandon_before_dispatch());
+    assert_eq!(started.give_up(), super::timeout_error());
+}
+
+#[test]
 fn timeout_errors_name_the_likely_causes() {
     // #2489: the reply must tell "wait" from "check the machine", and its number
     // must come from the deadline it reports.

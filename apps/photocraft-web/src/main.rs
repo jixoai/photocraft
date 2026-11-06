@@ -22,6 +22,9 @@ mod preset_bridge;
 #[cfg(any(target_arch = "wasm32", test))]
 mod agent;
 
+#[cfg(any(target_arch = "wasm32", test))]
+mod agent_error;
+
 #[cfg(target_arch = "wasm32")]
 mod webmcp;
 

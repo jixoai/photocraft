@@ -6,6 +6,8 @@ use photocraft_ui_egui::PhotocraftApp;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use crate::agent_error::{self, Failure};
+
 pub const MAX_FILE_BYTES: usize = 64 * 1024 * 1024;
 pub const MAX_JSON_BYTES: usize = 1024 * 1024;
 pub const MAX_IMPORT_JSON_BYTES: usize = MAX_FILE_BYTES.div_ceil(3) * 4 + 4096;
@@ -51,7 +53,7 @@ pub fn tools() -> Vec<Value> {
         (
             TOOL_NAMES[0],
             "Discover FDE2E Photocraft commands",
-            "Discover engine commands before editing. Each entry includes its exact id, semantic description, JSON Schema inputSchema, legacy params, journal flag and current enabled/disabledReason. Read inputSchema for parameter types, units, required fields, defaults, nested objects and examples; x-photocraft-coverage distinguishes complete authoring contracts from partial legacy-derived guidance. Page with nextOffset; search to avoid loading the full registry. Execute with photocraft_execute. Shell-only menus: photocraft_control ui.menu.list.",
+            "Discover engine commands before editing. Each entry includes its exact id, semantic description, JSON Schema inputSchema, legacy params, journal flag and current enabled/disabledReason. Read inputSchema for parameter types, units, required fields, defaults, nested objects and examples; x-photocraft-coverage distinguishes complete authoring contracts from partial legacy-derived guidance. Page with nextOffset; search to avoid loading the full registry. Execute with photocraft_execute. Shell-only menus: photocraft_control ui.menu.list. Invalid arguments return errorInfo with path/expected. If the browser rejects before the callback with UnknownError, window.photocraft.validateTool(name, args) diagnoses envelope errors without editing.",
             object(
                 json!({"search":{"type":"string","maxLength":256},"offset":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":200,"default":50}}),
                 &[],
@@ -61,7 +63,7 @@ pub fn tools() -> Vec<Value> {
         (
             TOOL_NAMES[1],
             "Execute FDE2E Photocraft command",
-            "Run an engine or UI command by exact id in the active document. First call photocraft_commands and construct params from that command's inputSchema, not its JSON-like legacy params string. Check schema coverage and enabled/disabledReason; partial schemas are guidance, not complete validation. Changes share the user's undo history. After an error/timeout inspect before retrying, since work may already have applied. Import with photocraft_import; export PNG/project copies with photocraft_export. Native-only commands return errors.",
+            "Run an engine or UI command by exact id in the active document. First call photocraft_commands and construct params from that command's inputSchema, not its JSON-like legacy params string. Check schema coverage and enabled/disabledReason; partial schemas are guidance, not complete validation. Changes share the user's undo history. Check ok, not Promise resolution. Failures include errorInfo.execution and retrySafe; unknown execution requires inspection before replay because work may already have applied. retrySafe is duplicate-edit safety, not an instruction to automatically retry unchanged arguments. Import with photocraft_import; export PNG/project copies with photocraft_export. Native-only commands return errors.",
             object(
                 json!({"command":{"type":"string","minLength":1,"maxLength":256,"description":"Exact discovered command id, e.g. shape.create; not a menu label."},"params":{"type":"object","description":"Command-specific parameters matching the entry's inputSchema from photocraft_commands. Omit for an empty object. Coordinates/opacity units are command-specific; do not assume CSS pixels or percentages."}}),
                 &["command"],
@@ -172,8 +174,8 @@ pub enum Call {
     Export(Export),
 }
 
-fn decode<T: serde::de::DeserializeOwned>(value: Value) -> Result<T, String> {
-    serde_json::from_value(value).map_err(|e| format!("Invalid arguments: {e}"))
+fn decode<T: serde::de::DeserializeOwned>(value: Value) -> Result<T, Failure> {
+    serde_json::from_value(value).map_err(|error| Failure::invalid("", json!({"type":"object"}), format!("Invalid arguments: {error}")))
 }
 
 pub fn filename(name: &str) -> Result<(), String> {
@@ -183,69 +185,63 @@ pub fn filename(name: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn params_object(params: &Value) -> Result<(), String> {
-    if params.is_object() { Ok(()) } else { Err("params must be an object".into()) }
-}
-
-pub fn parse(tool: &str, args: Value) -> Result<Call, String> {
-    params_object(&args)?;
+pub fn parse(tool: &str, args: Value) -> Result<Call, Failure> {
+    agent_error::validate(tool, &args)?;
     match tool {
         "photocraft_commands" => {
             let q: Query = decode(args)?;
-            if q.search.len() > 256 || !(1..=200).contains(&q.limit) {
-                return Err("search must be at most 256 bytes and limit must be 1–200".into());
+            if q.search.len() > 256 {
+                return Err(Failure::invalid("/search", json!({"maxBytes":256}), "search must be at most 256 UTF-8 bytes"));
             }
             Ok(Call::Commands(q))
         }
         "photocraft_execute" => {
             let p: Execute = decode(args)?;
-            params_object(&p.params)?;
             if p.command.is_empty() || p.command.len() > 256 {
-                return Err("command must contain 1–256 bytes".into());
+                return Err(Failure::invalid("/command", json!({"minBytes":1,"maxBytes":256}), "command must contain 1–256 UTF-8 bytes"));
             }
             Ok(Call::Control { method: "engine.execute".into(), params: json!({"command":p.command,"params":p.params}) })
         }
-        "photocraft_inspect" => {
-            if args.as_object().is_none_or(|o| !o.is_empty()) {
-                return Err("inspect takes no arguments".into());
-            }
-            Ok(Call::Control { method: "ui.inspect".into(), params: args })
-        }
+        "photocraft_inspect" => Ok(Call::Control { method: "ui.inspect".into(), params: args }),
         "photocraft_control" => {
             let p: Control = decode(args)?;
-            params_object(&p.params)?;
-            if !CONTROL_METHODS.contains(&p.method.as_str()) {
-                return Err(format!("Method {} is not available in the browser", p.method));
-            }
             if p.method == "ui.screenshot" && p.params.get("path").is_some_and(|v| !v.is_null()) {
-                return Err("Browser screenshots return PNG data; omit path".into());
+                return Err(Failure::invalid("/params/path", json!({"type":"null"}), "Browser screenshots return PNG data; omit path"));
             }
             if p.method == "app.save" {
-                filename(p.params.get("path").and_then(Value::as_str).ok_or("app.save requires path: a download filename")?)?;
+                let path = p
+                    .params
+                    .get("path")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| Failure::invalid("/params/path", json!({"type":"string"}), "app.save requires path: a download filename"))?;
+                filename(path).map_err(|message| Failure::invalid("/params/path", json!({"format":"filename","maxBytes":255}), message))?;
             }
             Ok(Call::Control { method: p.method, params: p.params })
         }
         "photocraft_import" => {
             let p: Import = decode(args)?;
-            filename(&p.name)?;
+            filename(&p.name).map_err(|message| Failure::invalid("/name", json!({"format":"filename","maxBytes":255}), message))?;
             if p.base64.len() > MAX_FILE_BYTES.div_ceil(3) * 4 {
-                return Err("Import exceeds 64 MiB; use the browser file picker for larger files".into());
+                return Err(Failure::invalid(
+                    "/base64",
+                    json!({"maxDecodedBytes":MAX_FILE_BYTES}),
+                    "Import exceeds 64 MiB; use the browser file picker for larger files",
+                ));
             }
-            let bytes = base64::engine::general_purpose::STANDARD.decode(p.base64).map_err(|e| format!("Invalid base64: {e}"))?;
+            let bytes = base64::engine::general_purpose::STANDARD
+                .decode(p.base64)
+                .map_err(|error| Failure::invalid("/base64", json!({"contentEncoding":"base64"}), format!("Invalid base64: {error}")))?;
             if bytes.is_empty() || bytes.len() > MAX_FILE_BYTES {
-                return Err("Import must contain 1 byte to 64 MiB".into());
+                return Err(Failure::invalid("/base64", json!({"minDecodedBytes":1,"maxDecodedBytes":MAX_FILE_BYTES}), "Import must contain 1 byte to 64 MiB"));
             }
             Ok(Call::Import { name: p.name, bytes })
         }
         "photocraft_export" => {
             let p: Export = decode(args)?;
-            filename(&p.name)?;
-            if p.quality.is_some_and(|q| !(1..=100).contains(&q)) {
-                return Err("quality must be 1–100".into());
-            }
+            filename(&p.name).map_err(|message| Failure::invalid("/name", json!({"format":"filename","maxBytes":255}), message))?;
             Ok(Call::Export(p))
         }
-        _ => Err(format!("Unknown FDE2E Photocraft tool: {tool}")),
+        _ => Err(Failure::rejected("UNKNOWN_TOOL", "Unknown browser tool", "Discover tools and use an exact registered tool name.")),
     }
 }
 
@@ -421,6 +417,20 @@ mod tests {
         }
         for tool in TOOL_NAMES {
             assert!(parse(tool, Value::Null).is_err());
+        }
+    }
+
+    #[test]
+    fn semantic_argument_errors_identify_the_field_before_dispatch() {
+        for (tool, args, path) in [
+            ("photocraft_import", json!({"name":"a.png","base64":"!"}), "/base64"),
+            ("photocraft_export", json!({"name":"../a.png"}), "/name"),
+            ("photocraft_control", json!({"method":"app.save","params":{}}), "/params/path"),
+            ("photocraft_control", json!({"method":"ui.screenshot","params":{"path":"a.png"}}), "/params/path"),
+        ] {
+            let reply = parse(tool, args).unwrap_err().reply();
+            assert_eq!(reply["errorInfo"]["path"], path);
+            assert_eq!(reply["errorInfo"]["execution"], "not_started");
         }
     }
 
