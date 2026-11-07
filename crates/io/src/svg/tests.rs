@@ -312,7 +312,8 @@ fn a_single_path_clip_becomes_the_groups_vector_mask() {
     // The report's file: PhotoCraft's own icon opens without the clip-path warning.
     let icon = import_svg("photocraft.svg", include_bytes!("../../../../assets/app-icon/photocraft.svg")).unwrap();
     assert!(icon.warnings.iter().all(|w| !w.contains("clip-path")), "{:?}", icon.warnings);
-    assert!(icon.document.layers.iter().any(|l| l.vector_mask.is_some()), "its rounded square is a vector mask");
+    assert_eq!(icon.document.layers.len(), 2, "the downstream icon has a rounded background and an editable F path");
+    assert!(icon.document.layers.iter().all(|layer| matches!(layer.content, LayerContent::Shape(_))), "the downstream icon stays editable");
     // Two shapes in the clip: rasterised, and said so.
     let two = br##"<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
             <defs><clipPath id="c"><rect width="20" height="20"/><rect x="30" width="20" height="20"/></clipPath></defs>

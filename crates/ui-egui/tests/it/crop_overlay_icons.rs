@@ -160,7 +160,8 @@ fn the_canvas_crop_menu_lists_a_glyph_per_overlay() {
     let opened = photocraft_ui_egui::canvas::canvas_tool_menu::open_crop(h.state_mut(), &ctx, Tool::Crop, [600.0, 400.0]);
     assert!(opened, "the crop menu opens on a pending crop");
     h.run();
-    let glyphs: Vec<_> = CropOverlay::ALL.iter().map(|kind| row_glyph(&h, kind.label())).collect();
+    let language = photocraft_ui_egui::i18n::current();
+    let glyphs: Vec<_> = CropOverlay::ALL.iter().map(|kind| row_glyph(&h, photocraft_ui_egui::i18n::tr(language, kind.label()))).collect();
     let unique: HashSet<_> = glyphs.iter().copied().collect();
     assert_eq!(unique.len(), CropOverlay::ALL.len(), "one glyph per row: {glyphs:?}");
 }

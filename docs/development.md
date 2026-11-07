@@ -58,6 +58,13 @@ The dev profile builds PhotoCraft's crates with `debug = "line-tables-only"` and
 
 ### Faster test loops
 
+Native UI tests that assert operation status need a healthy scratch disk: the allocator reserves
+the larger of 1 GiB or 5% of the volume's total capacity. Below that reserve, spilling pauses
+safely in memory and the UI reports the real scratch warning, which can replace the status a
+test expects. Check `df -h .` and the temporary-file volume before a broad run; reclaim inactive
+generated build caches if needed, rather than disabling the warning or weakening assertions.
+Keep active build directories, artwork, recovery data and acceptance exports intact.
+
 Most of a `cargo test` run is linking test binaries and running them one after another. While iterating:
 
 ```sh
