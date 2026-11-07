@@ -153,3 +153,42 @@ display-colour/LUT code; no unrelated warning suppressions were added. The revie
 baseline changes only `shape.edit` and the previously omitted `document.inspect.document`
 parameter. Source/test success does not update an already-open browser tab or prove a new
 independent drawing run; retain the existing acceptance artwork and open it unchanged.
+
+## 7. Semantic editing and isolated delivery/recovery follow-up
+
+The skill now records compact multipart-object membership and component roles, distinguishes
+whole-object from component-only edits, preserves tonal variants, and checks protected
+neighbours outside the intended edit closure. Real grouping is verified where appropriate;
+a host manifest is not claimed to be an application group. Coordinated requests are not
+atomic: undo/redo must cover the actual completed history steps in reverse/forward order.
+This is reusable agent strategy, not a new scene-specific engine feature.
+
+On 2026-11-07, an isolated `http://localhost:8788` native-WebMCP probe used a 480×320 RGB16
+document with editable text, a real three-child group, a separate occluder and a support.
+Three coordinated recolour requests preserved geometry and protected neighbours. Three
+undos restored the original PNG exactly; three redos restored the revised PNG exactly.
+The normal-operation plan completed all 20 tracked requests without duplicate IDs.
+
+A revision-20 checkpoint was confirmed committed with idle queues and no error. Reloading
+only the disposable page retained that exact key/revision and changed the page instance.
+Explicit `recovery.restore` opened a dirty copy, retained the source snapshot and preserved
+the full layer hierarchy, vector data, editable text and 16-bit format. The source undo stack
+was not restored. A read-only query with the old instance returned `INSTANCE_MISMATCH`.
+Four new tracked requests edited and undid text and shape paint in the restored copy; PNGs
+before reload, after restore and after those undo checks were byte-identical. Native project
+exports before/after restore had identical layer manifests and valid ZIP contents.
+
+For PNG, a download wait was armed before the native `download: true` export. The event was
+observed, the artifact saved in the same browser round, and completion reported no failure.
+The downloaded file decoded as 480×320 RGB16 and matched the base64 baseline byte-for-byte.
+No permission bypass or browser policy change was used. This proves the observed PNG path,
+not every browser's permissions or an approval flow.
+
+The subsequent `.pcraft` browser export returned success, but its event wait timed out.
+Browser automation then reported user control; no takeover, retry, replacement space or
+cleanup was attempted. No completed project download was verified, and the timeout's cause
+was not established. The valid host-saved project is separate delivery evidence, not a pass
+for that browser download. The reusable [probe procedure](../.agents/skills/photocraft-webmcp/references/delivery-recovery.md)
+keeps these observations separate. Local evidence is in
+`target/acceptance/webmcp-semantic-reliability-20261107/`; it is synthetic technical evidence,
+not an independent illustration or a claim of general artistic improvement.

@@ -114,3 +114,7 @@ saved by the host are an alternative delivery path, not proof that browser downl
 For independent acceptance, use the [held-out evaluation protocol](../../../docs/webmcp-acceptance.md).
 Separate tool reliability, visual quality, editability, recovery and instruction compliance;
 keep previous scene scripts/artifacts out of the acceptance agent's examples.
+When download or reload-restoration acceptance is requested, read the
+[isolated probe procedure](references/delivery-recovery.md). Verify the real file and explicit
+restore separately from export/checkpoint admission; do not use an existing artwork page as
+the disposable probe.

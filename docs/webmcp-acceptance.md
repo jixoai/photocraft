@@ -59,6 +59,26 @@ Native synthetic geometry tests are technical regressions, not artistic acceptan
 acceptance agent and the human reviewer judge held-out artwork; development screenshots do
 not count as an independent review. Desktop-only platform failures are reported separately.
 
+## Independent delivery and recovery probes
+
+Use the [isolated probe procedure](../.agents/skills/photocraft-webmcp/references/delivery-recovery.md)
+when validating these technical dimensions. They can run on a small disposable document;
+neither requires regenerating an illustration or refreshing an existing artwork page.
+
+- **Download:** record the native export reply, armed event outcome, browser authorization
+  status and verified saved file separately. Verify PNG/project contents, not just a filename
+  or successful trigger. A timeout alone does not diagnose a permission problem or a failed
+  export. Host-saved base64 delivery is valid delivery, but not browser-download verification.
+- **Recovery:** distinguish checkpoint admission, matching revision committed to storage,
+  persistence after reloading the disposable page, explicit restore to a dirty copy with the
+  source snapshot retained, and restored semantic data/rendered appearance. Reimporting an
+  exported project does not test `recovery.restore`. The request instance changes on reload;
+  restored document IDs/revisions and undo history are not cross-page continuity guarantees.
+- **Boundaries:** keep the probe on its recorded origin/TaskSpace, avoid other pages' recovery
+  entries, and stop on permission/control loss. No policy changes, storage clearing or
+  replacement spaces. Label each untested or blocked stage instead of reporting an overall
+  pass from one successful stage.
+
 ## Agent prompt template
 
 Replace the placeholders with a new brief and the actual editor URL/artifact folder:
@@ -99,6 +119,9 @@ Keep the final artwork visible in its editor tab. Export and verify <FOLDER>/art
 not an editor screenshot. Show the actual image preview, not base64 text. Report what was
 verified, any remaining limitation, and score tool reliability, visual quality, editability,
 recovery and instruction compliance separately. Do not claim human acceptance for yourself.
+Label browser-download verification separately from host-saved base64 delivery, and checkpoint
+creation separately from persistence after reload and explicit restore. Use the isolated probe
+procedure for requested technical acceptance; stop and hand off browser-owned permissions.
 ```
 
 ## Technical acceptance checklist
