@@ -112,6 +112,11 @@ fn choose(h: &mut Harness<'_, Probe>, font: &str, accept: &str) {
         "arrow-enter" => {
             h.key_press(Key::ArrowDown);
             h.run();
+            if fields(h)[0].as_deref() != Some(font) {
+                h.key_press(Key::ArrowUp);
+                h.run();
+            }
+            assert_eq!(fields(h)[0].as_deref(), Some(font), "keyboard acceptance targets the requested family, not a substring match");
             h.key_press(Key::Enter);
         }
         "click" => h.get_by_label(font).click(),
