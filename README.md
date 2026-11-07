@@ -39,6 +39,7 @@ bash scripts/downstream-check.sh full
 
 - [WebMCP](docs/webmcp.md)：六个传输工具、命令发现、执行、检查、导入与导出。
 - [控制协议](docs/control-protocol.md)：可编程操作与画面检查。
+- [工具清单](docs/tool-reference.md)：界面可选工具，与代码中的完整列表保持一致。
 - [上游同步](docs/downstream-maintenance.md)：分支策略、回归门禁与契约基线。
 
 当前基线有 964 个引擎命令，其中 135 个契约已完整审计、829 个明确标记为部分契约；不代表所有命令都已具备完整参数或输出契约。绘图工作流与构图策略属于 agent / skill，不能替代浏览器画面、项目保存和 PNG 导出的实际验收。

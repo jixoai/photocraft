@@ -302,6 +302,11 @@ fn card_title(painter: &egui::Painter, title: &str, width: f32, color: egui::Col
     let mut job = egui::text::LayoutJob::simple(title.to_owned(), egui::FontId::proportional(12.0), color, width);
     job.wrap.max_rows = 2;
     job.halign = egui::Align::Center;
+    let wrapped = painter.layout_job(job.clone());
+    if !wrapped.elided {
+        return wrapped;
+    }
+    job.wrap.break_anywhere = true;
     painter.layout_job(job)
 }
 

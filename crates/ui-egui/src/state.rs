@@ -751,27 +751,18 @@ mod tests {
         assert_eq!(Tool::from_name("nope"), None);
     }
 
-    /// The README's "Everything in the box" tool heading and list name exactly the tools a user can
-    /// pick, `Tool::ALL` (#996).
     #[test]
-    fn readme_tool_list_matches_tool_all() {
-        let readme = include_str!("../../../README.md");
-        let (_, rest) = readme.split_once("<h4>🧰 ").unwrap();
-        let (count, rest) = rest.split_once(" tools</h4>").unwrap();
-        assert_eq!(count.parse::<usize>().unwrap(), Tool::ALL.len(), "README.md tool heading");
-        let list = rest.trim_start().lines().next().unwrap();
-        // "Rectangular and Elliptical Marquee" names two tools: "Rectangular Marquee", "Elliptical Marquee".
-        let mut named: Vec<String> = Vec::new();
-        for entry in list.split(" · ") {
-            match entry.split_once(" and ").and_then(|(first, rest)| Some((first, rest.split_once(' ')?))) {
-                Some((first, (second, noun))) => named.extend([format!("{first} {noun}"), format!("{second} {noun}")]),
-                None => named.push(entry.to_owned()),
-            }
-        }
+    fn documented_tool_list_matches_tool_all() {
+        let reference = include_str!("../../../docs/tool-reference.md");
+        let (_, rest) = reference.split_once("## Tools (").expect("tool inventory heading");
+        let (count, list) = rest.split_once(")\n").expect("tool inventory count");
+        assert_eq!(count.parse::<usize>().unwrap(), Tool::ALL.len(), "docs/tool-reference.md tool heading");
+        let mut named: Vec<String> = list.lines().filter_map(|line| line.strip_prefix("- ").map(str::to_owned)).collect();
         named.sort();
-        let mut labels: Vec<String> = Tool::ALL.iter().map(|tool| tool.label().trim_end_matches(" Tool").to_owned()).collect();
+        let mut labels: Vec<String> = Tool::ALL.iter().map(|tool| tool.label().to_owned()).collect();
         labels.sort();
-        assert_eq!(named, labels, "README.md tool list");
+        assert_eq!(named, labels, "docs/tool-reference.md tool list");
+        assert!(include_str!("../../../README.md").contains("(docs/tool-reference.md)"), "the README links to the tool reference");
     }
 
     #[test]

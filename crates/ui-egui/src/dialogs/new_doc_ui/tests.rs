@@ -211,6 +211,26 @@ fn preset_card_titles_fit_the_card_in_every_language() {
 }
 
 #[test]
+fn preset_card_titles_keep_word_wrapping_and_elide_only_when_the_card_is_full() {
+    let ctx = egui::Context::default();
+    ctx.run_ui(Default::default(), |ui| {
+        let title = "FDE2E Photocraft-standardstørrelse";
+        let compact = card_title(ui.painter(), title, 152.0, egui::Color32::WHITE);
+        assert!(!compact.elided);
+        assert_eq!(compact.rows.len(), 2);
+        assert!(compact.size().x <= 152.0);
+        let short = card_title(ui.painter(), "Web Minimum", 152.0, egui::Color32::WHITE);
+        assert_eq!(short.rows.len(), 1);
+        let long = card_title(ui.painter(), &title.repeat(10), 152.0, egui::Color32::WHITE);
+        assert!(long.elided);
+        assert_eq!(long.rows.len(), 2);
+        assert!(long.size().x <= 152.0);
+    })
+    .textures_delta
+    .clear();
+}
+
+#[test]
 fn recent_category_lists_clipboard_then_created_documents_then_uncovered_defaults() {
     let settings = |w, h, ppi| DocumentSettings {
         width: w,
