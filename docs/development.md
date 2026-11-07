@@ -65,6 +65,17 @@ test expects. Check `df -h .` and the temporary-file volume before a broad run; 
 generated build caches if needed, rather than disabling the warning or weakening assertions.
 Keep active build directories, artwork, recovery data and acceptance exports intact.
 
+SVG import and bounded SVG rasterization share a maximum XML nesting depth of 128, including
+the remaining depth passed to embedded SVG images. More deeply nested top-level files return
+an actionable error before usvg parses them; over-depth embedded images are omitted (strict
+stored-preview paths reject them). The former 512-level bound could abort a release build on
+a 1 MiB thread stack. Small-stack regression tests cover the accepted boundary, the previous
+crashing input, shared embedded depth and the deepest accepted image chain. Raising the test
+runner's stack does not fix a parser that crashes on a smaller native or browser stack.
+The XML-only parser used by KRA, ORA and Camera Raw XMP retains its separate 512-level
+limit; these formats do not run the recursive SVG conversion. Their own document group-depth
+checks still reject unsupported nesting without changing the format error contract.
+
 Most of a `cargo test` run is linking test binaries and running them one after another. While iterating:
 
 ```sh

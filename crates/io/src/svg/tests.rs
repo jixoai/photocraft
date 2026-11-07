@@ -844,9 +844,44 @@ fn bounded_embedded_svg_gets_only_the_nesting_depth_the_drawing_left() {
             let deep = embed(MAX_XML_DEPTH - 2, MAX_XML_DEPTH - 2);
             let buf = rasterize_bounded(deep.as_bytes(), 1.0, MAX_RASTER_PIXELS).unwrap();
             assert!(buf.px[4 * 8 + 4][3] < 0.01, "the too-deep image is left out");
-            let fine = embed(200, 200);
+            let fine = embed(MAX_XML_DEPTH / 4, MAX_XML_DEPTH / 4);
             let buf = rasterize_bounded(fine.as_bytes(), 1.0, MAX_RASTER_PIXELS).unwrap();
             assert!(buf.px[4 * 8 + 4][3] > 0.99, "within the shared budget the image draws");
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+#[test]
+fn svg_nesting_limit_rejects_the_previous_crash_before_either_parser_on_a_small_stack() {
+    std::thread::Builder::new()
+        .stack_size(1 << 20)
+        .spawn(|| {
+            let drawing = |groups: usize| {
+                format!(
+                    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\">{}<rect width=\"8\" height=\"8\"/>{}</svg>",
+                    "<g>".repeat(groups),
+                    "</g>".repeat(groups)
+                )
+            };
+            let boundary = drawing(MAX_XML_DEPTH - 1);
+            assert_eq!(nesting_depth(boundary.as_bytes(), usize::MAX), MAX_XML_DEPTH);
+            assert!(parse(boundary.as_bytes()).is_ok());
+            assert!(rasterize_bounded(boundary.as_bytes(), 1.0, MAX_RASTER_PIXELS).is_ok());
+            for groups in [MAX_XML_DEPTH, 200, 510, 4096] {
+                let too_deep = drawing(groups);
+                assert!(matches!(parse(too_deep.as_bytes()), Err(IoError::Svg(message)) if message.contains("nested")), "{groups} groups");
+                assert!(
+                    matches!(rasterize_bounded(too_deep.as_bytes(), 1.0, MAX_RASTER_PIXELS), Err(IoError::Svg(message)) if message.contains("nested")),
+                    "{groups} groups"
+                );
+            }
+            let inner = drawing(510);
+            let embedded = image_svg(&embedded_image("image/svg+xml", inner.as_bytes()));
+            let bounded = rasterize_bounded(embedded.as_bytes(), 1.0, MAX_RASTER_PIXELS).unwrap();
+            assert!(bounded.px.iter().all(|pixel| pixel[3] < 0.01));
+            assert!(parse(embedded.as_bytes()).is_ok());
         })
         .unwrap()
         .join()

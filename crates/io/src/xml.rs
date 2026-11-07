@@ -4,8 +4,8 @@
 
 use roxmltree::{Document, ParsingOptions};
 
-/// Deepest element nesting accepted, the same as for SVG drawings: real files stay far below.
-pub const MAX_DEPTH: usize = crate::svg::MAX_XML_DEPTH;
+/// Deepest element nesting accepted by the XML-only parser.
+pub const MAX_DEPTH: usize = 512;
 
 /// Parses `text`, refusing nesting deeper than [`MAX_DEPTH`] before roxmltree sees it.
 ///
@@ -77,6 +77,22 @@ mod tests {
         // The root plus MAX_DEPTH - 1 levels is exactly MAX_DEPTH deep.
         assert!(parse(&nested(MAX_DEPTH - 1), ParsingOptions::default()).is_ok());
         assert!(parse(&nested(MAX_DEPTH), ParsingOptions::default()).is_err());
+    }
+
+    #[test]
+    fn xml_only_nesting_budget_is_independent_of_svg_parser_recursion() {
+        let boundary = nested(MAX_DEPTH - 1);
+        assert!(crate::svg::nesting_depth(boundary.as_bytes(), usize::MAX) > crate::svg::MAX_XML_DEPTH);
+        std::thread::Builder::new()
+            .stack_size(1 << 20)
+            .spawn(move || {
+                for opts in [ParsingOptions::default(), dtd()] {
+                    assert!(parse(&boundary, opts).is_ok());
+                }
+            })
+            .unwrap()
+            .join()
+            .unwrap();
     }
 
     #[test]
