@@ -5,8 +5,8 @@ use super::{
 
 impl PhotocraftApp {
     /// Run an engine command, reporting errors in the status bar.
-    pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
-        if let Some(result) = delete_layer_prompt::intercept(self, id, &params) {
+    pub fn run(&mut self, id: &str, mut params: Value) -> Result<Value, String> {
+        if let Some(result) = delete_layer_prompt::intercept(self, id, &mut params) {
             return result;
         }
         if let Some(result) = mask_trash_prompt::intercept(self, id, &params) {

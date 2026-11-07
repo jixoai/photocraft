@@ -8,10 +8,13 @@ pub fn owns(fields: &Map<String, Value>) -> bool {
     fields.contains_key(MARK)
 }
 
-pub fn intercept(app: &mut PhotocraftApp, command: &str, params: &Value) -> Option<Result<Value, String>> {
+pub fn intercept(app: &mut PhotocraftApp, command: &str, params: &mut Value) -> Option<Result<Value, String>> {
+    if command != "layer.delete" {
+        return None;
+    }
+    let trash = params.as_object_mut().and_then(|params| params.remove("__trash"));
     if app.automation_input
-        || command != "layer.delete"
-        || params.get("__trash").and_then(Value::as_bool) != Some(true)
+        || trash.as_ref().and_then(Value::as_bool) != Some(true)
         || app.session.prefs().dialogs.get(PREF).and_then(|v| v.get("skip")).and_then(Value::as_bool) == Some(true)
     {
         return None;
@@ -130,6 +133,30 @@ mod tests {
         assert_eq!(app.session.documents()[0].doc.layer_count(), 2);
         app.run("edit.clear", json!({})).unwrap();
         assert!(app.ui.dialogs.is_empty());
+    }
+
+    #[test]
+    fn trash_metadata_is_consumed_before_automation_and_keeps_the_explicit_target() {
+        let mut app = make_app();
+        let target = app.session.active().unwrap().active_layer.unwrap();
+        app.run("layer.new.layer", json!({"name": "Keep"})).unwrap();
+        let keep = app.session.active().unwrap().active_layer.unwrap();
+        app.automation_input = true;
+        app.run("layer.delete", json!({"__trash": true, "layer": target.0})).unwrap();
+        let state = app.session.active().unwrap();
+        assert!(state.doc.layer(target).is_none());
+        assert!(state.doc.layer(keep).is_some());
+        assert!(app.ui.dialogs.is_empty());
+    }
+
+    #[test]
+    fn trash_confirmation_does_not_strip_unknown_engine_parameters() {
+        let mut app = make_app();
+        let target = app.session.active().unwrap().active_layer.unwrap();
+        let dialog = app.run("layer.delete", json!({"__trash": true, "unknown": true})).unwrap()["dialog"].as_u64().unwrap();
+        assert!(app.ui.dialogs[0].fields["params"].get("__trash").is_none());
+        assert!(crate::dialogs::confirm(&mut app, dialog).unwrap_err().contains("unknown parameter"));
+        assert!(app.session.active().unwrap().doc.layer(target).is_some());
     }
 
     #[test]
