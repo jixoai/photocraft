@@ -148,8 +148,8 @@ claim full runtime JSON Schema validation of nested values or state-dependent co
 Follow-up validation: 3,395 engine/library/integration tests and 40 Web tests passed, along
 with the opt-in adversarial command hunt, 31-crate layering and the 24-library Wasm gate
 including HEIF. Native changed-crate all-target strict Clippy and Web-only Wasm strict Clippy
-passed. Engine Wasm strict Clippy remains blocked by three pre-existing unused constants in
-display-colour/LUT code; no unrelated warning suppressions were added. The reviewed 964-command
+passed. Engine Wasm strict Clippy was blocked at that checkpoint by three unused constants in
+display-colour/LUT code; the 2026-11-07 full-UI follow-up below resolves their platform gating. The reviewed 964-command
 baseline changes only `shape.edit` and the previously omitted `document.inspect.document`
 parameter. Source/test success does not update an already-open browser tab or prove a new
 independent drawing run; retain the existing acceptance artwork and open it unchanged.
@@ -225,9 +225,10 @@ browser space was operated on. Local evidence: `target/acceptance/parallel-tasks
 
 Validation: 45 Web tests, 77 focused control tests, adversarial command hunt, native changed-crate
 all-target strict Clippy, Web-only Wasm strict Clippy, layering and workspace Wasm/HEIF pass.
-The full UI library run is **not green**: 4740 pass, 29 fail, 21 ignored, including font/glyph,
-README/title and stale-parameter fixtures. UI Wasm strict Clippy also reports four untouched
-cfg-specific warnings; ordinary Wasm checks pass. No unrelated fixes or suppressions added.
+At that checkpoint the full UI library run was **not green**: 4740 pass, 29 fail, 21 ignored,
+including font/glyph, README/title and stale-parameter fixtures. UI Wasm strict Clippy also
+reported four cfg-specific warnings; ordinary Wasm checks passed. The follow-up below resolves
+these failures rather than treating the focused controls as a substitute for the full suite.
 
 This establishes the observed independent-task path, not hostile-agent security isolation,
 unbounded capacity, distributed collaboration or improved artistic judgment. Machine/browser
@@ -236,3 +237,61 @@ to separate host directories; it does not claim browser-download completion. Ser
 download-event waits and obey browser-owned permission prompts. See the
 [contract](webmcp.md#independent-parallel-tasks) and
 [repeatable acceptance](webmcp-acceptance.md#parallel-task-acceptance).
+
+## 9. Full UI reliability follow-up (2026-11-07)
+
+The full UI suite now passes: 4,773 library tests and 177 integration tests, with 22 existing
+opt-in tests ignored. The original 29 failures were not all model or environment problems:
+
+- The Layers-panel trash marker leaked into strict engine parameters, breaking confirmation,
+  remembered skip and automation paths. The shell consumes only its own marker; explicit layer
+  targeting, stale-document protection and unknown-engine-parameter rejection remain tested.
+- System glyph fallback was incorrectly disabled whenever optional embedded craft-fonts were
+  absent. The per-character provider now works without that optional build input. Synthetic
+  system-only first-frame/rebuild/weight tests keep strict missing-glyph policy; no fonts were
+  committed and no tofu policy was substituted for glyph coverage.
+- Font acceptance fixtures assumed a substring search had only one result. Keyboard acceptance
+  now explicitly targets the requested family; production arrow navigation remains unchanged.
+- New-document preset titles retain ordinary word wrapping but retry character wrapping before
+  eliding longer localized product names. Danish and Chinese offscreen captures were inspected.
+  The exact tool inventory/count contract lives in a README-linked reference instead of an
+  obsolete upstream marketing section.
+- Generated ICC profiles and XMP toolkit markers use FDE2E Photocraft. Legacy own-profile names
+  and exact legacy XMP ownership markers remain supported; foreign sidecars are still protected.
+  The generated CMYK profile was regenerated with its original CC0 attribution retained.
+- Integration fixtures now query translated crop-overlay labels and menu access-key suffixes,
+  and compare the downstream SVG icon with its actual editable shapes. The synthetic clip-mask
+  import and independent pixel comparison still exercise the original SVG clipping behavior.
+
+A separate low-disk rerun produced scratch warnings that replaced status text under test.
+After reclaiming only inactive generated build caches, all 88 affected checks passed without
+changing assertions or suppressing real disk warnings. Native scratch requires the larger of
+1 GiB or 5% of volume capacity to remain free; see [development](development.md#faster-test-loops).
+
+Strict native all-target Clippy and strict Wasm library/Web-binary Clippy now pass with dependency
+linting enabled. Fixes gate native-only helpers/constants to their platform and end a real file
+handle's scope before rename; they do not disable lints or remove native durability barriers.
+Layering, the 24-library Wasm/HEIF gate, the adversarial command hunt and 3,395 full engine tests
+also pass (21 existing opt-in engine tests ignored). The pinned corpus fetch verified every
+configured digest. Its first release run exposed a genuine SVG parser stack overflow on an
+explicit 1 MiB thread, which increasing the outer test-runner stack did not repair. The shared
+SVG XML nesting bound is now 128 instead of 512. Files beyond it fail before parsing; embedded
+SVG images share the remaining depth. The accepted boundary, previous crashing depths, shared
+image budget and deepest image chain all pass small-stack release regressions (39 SVG tests).
+The XML-only parser for KRA/ORA/XMP keeps an independent 512-level bound, verified on a 1 MiB
+stack. SVG conversion's stricter recursion budget does not change these formats' own
+unsupported-group-depth errors.
+The final pinned IO corpus release run passes 552 library and 578 integration tests, with
+12 existing opt-in tests ignored (including the separate multi-gigapixel export target).
+It uses the normal test-runner stack, not a `RUST_MIN_STACK` workaround. The full UI suite
+also passes again after this parser fix: 4,950 passed, zero failed, 22 existing ignored.
+
+The quick performance gate also completes without scenario failures; the earlier missing-glyph
+benchmark panic and absent P50/P80 rows are gone. This run reports P50 p95 3.01 ms and P80 p95
+46.7 ms on Apple M2. Regression comparison is skipped against the different-machine M4 Pro
+baseline; no baseline, parity floor or budget-enforcement flag was changed.
+
+Evidence and detailed logs are local under `target/ui-repair/`. Offscreen verification does not
+claim a new agent drawing, completed browser download or refreshed existing artwork session.
+The final Web release was rebuilt and the local site's index switched atomically after copying
+its assets; older hashed assets remain available for already-open artwork tabs.

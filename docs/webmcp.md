@@ -659,13 +659,18 @@ ignored test); 16 web-app tests, the drawing-plan regression and seven boot test
 release app/boot builds; packaging regression and file-size checks. Browser testing used the
 extracted dual-payload zip under a URL subpath, including relative imports and real worker helpers.
 
-The full dependency Clippy gate is blocked by the existing `clippy::drop_non_drop` in
-`crates/io/src/psd_export/document.rs:111`. The earlier broad UI suite had 4,741 passing and
-22 failing tests tied to installed-font/font-provider assumptions, outside this change.
+At the original checkpoint, full dependency Clippy was blocked by `clippy::drop_non_drop` in
+the PSD exporter, and the broad UI suite had 4,741 passing and 22 failing tests. These are no
+longer current blockers: the 2026-11-07 follow-up passes 4,773 UI library tests and 177 integration
+tests (22 existing opt-in tests ignored), native all-target strict Clippy and Wasm library/Web
+binary strict Clippy with dependency linting. See the
+[full UI follow-up](webmcp-reliability.md#9-full-ui-reliability-follow-up-2026-11-07) for root causes
+and preserved safety contracts.
 Wasm `--all-targets` Clippy also pulls unsupported native test dependencies (`wait-timeout`
 and `getrandom`); the library check and application-binary lint pass instead.
-`cargo xtask perf --quick` ran but reported missing
-P50/P80 result rows and a `layout_bench` panic in the egui fork because no installed font
-provided `文` (U+6587). It also labels this machine's run contended and skips comparison with
-its different-machine baseline. These failures are not reported as passing checks, and no
-repository performance baseline or parity score was raised.
+The original `cargo xtask perf --quick` run reported missing P50/P80 rows and a `layout_bench`
+missing-glyph panic. The 2026-11-07 follow-up now completes with no scenario failures and both
+rows present: P50 p95 3.01 ms, P80 p95 46.7 ms on this Apple M2 quick run. The runner skips
+regression comparison because the committed baseline is for a different machine class (M4 Pro).
+These measurements do not establish a same-machine speedup or certify all tracked budgets;
+no repository performance baseline or parity score was raised.
