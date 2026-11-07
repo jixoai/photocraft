@@ -1,6 +1,6 @@
 # WebMCP reliability work
 
-Updated: 2026-11-06.
+Updated: 2026-11-07.
 
 This work follows an independent browser drawing-session review. Improvements must apply
 to arbitrary subjects, not a particular illustration. Desktop-only test failures are not
@@ -125,3 +125,13 @@ or a separate file-content check. Browser work stopped on user takeover; no cont
 or existing user tabs closed. Browser reimport was not completed after takeover; native
 8/16/32-bit project reimport/editability regressions did pass. The final independent drawing
 agent and user still perform the held-out visual acceptance.
+
+## 6. Independent drawing follow-up
+
+An independent native-WebMCP drawing session exposed a contract/runtime mismatch:
+`shape.edit` advertised `kind: "path"`, but dispatched it to the live-primitive builder,
+which rejected that kind. Explicit path edits now require `path`, use its Bézier geometry
+without live-primitive regeneration, and retain the normal paint/transform/history behavior.
+Regression coverage includes schema/runtime agreement, unchanged neighbors and undo/redo at
+8/16/32 bits, malformed or missing paths without mutation, and the shared Web control path.
+This is a subject-independent authoring fix, not a scene generator or a visual-quality claim.

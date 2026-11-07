@@ -465,6 +465,10 @@ pub(super) fn shape_create(s: &mut Session, p: &Value) -> Result<Value> {
 
 pub(super) fn shape_edit(s: &mut Session, p: &Value) -> Result<Value> {
     const CMD: &str = "shape.edit";
+    let explicit_path = p.get("kind").and_then(Value::as_str) == Some("path");
+    if explicit_path && p.get("path").is_none() {
+        return Err(bad(CMD, "kind \"path\" needs `path`"));
+    }
     let id = layer_id(s, p)?;
     let fg = s.tools.foreground;
     let fgc = Color::rgba(fg[0], fg[1], fg[2], fg[3]);
@@ -492,7 +496,7 @@ pub(super) fn shape_edit(s: &mut Session, p: &Value) -> Result<Value> {
             "arrowLength",
             "arrowConcavity",
         ];
-        if geom_keys.iter().any(|k| p.get(*k).is_some()) {
+        if !explicit_path && geom_keys.iter().any(|key| p.get(*key).is_some()) {
             let kind = p.get("kind").and_then(Value::as_str).map(str::to_string).or_else(|| sh.live.as_ref().map(|l| live_kind(l).to_string()));
             let kind = kind.ok_or_else(|| bad(CMD, "this shape has no live-shape parameters; pass `kind` or `path`"))?;
             // Explicit radii on a plain rectangle keep it a (now rounded) rectangle.

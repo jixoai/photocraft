@@ -8,7 +8,7 @@ pub(super) fn description(id: &str) -> Option<&'static str> {
             "Create an editable vector shape layer, or append components to addTo. Use a live primitive for adjustable geometry or kind=path for Bézier curves. rect is [x,y,width,height] in document pixels, not corner coordinates. fill/stroke preserve separate editable paints. Returns shape.info; do not rasterize unless pixel editing is required."
         }
         "shape.edit" => {
-            "Edit an existing vector shape without flattening it. Omitted properties remain unchanged; fill=null removes the fill and stroke=null removes the outline. A new path replaces the geometry and drops live-shape parameters. move/transform use document pixels. Inspect shape.info before editing a component."
+            "Edit an existing vector shape without flattening it. Omitted properties remain unchanged; fill=null removes the fill and stroke=null removes the outline. A new path replaces the geometry and drops live-shape parameters. kind=path requires path and uses it instead of live-primitive geometry. move/transform use document pixels. Inspect shape.info before editing a component."
         }
         "path.set" => {
             "Create or replace the work path or a named path. Does not paint pixels. op appends the new subpaths to an existing path using that Boolean operation. Use shape.create for an editable painted shape, path.fill for raster fill, or path.toSelection for a selection."
@@ -42,6 +42,9 @@ pub(super) fn schema(id: &str) -> Option<Value> {
         }
         "shape.edit" => {
             let mut schema = shape(true);
+            schema["allOf"] = json!([
+                {"if":{"properties":{"kind":{"const":"path"}},"required":["kind"]},"then":{"required":["path"]}}
+            ]);
             schema["examples"] = json!([{"layer":7,"move":[12,-8],"stroke":{"width":2}}, {"layer":7,"fill":null}]);
             schema
         }

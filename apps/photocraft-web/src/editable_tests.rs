@@ -20,6 +20,30 @@ fn png(app: &PhotocraftApp) -> Vec<u8> {
 }
 
 #[test]
+fn explicit_path_patch_uses_the_shared_web_control_and_undo_history() {
+    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Services::default());
+    execute(&mut app, "file.new", json!({"width":32,"height":24}));
+    let subject = execute(&mut app, "shape.create", json!({"kind":"ellipse","rect":[2,2,12,10],"fill":"#247c98"}));
+    let before = png(&app);
+    let changed = execute(
+        &mut app,
+        "shape.edit",
+        json!({
+            "layer":subject["layer"],"kind":"path",
+            "path":{"subpaths":[{"closed":true,"knots":[[3,3],[16,4],[8,18]]}]}
+        }),
+    );
+    assert_eq!(changed["kind"], "path");
+    assert!(changed["live"].is_null());
+    let after = png(&app);
+    assert_ne!(after, before);
+    execute(&mut app, "edit.undo", json!({}));
+    assert_eq!(png(&app), before);
+    execute(&mut app, "edit.redo", json!({}));
+    assert_eq!(png(&app), after);
+}
+
+#[test]
 fn object_patch_preserves_neighbors_history_and_editability_at_all_depths() {
     for depth in [8, 16, 32] {
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Services::default());
