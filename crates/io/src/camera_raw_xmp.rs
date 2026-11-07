@@ -275,7 +275,8 @@ fn escape(s: &str) -> String {
 }
 
 /// The XMP toolkit [`save`] names on `x:xmpmeta`.
-const TOOLKIT: &str = "PhotoCraft";
+const TOOLKIT: &str = "FDE2E Photocraft";
+const LEGACY_TOOLKIT: &str = "PhotoCraft";
 const META_NS: &str = "adobe:ns:meta/";
 
 /// Did [`save`] write this file? True when its `x:xmpmeta` names PhotoCraft as the toolkit
@@ -287,18 +288,19 @@ pub fn is_photocraft_xmp(bytes: &[u8]) -> bool {
     }
     let Ok(text) = std::str::from_utf8(bytes) else { return false };
     let Ok(doc) = roxmltree::Document::parse(text.trim_start_matches('\u{feff}')) else { return false };
-    doc.descendants()
+    let toolkit = doc
+        .descendants()
         .find(|n| n.is_element() && n.tag_name().namespace() == Some(META_NS) && n.tag_name().name() == "xmpmeta")
-        .and_then(|n| n.attribute((META_NS, "xmptk")))
-        == Some(TOOLKIT)
+        .and_then(|n| n.attribute((META_NS, "xmptk")));
+    matches!(toolkit, Some(TOOLKIT | LEGACY_TOOLKIT))
 }
 
 /// Write `params` as a Camera Raw settings file Photoshop's Load Settings… reads.
 pub fn save(params: &CameraRaw) -> String {
     let mut p = params.clone();
     let wb = if p.temperature != 0.0 || p.tint != 0.0 { "Custom" } else { "As Shot" };
-    let mut out = String::from(
-        "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"PhotoCraft\">\n <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n  <rdf:Description rdf:about=\"\"\n    xmlns:crs=\"http://ns.adobe.com/camera-raw-settings/1.0/\"\n",
+    let mut out = format!(
+        "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"{TOOLKIT}\">\n <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n  <rdf:Description rdf:about=\"\"\n    xmlns:crs=\"http://ns.adobe.com/camera-raw-settings/1.0/\"\n",
     );
     out.push_str("   crs:Version=\"18.4\"\n   crs:ProcessVersion=\"15.4\"\n");
     out.push_str(&format!("   crs:WhiteBalance=\"{wb}\"\n"));
@@ -463,7 +465,10 @@ mod tests {
     #[test]
     fn is_photocraft_xmp_reads_the_toolkit_marker() {
         let own = save(&CameraRaw { contrast: 15.0, ..CameraRaw::default() });
+        assert!(own.contains("x:xmptk=\"FDE2E Photocraft\""));
         assert!(is_photocraft_xmp(own.as_bytes()));
+        let legacy = own.replace(TOOLKIT, LEGACY_TOOLKIT);
+        assert!(is_photocraft_xmp(legacy.as_bytes()), "existing upstream sidecars remain editable");
         let wrapped = format!("\u{feff}<?xpacket begin=\"\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n{own}<?xpacket end=\"w\"?>");
         assert!(is_photocraft_xmp(wrapped.as_bytes()), "an xpacket wrapper and a byte order mark");
         assert!(!is_photocraft_xmp(FIXTURE), "Camera Raw's own toolkit");
@@ -474,6 +479,7 @@ mod tests {
             b"<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" xmptk=\"PhotoCraft\"/>",
             b"<x:xmpmeta xmlns:x=\"other:ns/\" x:xmptk=\"PhotoCraft\"/>",
             b"<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"PhotoCraft 2\"/>",
+            b"<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"FDE2E Photocraft 2\"/>",
             b"\xff\xfe",
         ] {
             assert!(!is_photocraft_xmp(other), "{}", String::from_utf8_lossy(other));

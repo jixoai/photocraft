@@ -83,15 +83,15 @@ impl Builtin {
         match self {
             Builtin::Srgb => "sRGB IEC61966-2.1",
             Builtin::DisplayP3 => "Display P3",
-            Builtin::AdobeRgbCompat => "Adobe RGB (1998)-compatible (PhotoCraft)",
-            Builtin::ProPhotoCompat => "ProPhoto RGB-compatible (ROMM primaries, PhotoCraft)",
-            Builtin::LinearSrgb => "Linear sRGB (PhotoCraft)",
-            Builtin::AcesCg => "ACEScg (AP1, linear, PhotoCraft)",
-            Builtin::Rec2020 => "Rec. ITU-R BT.2020 (PhotoCraft)",
-            Builtin::GrayGamma22 => "Gray Gamma 2.2 (PhotoCraft)",
-            Builtin::SGray => "sGray (sRGB tone curve, PhotoCraft)",
-            Builtin::DotGain20Compat => "Dot Gain 20%-compatible (gamma 1.732, PhotoCraft)",
-            Builtin::LabD50 => "Lab D50 identity (PhotoCraft)",
+            Builtin::AdobeRgbCompat => "Adobe RGB (1998)-compatible (FDE2E Photocraft)",
+            Builtin::ProPhotoCompat => "ProPhoto RGB-compatible (ROMM primaries, FDE2E Photocraft)",
+            Builtin::LinearSrgb => "Linear sRGB (FDE2E Photocraft)",
+            Builtin::AcesCg => "ACEScg (AP1, linear, FDE2E Photocraft)",
+            Builtin::Rec2020 => "Rec. ITU-R BT.2020 (FDE2E Photocraft)",
+            Builtin::GrayGamma22 => "Gray Gamma 2.2 (FDE2E Photocraft)",
+            Builtin::SGray => "sGray (sRGB tone curve, FDE2E Photocraft)",
+            Builtin::DotGain20Compat => "Dot Gain 20%-compatible (gamma 1.732, FDE2E Photocraft)",
+            Builtin::LabD50 => "Lab D50 identity (FDE2E Photocraft)",
             Builtin::CoatedCmyk => crate::synth::DESCRIPTION,
         }
     }
@@ -114,7 +114,11 @@ impl Builtin {
             "cmyk" | "coatedcmyk" | "defaultcmyk" | "photocraftcoatedcmyk" => Some(Builtin::CoatedCmyk),
             _ => None,
         };
-        alias.or_else(|| Builtin::ALL.into_iter().find(|b| b.description().eq_ignore_ascii_case(s)))
+        alias.or_else(|| {
+            Builtin::ALL
+                .into_iter()
+                .find(|b| b.description().eq_ignore_ascii_case(s) || b.description().replace("FDE2E Photocraft", "PhotoCraft").eq_ignore_ascii_case(s))
+        })
     }
 
     /// The profile (built once per process).
@@ -146,7 +150,7 @@ pub fn srgb() -> &'static Profile {
 /// only assigned to such files, never offered as a working space.
 pub fn linear_gray() -> &'static Profile {
     static PROFILE: OnceLock<Profile> = OnceLock::new();
-    PROFILE.get_or_init(|| gray("Linear Gray (PhotoCraft)", Curve::Gamma(1.0)))
+    PROFILE.get_or_init(|| gray("Linear Gray (FDE2E Photocraft)", Curve::Gamma(1.0)))
 }
 
 /// The ICC D65 used for the RGB spaces (chromaticity 0.3127, 0.3290).
@@ -305,7 +309,7 @@ pub fn cicp_rgb(primaries: u16, transfer: u16, linear: bool) -> Option<Profile> 
         5 => (Curve::Gamma(2.8), "gamma 2.8"),
         _ => return None,
     };
-    Some(rgb(&format!("{name} {curve} (PhotoCraft)"), prim, d65(), trc))
+    Some(rgb(&format!("{name} {curve} (FDE2E Photocraft)"), prim, d65(), trc))
 }
 
 fn build(b: Builtin) -> Profile {
@@ -340,6 +344,18 @@ fn build(b: Builtin) -> Profile {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn built_in_profile_branding_round_trips_and_accepts_legacy_names() {
+        for builtin in Builtin::ALL {
+            let description = builtin.description();
+            assert_eq!(Builtin::from_id(description), Some(builtin));
+            assert_eq!(Builtin::from_id(&description.replace("FDE2E Photocraft", "PhotoCraft")), Some(builtin));
+            assert_eq!(builtin.profile().description, description);
+            let parsed = Profile::parse(&builtin.profile().to_bytes()).unwrap();
+            assert_eq!(parsed.description, description);
+        }
+    }
 
     #[test]
     fn cicp_maps_onto_the_builtins_and_linear_bt2020() {
