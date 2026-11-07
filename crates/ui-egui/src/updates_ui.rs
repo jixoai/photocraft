@@ -5,6 +5,7 @@ use serde_json::Value;
 
 use crate::PhotocraftApp;
 
+#[cfg_attr(target_arch = "wasm32", derive(Default))]
 pub(crate) struct Runtime {
     startup_checked: bool,
     notified_version: Option<String>,
@@ -13,6 +14,7 @@ pub(crate) struct Runtime {
     updater: craft_update::updater::Updater,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Default for Runtime {
     fn default() -> Self {
         Self {

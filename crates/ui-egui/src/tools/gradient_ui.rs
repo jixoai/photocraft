@@ -78,6 +78,7 @@ pub struct LiveGradient {
 }
 
 /// Whether an uncommitted gradient gesture must finish before applying a saved vector.
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn editing(app: &PhotocraftApp) -> bool {
     app.gradient.drag.is_some() || app.gradient.panel.is_some() || app.gradient.preset_stop.is_some()
 }

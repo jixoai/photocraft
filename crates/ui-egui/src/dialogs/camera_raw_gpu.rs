@@ -46,20 +46,20 @@ impl Pass {
     pub(crate) fn start(adapter: &wgpu::Adapter, device: &wgpu::Device, slot: &Slot) {
         if !Self::usable(adapter) {
             let _ = (slot.set(None), device);
-            return;
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let (on, out) = (device.clone(), slot.clone());
-            let spawned = std::thread::Builder::new().name("camera-raw-pipeline".into()).spawn(move || {
-                let pass = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| Self::build_on(&on))).unwrap_or_else(|_| {
-                    log::warn!("building the Camera Raw pipeline panicked; Camera Raw develops on the CPU");
-                    None
+        } else {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let (on, out) = (device.clone(), slot.clone());
+                let spawned = std::thread::Builder::new().name("camera-raw-pipeline".into()).spawn(move || {
+                    let pass = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| Self::build_on(&on))).unwrap_or_else(|_| {
+                        log::warn!("building the Camera Raw pipeline panicked; Camera Raw develops on the CPU");
+                        None
+                    });
+                    let _ = out.set(pass);
                 });
-                let _ = out.set(pass);
-            });
-            if spawned.is_err() {
-                let _ = slot.set(Self::build_on(device));
+                if spawned.is_err() {
+                    let _ = slot.set(Self::build_on(device));
+                }
             }
         }
     }

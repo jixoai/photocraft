@@ -858,7 +858,7 @@ fn write_bundle_file(root: &Path, path: &Path, data: &[u8], fs: &dyn crate::atom
             Err(e) => return Err(e.into()),
         }
     }
-    let (tmp, mut file) = temporary.ok_or_else(|| {
+    let (tmp, file) = temporary.ok_or_else(|| {
         FormatError::Io(std::io::Error::new(std::io::ErrorKind::AlreadyExists, format!("could not create a temporary file beside {}", path.display())))
     })?;
     let result = (|| -> Result<()> {
@@ -868,9 +868,11 @@ fn write_bundle_file(root: &Path, path: &Path, data: &[u8], fs: &dyn crate::atom
             return Err(unsafe_bundle_entry(&tmp));
         }
         validate_bundle_file(root, path)?;
-        file.write_all(data)?;
-        file.sync_all()?;
-        drop(file);
+        {
+            let mut file = file;
+            file.write_all(data)?;
+            file.sync_all()?;
+        }
         // Preserve the existing mode where possible, as the generic atomic writer does.
         if let Ok(permissions) = std::fs::metadata(path).map(|m| m.permissions()) {
             let _ = std::fs::set_permissions(&tmp, permissions);
