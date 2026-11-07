@@ -25,7 +25,7 @@ fn diagnostic(call: Option<&Call>) -> bool {
     match call {
         Some(Call::Commands(_) | Call::RequestStatus(_) | Call::Inspect(_)) => true,
         Some(Call::Control { method, .. }) => {
-            matches!(method.as_str(), "jobs.list" | "jobs.cancel" | "ui.inspect" | "engine.commands" | "document.inspect" | "recovery.list")
+            matches!(method.as_str(), "scope.status" | "jobs.list" | "jobs.cancel" | "ui.inspect" | "engine.commands" | "document.inspect" | "recovery.list")
         }
         _ => false,
     }
@@ -163,7 +163,7 @@ fn interrupted(active: &Active) -> Failure {
     Failure::interrupted(message, active.dispatch.abandon_before_dispatch())
 }
 
-fn prepare(tool: &str, input: JsValue) -> Result<(Call, usize), Failure> {
+fn prepare(scope: &crate::task_scope::Scope, tool: &str, input: JsValue) -> Result<(Call, usize), Failure> {
     let input = if input.is_undefined() { Object::new().into() } else { input };
     let encoded = js_sys::JSON::stringify(&input)
         .map_err(|_| Failure::invalid("", json!({"type":"object"}), "Arguments must be JSON serializable; cyclic objects and BigInt are unsupported"))?;
@@ -185,7 +185,7 @@ fn prepare(tool: &str, input: JsValue) -> Result<(Call, usize), Failure> {
         ));
     }
     let value = serde_json::from_str(&encoded).map_err(|error| Failure::invalid("", json!({"type":"object"}), format!("Invalid JSON arguments: {error}")))?;
-    Ok((agent::parse(tool, value)?, bytes))
+    Ok((agent::parse_scoped(scope, tool, value)?, bytes))
 }
 
 pub(crate) fn page_identity() -> Result<String, JsValue> {
@@ -195,8 +195,8 @@ pub(crate) fn page_identity() -> Result<String, JsValue> {
 }
 
 fn admit(queue: &mut Queue, mut pending: Pending) -> Result<Option<Value>, Failure> {
-    let tracking = if let Some(Call::Tracked { id, instance, command, params }) = pending.call.as_ref() {
-        let fingerprint = Ledger::fingerprint(command, params)?;
+    let tracking = if let Some(Call::Tracked { id, instance, command, params, expected }) = pending.call.as_ref() {
+        let fingerprint = agent::tracked_fingerprint(command, params, expected)?;
         if let Some(status) = queue.ledger.existing(instance, id, &fingerprint)? {
             return Ok(Some(status));
         }
@@ -209,8 +209,8 @@ fn admit(queue: &mut Queue, mut pending: Pending) -> Result<Option<Value>, Failu
     }
     let status = if let Some((id, instance, fingerprint)) = tracking {
         let status = queue.ledger.reserve(&instance, &id, fingerprint)?;
-        if let Some(Call::Tracked { command, params, .. }) = pending.call.take() {
-            pending.call = Some(Call::Control { method: "engine.execute".into(), params: json!({"command":command,"params":params}) });
+        if let Some(Call::Tracked { command, params, expected, .. }) = pending.call.take() {
+            pending.call = Some(Call::Control { method: "engine.execute".into(), params: agent::execution_params(command, params, expected) });
         }
         pending.tracked = Some(id);
         Some(status)
@@ -223,13 +223,13 @@ fn admit(queue: &mut Queue, mut pending: Pending) -> Result<Option<Value>, Failu
     Ok(status)
 }
 
-fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: JsValue, options: JsValue) -> Promise {
+fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, scope: &crate::task_scope::Scope, tool: &str, input: JsValue, options: JsValue) -> Promise {
     let prepared = (|| -> Result<_, Failure> {
         let signal = member(&options, "signal").and_then(|v| v.dyn_into::<web_sys::AbortSignal>().ok());
         if signal.as_ref().is_some_and(web_sys::AbortSignal::aborted) {
             return Err(Failure::interrupted("Cancelled before dispatch; no changes applied", true));
         }
-        let (call, bytes) = prepare(tool, input)?;
+        let (call, bytes) = prepare(scope, tool, input)?;
         Ok((call, signal, bytes))
     })();
     let (call, signal, bytes) = match prepared {
@@ -296,7 +296,8 @@ impl Bridge {
             let tool = js(definition)?;
             let queue = self.queue.clone();
             let wake = ctx.clone();
-            let execute = Closure::<dyn FnMut(JsValue, JsValue) -> Promise>::new(move |input, options| enqueue(&queue, &wake, name, input, options));
+            let scope = self.scope.clone();
+            let execute = Closure::<dyn FnMut(JsValue, JsValue) -> Promise>::new(move |input, options| enqueue(&queue, &wake, &scope, name, input, options));
             set(&tool, "execute", &execute.into_js_value())?;
             tools.push(&tool);
         }
@@ -304,8 +305,9 @@ impl Bridge {
         // implemented WebMCP. This is not a network endpoint or a modelContext polyfill.
         let api = Object::new();
         set(&api, "tools", &js(&json!(definitions))?)?;
+        let scope = self.scope.clone();
         let validate = Closure::<dyn FnMut(String, JsValue) -> Result<JsValue, JsValue>>::new(move |name: String, input| {
-            let reply = match prepare(&name, input) {
+            let reply = match prepare(&scope, &name, input) {
                 Ok(_) => json!({"ok":true,"result":{"valid":true}}),
                 Err(failure) => failure.reply(),
             };
@@ -317,8 +319,10 @@ impl Bridge {
         set(&api, "backgroundWorkers", &JsValue::from_bool(photocraft_engine::background::available()))?;
         let queue = self.queue.clone();
         let wake = ctx.clone();
-        let call =
-            Closure::<dyn FnMut(String, JsValue, JsValue) -> Promise>::new(move |name: String, input, options| enqueue(&queue, &wake, &name, input, options));
+        let scope = self.scope.clone();
+        let call = Closure::<dyn FnMut(String, JsValue, JsValue) -> Promise>::new(move |name: String, input, options| {
+            enqueue(&queue, &wake, &scope, &name, input, options)
+        });
         set(&api, "callTool", &call.into_js_value())?;
         let context = window
             .document()
@@ -378,6 +382,7 @@ impl Bridge {
             return;
         }
         let result = match call {
+            Call::Control {method,..} if method == "scope.status" => Ok(self.scope.status()),
             Call::Control {method,params} if method.starts_with("recovery.") => self.recovery.control(&app.session, &method, &params),
             Call::Control {method,params} => {
                 let (request,receiver) = ControlRequest::new(method,params);

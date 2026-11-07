@@ -21,6 +21,44 @@ impl Scope {
         self.id().map_or_else(|| legacy.to_owned(), |id| format!("{legacy}.scope.{id}"))
     }
 
+    pub fn authorize(&self, tool: &str, args: &Value) -> Result<(), crate::agent_error::Failure> {
+        use crate::agent_error::Failure;
+        let supplied = args.get("scopeId").and_then(Value::as_str);
+        if let Some(supplied) = supplied {
+            Self::new(Some(supplied.into())).map_err(|message| Failure::invalid("/scopeId", json!({"pattern":"^[A-Za-z0-9_-]+$"}), message))?;
+            if Some(supplied) != self.id() {
+                return Err(Failure::rejected(
+                    "SCOPE_MISMATCH",
+                    "This page belongs to a different task scope",
+                    "Use the assigned task page; do not change scopeId to fit an unexpected tab.",
+                ));
+            }
+        }
+        let discovery = matches!(tool, "photocraft_commands" | "photocraft_inspect")
+            || (tool == "photocraft_control"
+                && matches!(
+                    args["method"].as_str(),
+                    Some(
+                        "scope.status"
+                            | "requests.status"
+                            | "recovery.list"
+                            | "engine.commands"
+                            | "ui.inspect"
+                            | "ui.menu.list"
+                            | "ui.screenshot"
+                            | "jobs.list"
+                    )
+                ));
+        if self.id().is_some() && supplied.is_none() && !discovery {
+            return Err(Failure::rejected(
+                "SCOPE_REQUIRED",
+                "Explicit task scopeId is required on this page",
+                "Discover scope.status on the assigned page, verify its identity, then include that scopeId.",
+            ));
+        }
+        Ok(())
+    }
+
     pub fn status(&self) -> Value {
         json!({
             "scopeId":self.id(),

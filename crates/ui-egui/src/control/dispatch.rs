@@ -88,6 +88,22 @@ fn mode_menu_choose(app: &mut PhotocraftApp, ctx: &egui::Context, label: &str) -
 
 fn execute_command(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest) -> Outcome {
     let p = &req.params;
+    if let Some(expected) = p.get("ifDocument") {
+        let valid = expected.as_object().is_some_and(|fields| {
+            fields.keys().all(|key| matches!(key.as_str(), "id" | "revision"))
+                && expected["id"].as_u64().is_some()
+                && fields.get("revision").is_none_or(|revision| revision.as_u64().is_some())
+        });
+        if !valid {
+            return precondition_error("INVALID_ARGUMENTS", "ifDocument requires an unsigned id and optional unsigned revision, with no other fields");
+        }
+        let matches = app.session.active().is_some_and(|state| {
+            expected["id"].as_u64() == Some(state.doc.id.0) && expected.get("revision").is_none_or(|revision| revision.as_u64() == Some(state.revision))
+        });
+        if !matches {
+            return precondition_error("DOCUMENT_PRECONDITION_FAILED", "The active document or revision changed before dispatch");
+        }
+    }
     let Some(id) = str_param(p, "command").or(str_param(p, "id")) else { return err("missing `command`") };
     if req.method == "engine.execute" && METHODS.contains(&id) && photocraft_engine::commands::find(id).is_none() {
         return err(photocraft_engine::command_hints::protocol_method_as_command(id));
@@ -119,6 +135,12 @@ fn execute_command(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRe
         return run_waiting(app, wait, |app| app.run(id, params));
     }
     run_waiting(app, wait, |app| crate::menus::invoke(app, ctx, id, params))
+}
+
+fn precondition_error(code: &str, message: &str) -> Outcome {
+    Outcome::Done(
+        json!({"ok":false,"error":message,"errorInfo":{"code":code,"message":message,"execution":"not_started","retrySafe":true,"hint":"Inspect the active document and reconcile the plan before submitting a new edit."}}),
+    )
 }
 
 fn jobs_cancel(app: &mut PhotocraftApp, p: &Value) -> Outcome {

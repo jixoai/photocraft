@@ -8,6 +8,40 @@ fn call(app: &mut PhotocraftApp, ctx: &egui::Context, method: &str, params: Valu
     }
 }
 
+#[test]
+fn document_preconditions_are_checked_at_actual_dispatch_without_mutation() {
+    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
+    let ctx = egui::Context::default();
+    app.run("file.new", json!({"width":8,"height":8})).unwrap();
+    let state = app.session.active().unwrap();
+    let original = json!({"id":state.doc.id.0,"revision":state.revision});
+    let (queued, _receiver) = ControlRequest::new("engine.execute", json!({"command":"layer.new.layer","params":{"name":"stale"},"ifDocument":original}));
+    app.run("file.new", json!({"width":12,"height":12})).unwrap();
+    let Outcome::Done(reply) = handle(&mut app, &ctx, &queued) else { panic!("expected rejection") };
+    assert_eq!(reply["errorInfo"]["code"], "DOCUMENT_PRECONDITION_FAILED");
+    let state = app.session.active().unwrap();
+    let current = json!({"id":state.doc.id.0,"revision":state.revision});
+    for method in ["engine.execute", "ui.menu.invoke"] {
+        for expected in [original.clone(), json!({"id":current["id"],"revision":u64::MAX})] {
+            let reply = call(&mut app, &ctx, method, json!({"command":"layer.new.layer","params":{"name":"stale"},"ifDocument":expected}));
+            assert_eq!(reply["errorInfo"]["code"], "DOCUMENT_PRECONDITION_FAILED");
+            assert_eq!(reply["errorInfo"]["execution"], "not_started");
+            assert_eq!(app.session.active().unwrap().revision, current["revision"].as_u64().unwrap());
+        }
+    }
+    let reply = call(&mut app, &ctx, "engine.execute", json!({"command":"layer.new.layer","params":{"name":"valid"},"ifDocument":current}));
+    assert_eq!(reply["ok"], true, "{reply}");
+    assert!(app.session.active().unwrap().revision > current["revision"].as_u64().unwrap());
+    let revision = app.session.active().unwrap().revision;
+    let reply = call(&mut app, &ctx, "engine.execute", json!({"command":"layer.new.layer","params":{"name":"stale revision"},"ifDocument":current}));
+    assert_eq!(reply["errorInfo"]["code"], "DOCUMENT_PRECONDITION_FAILED");
+    assert_eq!(app.session.active().unwrap().revision, revision);
+    for expected in [json!(null), json!({}), json!({"id":-1}), json!({"id":1,"typo":true}), json!({"id":1,"revision":null})] {
+        let reply = call(&mut app, &ctx, "engine.execute", json!({"command":"layer.new.layer","ifDocument":expected}));
+        assert_eq!(reply["errorInfo"]["code"], "INVALID_ARGUMENTS");
+    }
+}
+
 /// #3674: a guessed name gets a pointer to the right one, in both directions; and every
 /// method listed for those hints is served.
 #[test]

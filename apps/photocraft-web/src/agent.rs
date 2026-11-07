@@ -36,6 +36,7 @@ pub const CONTROL_METHODS: &[&str] = &[
     "ui.type",
     "ui.screenshot",
     "app.save",
+    "scope.status",
     "requests.status",
     "recovery.list",
     "recovery.checkpoint",
@@ -66,7 +67,7 @@ fn control_schema() -> Value {
         "then":{"properties":{"params":status}}
     }]);
     if let Some(conditions) = schema["allOf"].as_array_mut() {
-        for method in ["recovery.list", "recovery.checkpoint", "recovery.restore", "recovery.discard", "recovery.retry"] {
+        for method in ["scope.status", "recovery.list", "recovery.checkpoint", "recovery.restore", "recovery.discard", "recovery.retry"] {
             let keyed = matches!(method, "recovery.restore" | "recovery.discard");
             let mut fields = json!({});
             let mut required = Vec::new();
@@ -151,9 +152,12 @@ pub fn tools() -> Vec<Value> {
     entries
         .into_iter()
         .map(|(name, title, description, mut schema, read_only)| {
+            schema["properties"]["scopeId"] = json!({"type":"string","minLength":1,"maxLength":64,"pattern":"^[A-Za-z0-9_-]+$","description":"Stable task identity from photocraft_control scope.status. Required for non-discovery calls on explicitly scoped pages; a supplied mismatch always rejects before admission. Never inferred from the currently active browser tab."});
             if name == "photocraft_execute" {
                 schema["dependentRequired"] = json!({"requestId":["instanceId"],"instanceId":["requestId"]});
+                schema["properties"]["ifDocument"] = json!({"type":"object","properties":{"id":{"type":"integer","minimum":0},"revision":{"type":"integer","minimum":0}},"required":["id"],"additionalProperties":false,"description":"Optional active-document precondition, checked immediately before command dispatch. Use actual id/revision from document inspection. A mismatch applies no command; inspect and reconcile rather than retrying unchanged. Included in tracked request identity."});
             }
+            let description = format!("{description} For independent tasks open a dedicated ?scope=TASK page, discover scope.status and pass scopeId on every non-discovery call. Scope isolates accidental operations and storage, not hostile same-origin code.");
             json!({
                 "name":name,"title":title,"description":description,"inputSchema":schema,
                 "annotations":{"readOnlyHint":read_only}
@@ -180,6 +184,18 @@ fn empty_object() -> Value {
     json!({})
 }
 
+pub fn execution_params(command: String, params: Value, expected: Option<Value>) -> Value {
+    let mut result = json!({"command":command,"params":params});
+    if let Some(expected) = expected {
+        result["ifDocument"] = expected;
+    }
+    result
+}
+
+pub fn tracked_fingerprint(command: &str, params: &Value, expected: &Option<Value>) -> Result<String, Failure> {
+    crate::agent_requests::Ledger::fingerprint(command, &execution_params(command.into(), params.clone(), expected.clone()))
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Execute {
@@ -190,6 +206,8 @@ struct Execute {
     request_id: Option<String>,
     #[serde(rename = "instanceId")]
     instance_id: Option<String>,
+    #[serde(rename = "ifDocument")]
+    expected: Option<Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -229,7 +247,7 @@ pub enum Call {
     Control { method: String, params: Value },
     Import { name: String, bytes: Vec<u8> },
     Export(Export),
-    Tracked { id: String, instance: String, command: String, params: Value },
+    Tracked { id: String, instance: String, command: String, params: Value, expected: Option<Value> },
     RequestStatus(RequestStatus),
     Inspect(crate::agent_inspect::Query),
 }
@@ -245,8 +263,17 @@ pub fn filename(name: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn parse(tool: &str, args: Value) -> Result<Call, Failure> {
+pub fn parse_scoped(scope: &crate::task_scope::Scope, tool: &str, args: Value) -> Result<Call, Failure> {
     agent_error::validate(tool, &args)?;
+    scope.authorize(tool, &args)?;
+    parse(tool, args)
+}
+
+pub fn parse(tool: &str, mut args: Value) -> Result<Call, Failure> {
+    agent_error::validate(tool, &args)?;
+    if let Some(fields) = args.as_object_mut() {
+        fields.remove("scopeId");
+    }
     match tool {
         "photocraft_commands" => {
             let q: Query = decode(args)?;
@@ -272,9 +299,9 @@ pub fn parse(tool: &str, args: Value) -> Result<Call, Failure> {
                         return Err(Failure::invalid(format!("/{field}"), json!({"maxBytes":128}), "Request identity must be at most 128 UTF-8 bytes"));
                     }
                 }
-                return Ok(Call::Tracked { id, instance, command: p.command, params: p.params });
+                return Ok(Call::Tracked { id, instance, command: p.command, params: p.params, expected: p.expected });
             }
-            Ok(Call::Control { method: "engine.execute".into(), params: json!({"command":p.command,"params":p.params}) })
+            Ok(Call::Control { method: "engine.execute".into(), params: execution_params(p.command, p.params, p.expected) })
         }
         "photocraft_inspect" => {
             let query: crate::agent_inspect::Query = decode(args.clone())?;
@@ -430,6 +457,61 @@ mod tests {
     }
 
     #[test]
+    fn scoped_routing_rejects_before_execution_or_tracking_admission() {
+        let scope = crate::task_scope::Scope::new(Some("task-a".into())).unwrap();
+        for (tool, args) in [
+            ("photocraft_execute", json!({"command":"file.new","scopeId":"task-b","requestId":"step","instanceId":"page"})),
+            ("photocraft_execute", json!({"command":"file.new"})),
+            ("photocraft_control", json!({"method":"ui.key","params":{"key":"Delete"}})),
+            ("photocraft_import", json!({"name":"image.png","base64":"YQ=="})),
+            ("photocraft_export", json!({"name":"image.png"})),
+            ("photocraft_inspect", json!({"scopeId":"task-b"})),
+        ] {
+            let reply = parse_scoped(&scope, tool, args).unwrap_err().reply();
+            assert_eq!(reply["ok"], false);
+            assert_eq!(reply["errorInfo"]["execution"], "not_started");
+            assert_eq!(reply["errorInfo"]["retrySafe"], true);
+            assert!(matches!(reply["errorInfo"]["code"].as_str(), Some("SCOPE_REQUIRED" | "SCOPE_MISMATCH")));
+        }
+        for (tool, args) in [
+            ("photocraft_control", json!({"method":"scope.status"})),
+            ("photocraft_inspect", json!({"scope":"document"})),
+            ("photocraft_commands", json!({})),
+            ("photocraft_execute", json!({"scopeId":"task-a","command":"file.new"})),
+        ] {
+            assert!(parse_scoped(&scope, tool, args).is_ok());
+        }
+        assert!(parse_scoped(&crate::task_scope::Scope::default(), "photocraft_execute", json!({"command":"file.new"})).is_ok());
+        assert!(parse_scoped(&crate::task_scope::Scope::default(), "photocraft_execute", json!({"command":"file.new","scopeId":"task-a"})).is_err());
+    }
+
+    #[test]
+    fn document_preconditions_survive_routing_and_tracked_identity() {
+        let guard = json!({"id":7,"revision":3});
+        let Call::Control { params, .. } = parse("photocraft_execute", json!({"command":"edit.undo","ifDocument":guard})).unwrap() else {
+            panic!("expected control call")
+        };
+        assert_eq!(params["ifDocument"], guard);
+        let Call::Tracked { expected, .. } =
+            parse("photocraft_execute", json!({"command":"edit.undo","ifDocument":guard,"requestId":"step","instanceId":"page"})).unwrap()
+        else {
+            panic!("expected tracked call")
+        };
+        assert_eq!(expected, Some(guard.clone()));
+        let fingerprint = tracked_fingerprint("edit.undo", &json!({}), &expected).unwrap();
+        let mut ledger = crate::agent_requests::Ledger::new("page".into());
+        ledger.reserve("page", "step", fingerprint.clone()).unwrap();
+        assert!(ledger.existing("page", "step", &fingerprint).unwrap().is_some());
+        for changed in [None, Some(json!({"id":8,"revision":3})), Some(json!({"id":7,"revision":4}))] {
+            let changed = tracked_fingerprint("edit.undo", &json!({}), &changed).unwrap();
+            assert_eq!(ledger.existing("page", "step", &changed).unwrap_err().reply()["errorInfo"]["code"], "REQUEST_ID_CONFLICT");
+        }
+        for invalid in [json!({}), json!({"id":-1}), json!({"id":1,"revision":null}), json!({"id":1,"other":true})] {
+            assert!(parse("photocraft_execute", json!({"command":"edit.undo","ifDocument":invalid})).is_err());
+        }
+    }
+
+    #[test]
     fn every_command_is_discoverable_once_and_bad_pages_are_bounded() {
         let app = app();
         let mut ids = std::collections::BTreeSet::new();
@@ -544,7 +626,7 @@ mod tests {
 
     #[test]
     fn tracked_requests_parse_without_changing_legacy_execution() {
-        let Call::Tracked { id, instance, command, params } = parse(
+        let Call::Tracked { id, instance, command, params, .. } = parse(
             "photocraft_execute",
             json!({
                 "requestId":"plan:1","instanceId":"page-a","command":"layer.new.layer","params":{"name":"object"}
