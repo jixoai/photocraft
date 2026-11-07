@@ -70,6 +70,9 @@ schemas for `shape.create`, `shape.edit`, `shape.info`, grouping and transforms.
 IDs, patch only the intended object, verify an unchanged neighbor, undo/redo and project
 roundtrip. Review actual images at composition, silhouette and finishing milestones.
 Do not confuse more primitives, successful calls or many layers with better visual quality.
+For multipart subjects, retain a compact semantic manifest of component IDs and roles. Define
+whether a requested edit covers the whole object or one component; verify that closure as well
+as protected neighbors, including the real number of history steps for undo/redo.
 
 ## Checkpoint and recover
 

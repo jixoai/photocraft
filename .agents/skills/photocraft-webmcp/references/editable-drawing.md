@@ -20,6 +20,40 @@ hierarchy; do not assume a creation index, selection or group target. A path use
 pixels, not screen coordinates; rectangle fields are extents, not the opposite corner.
 Discover each command's schema rather than inferring fields from these workflow descriptions.
 
+## Maintain a semantic object manifest
+
+Keep a compact host-side manifest for major multipart objects that may need coordinated edits.
+This is an agent planning artifact, not a new editor data model. Record the semantic name,
+returned component layer IDs and roles (base, shadow, trim, highlight, accessory or text).
+Include bounds and relationships where they affect the edit: front/back order, contact points,
+support and occlusions. Names and coordinates help reasoning; they never substitute for IDs.
+
+Treat an object's components as an edit closure. Before a whole-object change, decide whether
+the change applies to the closure or to one named component. A recolour may need several base
+surfaces and their tonal variants, but not independent accessories or a cast shadow. Do not
+flatten all shading to one colour. Read every affected component plus at least one protected
+neighbour outside the edit closure. If
+the requested edit is intentionally component-only, state that explicitly and verify the
+remaining components still form a coherent object; do not mistake an unchanged neighbour for
+a complete semantic-object test.
+
+Prefer actual layer/group hierarchy when its discovered commands support the intended edit;
+verify membership and stacking after grouping. A partial schema requires checking the command's
+documented behaviour, not inventing parameters. If grouping is unavailable or would disturb
+necessary interleaving, keep membership in the manifest and semantic layer names instead;
+do not claim that flat layers are grouped or merge away independent editability.
+
+After a local edit, compare the edited closure and the explicitly protected neighbours against
+their before-state. Check both data (kind, path/live geometry, paint, transform and bounds)
+and the rendered result. For an action or overlap, also re-check the contact pair and the
+occluding edge. Save the manifest with the plan or evidence so a later agent can distinguish
+“the requested layer changed” from “the intended semantic object changed.”
+
+Coordinate a multi-component edit through ordered tracked steps. Unless a discovered command
+explicitly provides a single history operation, this is not an atomic transaction: inspect any
+partial failure, and undo/redo the actual completed history steps in reverse/forward order.
+Verify the whole closure at both endpoints rather than undoing just the last component.
+
 ## Build and inspect at useful milestones
 
 1. Block major silhouettes and relationships. Export a PNG preview and actually view it.

@@ -20,6 +20,26 @@ objects, precise patches, shared history and feedback let a capable agent iterat
 control; they are advantages over a single flattened image, not a guarantee of better art.
 Use primitives for control, not as an excuse to replace every silhouette with an ellipse.
 
+## Semantic-object edit acceptance
+
+Layer count is not semantic editability. For major multipart objects, save a compact manifest
+of semantic names, component layer IDs and roles, plus bounds, front/back order, contact/support
+relationships and protected neighbours where relevant to the edit.
+This manifest is workflow evidence; it does not require a new editor command or a particular
+grouping implementation.
+
+For a whole-object edit, verify the complete intended component closure and its tonal variants,
+rather than checking only the first matching layer or painting away shading. For a deliberately
+component-only edit, name the component and explain why the other components remain separate.
+Read the edited components and at least one protected neighbour outside the closure before
+and after the change. Compare kind, path or live geometry, paint, transform and bounds, then inspect the
+rendered result. A protected neighbour staying unchanged proves isolation, not that the
+semantic object was edited completely. If the application exposes a real group hierarchy,
+verify it from inspection; otherwise use the manifest and semantic names without claiming that
+flat layers are grouped.
+For multi-step edits, demonstrate undo/redo of the full completed closure in the actual history
+order; several successful requests are not automatically an atomic edit.
+
 ## Avoid fitting to one request
 
 Choose fresh briefs only after freezing the implementation and skill. Vary subject, action,
@@ -61,12 +81,15 @@ then discover exact command schemas. Keep major semantic objects individually ed
 use paths/live shapes when appropriate and paint layers only where their material needs it.
 Store actual returned IDs. Use tracked editing receipts, short bounded calls and checkpoints;
 do not equate admission with completion or replay ambiguous mutations.
+For major multipart objects, save a compact semantic component manifest. Define the full
+component closure of the requested local edit; distinguish it from a component-only edit.
 Read each needed command's inputSchema before its first call. On the current document API,
 pass the discovered tool object to executeTool(toolObject, args), not a name/arguments wrapper.
 
 Review actual image outputs after composition, main silhouettes and finishing. Correct
 the weakest large-scale issue before adding tiny details. Make one requested local change
-to a named object, verify a neighboring object is unchanged, and demonstrate undo/redo.
+to a named object, verify its intended components and an unchanged protected neighbor outside
+the edit closure, and demonstrate undo/redo of every completed step in that edit.
 Export an editable .pcraft, reopen a copy and verify the main objects remain editable.
 Verify a completed browser checkpoint and its restore in an isolated test page only;
 never reload the only unsaved result or delete another page's recovery snapshot.
