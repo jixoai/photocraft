@@ -1,6 +1,6 @@
 # General WebMCP drawing acceptance
 
-Updated: 2026-11-06. This is a reusable evaluation protocol, not a reference illustration.
+Updated: 2026-11-07. This is a reusable evaluation protocol, not a reference illustration.
 
 ## Separate capability from strategy and model quality
 
@@ -50,6 +50,10 @@ verify the six registered tools. Do not substitute an external image generator, 
 script-rendered finished bitmap, a hidden renderer or an imported finished illustration.
 If native WebMCP is unavailable, report that blocker rather than silently substituting
 the same-page API. Preserve all unrelated user tabs/documents and existing artifacts.
+This is a drawing-only acceptance run: do not change project code or browser tool
+registrations to make a failure disappear. On a missing TaskSpace or user takeover,
+follow the browser skill's stop/recovery rules; do not create a replacement space to
+bypass the failure. A generic instruction to continue does not override those rules.
 
 Draw this new brief: <SUBJECT, ACTION, VIEWPOINT, STYLE, CONSTRAINTS, CANVAS SIZE>.
 No previous scene examples or exports are supplied. Decide composition and silhouette,
@@ -57,6 +61,8 @@ then discover exact command schemas. Keep major semantic objects individually ed
 use paths/live shapes when appropriate and paint layers only where their material needs it.
 Store actual returned IDs. Use tracked editing receipts, short bounded calls and checkpoints;
 do not equate admission with completion or replay ambiguous mutations.
+Read each needed command's inputSchema before its first call. On the current document API,
+pass the discovered tool object to executeTool(toolObject, args), not a name/arguments wrapper.
 
 Review actual image outputs after composition, main silhouettes and finishing. Correct
 the weakest large-scale issue before adding tiny details. Make one requested local change

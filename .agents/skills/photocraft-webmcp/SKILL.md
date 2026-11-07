@@ -14,8 +14,15 @@ from an automation timeout. Follow the user's constraints on imported assets and
 - Wait for `window.photocraft.webmcp.registered === 6` and no registration error before
   using native `document.modelContext.getTools()` / `executeTool`. Do not serialize tool
   callback objects; project only names/descriptions/schemas when inspecting metadata.
+- On the current `document.modelContext` API, await `getTools()`, find the actual tool
+  object by name and call `executeTool(toolObject, args)`. The `{name, arguments}` wrapper
+  used by other MCP clients is not this browser signature. Report unavailable native
+  WebMCP rather than replacing it with a same-page editing API or a fabricated tool.
 - Discover the required commands with `photocraft_commands` (limit at most 200), then use
-  their exact IDs and `inputSchema`. A partial contract is not full validation.
+  their exact IDs and `inputSchema` before the first call to each command. Store the
+  discovered contract with the plan; tool-envelope fields are not command parameters.
+  Use explicit `layer` selectors for addressed objects, not guessed `id`/`layers` aliases.
+  A partial contract is not full validation; do not assume a batch command exists.
 - Check `ok` in every reply. An application error includes `errorInfo`; native browser
   rejection can precede the callback. In that case diagnose the same arguments through
   `window.photocraft.validateTool(name, args)`, without mutating the document.
@@ -49,6 +56,11 @@ For multi-step edits, use tracked `photocraft_execute` calls when supported. See
 If tracking is unavailable, execute small ordered chunks, persist the last confirmed
 result, and inspect before retrying any ambiguous mutation. Do not claim exactly-once
 execution across page reloads or transactional rollback of a sequence.
+
+Persist the browser TaskSpace/page identity with the plan and follow the browser skill's
+ownership rules. A missing space or user-control response is not permission to create a
+replacement space or reclaim control. If that space cannot continue, stop and request
+explicit recovery instructions; a stored document checkpoint does not grant browser control.
 
 ## Draw and revise editable objects
 

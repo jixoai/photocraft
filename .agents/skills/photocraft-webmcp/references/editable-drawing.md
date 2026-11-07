@@ -24,6 +24,9 @@ Discover each command's schema rather than inferring fields from these workflow 
 
 1. Block major silhouettes and relationships. Export a PNG preview and actually view it.
    Check readability at thumbnail scale, composition, proportions, overlap and negative space.
+   For an action, identify the contact, support and direction of force that make it readable;
+   for depth, check consistent plane directions, scale and ground contact. A named object or
+   connected pair of paths is not by itself convincing action or perspective.
    Fix the weakest large relationship before decorating. Geometry density is not quality.
 2. Refine the focal contour, values and supporting objects. Keep object IDs in the host plan.
    Query `shape.info` only for objects being revised; prefer scoped inspection when supported.
