@@ -192,3 +192,47 @@ for that browser download. The reusable [probe procedure](../.agents/skills/phot
 keeps these observations separate. Local evidence is in
 `target/acceptance/webmcp-semantic-reliability-20261107/`; it is synthetic technical evidence,
 not an independent illustration or a claim of general artistic improvement.
+
+## 8. Independent parallel task workspaces
+
+Implemented opt-in validated URL scopes, per-scope recovery/preset databases and preferences,
+and an exclusive Web Lock acquired before storage/editor startup. Conflicting writers block
+without takeover; invalid/duplicate scopes or missing Web Locks fail closed. Legacy unscoped
+storage and calls remain compatible, without claiming that legacy pages are isolated.
+Native `scope.status` and all six tool schemas expose scope identity. Explicit-scoped writes
+require matching `scopeId`; supplied mismatches reject even discovery calls before ledger
+admission. `ifDocument: {id, revision?}` on execute is checked at actual command dispatch and
+included in tracked identity. It is not a transaction, job-completion guard or universal UI guard.
+
+On 2026-11-07, two native-WebMCP pages on the same `http://127.0.0.1:8791` origin created and
+edited independent 160×120 RGB16 documents concurrently. Both intentionally had document ID 1
+and vector layer ID 3; task/page identities kept them separate. Wrong/missing scopes rejected
+without mutation, and a rejected tracked ID was absent from the ledger. Stale revision guards
+rejected before running; changed tracked guards conflicted. A's undo/redo PNGs matched their
+respective baselines exactly while B's PNG/revision stayed unchanged.
+
+Distinct preference values and brush presets were saved by real commands. Each scope showed
+only its own library/checkpoint. Both committed checkpoints survived separate reloads with
+rotated request instances, retained preferences/presets and explicit dirty-copy restoration.
+Restored PNGs were byte-identical to their pre-reload counterparts; project ZIPs validated and
+full editable-layer manifests matched. A third same-scope page blocked while the owner lived,
+then acquired the lease after that disposable owner closed. Invalid/duplicate URLs and a
+page-local simulated missing Web Locks API registered no editor/tools or fallback database.
+The final release rebuild also verified an actionable unsupported-API message, successful
+legacy unscoped editing without Web Locks, and same-scope contention across the rebuilt page.
+Actual editor screenshots and restored PNGs were viewed. No existing artwork or user-owned
+browser space was operated on. Local evidence: `target/acceptance/parallel-tasks-20261107/`.
+
+Validation: 45 Web tests, 77 focused control tests, adversarial command hunt, native changed-crate
+all-target strict Clippy, Web-only Wasm strict Clippy, layering and workspace Wasm/HEIF pass.
+The full UI library run is **not green**: 4740 pass, 29 fail, 21 ignored, including font/glyph,
+README/title and stale-parameter fixtures. UI Wasm strict Clippy also reports four untouched
+cfg-specific warnings; ordinary Wasm checks pass. No unrelated fixes or suppressions added.
+
+This establishes the observed independent-task path, not hostile-agent security isolation,
+unbounded capacity, distributed collaboration or improved artistic judgment. Machine/browser
+resource and physical storage quotas remain shared. This probe uses `download: false` exports
+to separate host directories; it does not claim browser-download completion. Serialize
+download-event waits and obey browser-owned permission prompts. See the
+[contract](webmcp.md#independent-parallel-tasks) and
+[repeatable acceptance](webmcp-acceptance.md#parallel-task-acceptance).

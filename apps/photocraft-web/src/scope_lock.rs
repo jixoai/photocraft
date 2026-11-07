@@ -18,7 +18,14 @@ impl Writer {
         }
         let window = web_sys::window().ok_or("Browser window unavailable")?;
         let manager = Reflect::get(window.navigator().as_ref(), &JsValue::from_str("locks")).map_err(message)?;
-        let request = Reflect::get(&manager, &JsValue::from_str("request")).map_err(message)?.dyn_into::<Function>().map_err(message)?;
+        let unsupported = || {
+            "Task isolation requires the browser Web Locks API. Use a supported browser on HTTPS or trusted localhost; no shared-storage fallback was opened"
+                .to_owned()
+        };
+        if manager.is_null() || manager.is_undefined() {
+            return Err(unsupported());
+        }
+        let request = Reflect::get(&manager, &JsValue::from_str("request")).map_err(message)?.dyn_into::<Function>().map_err(|_| unsupported())?;
         let options = Object::new();
         Reflect::set(&options, &JsValue::from_str("ifAvailable"), &JsValue::TRUE).map_err(message)?;
         let release = Rc::new(RefCell::new(None));

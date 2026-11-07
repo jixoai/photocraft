@@ -8,7 +8,9 @@ technical probes, not a reason to repeat a drawing or operate an unrelated artwo
 Use one TaskSpace for the probe and obey its ownership/stop rules. Keep existing artwork pages
 untouched. Prefer a different explicitly chosen local origin when testing shared browser
 storage; `localhost` and `127.0.0.1` are different origins. A new origin cannot restore another
-origin's checkpoints. Do not change profiles, clear storage or create a replacement TaskSpace
+origin's checkpoints. For task-scope isolation acceptance, instead keep both probe pages on the
+same origin with distinct explicit scopes; another origin is not evidence for scope isolation.
+Include the assigned `scopeId` on export and all recovery writes. Do not change profiles, clear storage or create a replacement TaskSpace
 to get around a failure. Create only a disposable document with a distinctive name, editable
 text and a small multipart shape; export its project and baseline PNG before any reload.
 Record the page identity, native registration, command contracts, request instance, document

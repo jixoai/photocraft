@@ -20,7 +20,39 @@ objects, precise patches, shared history and feedback let a capable agent iterat
 control; they are advantages over a single flattened image, not a guarantee of better art.
 Use primitives for control, not as an excuse to replace every silhouette with an ellipse.
 
+## Parallel-task acceptance
+
+Use one new authorized browser TaskSpace with two dedicated pages on the **same origin**, each
+with a fresh distinct `?scope=TASK_ID`. Do not reload existing artwork or use another origin as
+proof that scopes isolate storage. Record page labels, scope/instance IDs and native tool contracts.
+
+- Interleave edits in A/B; check each page's document, layer IDs, history and distinct PNG/project
+  exports. Verify A undo/redo does not change B's metadata or PNG, even if numeric IDs coincide.
+- On B submit A's scope with an edit and tracked ID: require `SCOPE_MISMATCH`, no ledger record
+  and no document/history change. Omit scope on a write: require `SCOPE_REQUIRED`. Matching
+  scope plus stale document/revision must reject at dispatch without mutation. Reusing a tracked
+  ID with changed preconditions must conflict, not silently return a different target's result.
+- Write distinct preferences/presets through real commands and commit a checkpoint in each.
+  Confirm each recovery catalog, saved library and preference key contains only that task's
+  changes. Reload only a disposable page after durable evidence; require its checkpoint/library/
+  preferences to survive and the other live page to remain unchanged. Explicitly restore the
+  checkpoint, inspect editable objects and compare its PNG. Reload rotates the request instance.
+- Open a third page with A's scope: startup must block before tools/storage writes, with no
+  takeover. Deliberately close A only after preserving its probe result; reload the blocked page
+  and verify the lease releases and the same scope can reopen. Invalid/duplicate scopes and a
+  simulated missing Web Locks API must fail closed, never become legacy editors.
+- Keep outputs in per-task directories with unique filenames. Serialize real download waits;
+  distinguish verified base64 exports from browser-download completion. Physical resource and
+  storage quotas, permission prompts and download coordination remain browser-wide concerns.
+
+Report observed results and untested limits separately. Stop on ownership loss; do not create a
+replacement TaskSpace to bypass it. This probe does not establish security isolation, unbounded
+parallel capacity, multi-agent collaboration or artistic quality.
+
 ## Semantic-object edit acceptance
+
+For concurrent independent jobs, first run [parallel-task acceptance](#parallel-task-acceptance).
+Do not confuse it with several agents editing one document.
 
 Layer count is not semantic editability. For major multipart objects, save a compact manifest
 of semantic names, component layer IDs and roles, plus bounds, front/back order, contact/support

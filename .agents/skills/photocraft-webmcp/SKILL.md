@@ -27,6 +27,31 @@ from an automation timeout. Follow the user's constraints on imported assets and
   rejection can precede the callback. In that case diagnose the same arguments through
   `window.photocraft.validateTool(name, args)`, without mutating the document.
 
+## Independent tasks
+
+For concurrent independent jobs, use one assigned page per job with a unique explicit
+`?scope=TASK_ID` (1–64 ASCII letters/digits, hyphen or underscore). Follow the browser skill's
+TaskSpace ownership rules; several pages can share one TaskSpace where appropriate. Never
+reuse another task's active page. Read `photocraft_control` `scope.status`, verify the expected
+scope, then send top-level `scopeId` on every call, including export and recovery writes.
+Persist the exact page, origin, scope and instance with the plan. Discovery permits omitted
+identity, not silent retargeting; stop on `SCOPE_MISMATCH` or `SCOPE_REQUIRED`.
+
+Same-scope second writers block before editor startup; do not steal the lock. Continue in
+the owner page or deliberately close it before retrying the blocked page. Missing Web Locks
+fail closed. No scope means legacy shared storage, not isolated concurrency. Scope separates
+recovery, presets and preferences; it does not copy legacy custom libraries. Numeric object
+IDs are page-local. This is not same-canvas collaboration, a security boundary or a scheduler.
+Browser downloads/permissions and machine resources remain shared: serialize download waits,
+use distinct output directories/names, and keep concurrency bounded. Never clear storage.
+
+For a command targeting an inspected document, optionally send top-level
+`ifDocument: {id: actualId, revision: actualRevision}` on `photocraft_execute`, outside `params`.
+The guard is checked at command dispatch and included in tracked identity. On
+`DOCUMENT_PRECONDITION_FAILED`, inspect/reconcile instead of retrying unchanged. It is not a
+transaction or a completion-time guard for jobs, nor an automatic guard on all UI operations.
+See [parallel-task contract](../../../docs/webmcp.md#independent-parallel-tasks).
+
 ## Continue safely
 
 For multi-step edits, use tracked `photocraft_execute` calls when supported. See the
