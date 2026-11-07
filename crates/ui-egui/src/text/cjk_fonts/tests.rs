@@ -1368,10 +1368,6 @@ fn pending_scan_recovers_through_real_layout_and_the_lazy_reload() {
 
 #[test]
 fn strict_policy_first_frame_after_the_scan_is_accepted() {
-    if craft_fonts::CRAFT_FONTS.is_empty() {
-        eprintln!("skipping: the eager provider is only installed with craft-fonts");
-        return;
-    }
     let ctx = egui::Context::default();
     ctx.set_missing_glyph_policy(egui::MissingGlyphPolicy::Panic);
     let sources = Sources {
@@ -1391,6 +1387,38 @@ fn strict_policy_first_frame_after_the_scan_is_accepted() {
     .textures_delta
     .clear();
     assert!(ctx.fonts_mut(|f| f.has_glyph(&FontId::proportional(12.0), '龍')));
+}
+
+#[test]
+fn system_only_provider_draws_other_scripts_in_all_ui_weights_after_rebuilds() {
+    let ctx = egui::Context::default();
+    ctx.set_missing_glyph_policy(egui::MissingGlyphPolicy::Panic);
+    let sources = || Sources {
+        locale: || Some("en".into()),
+        files: no_files,
+        last_resort: Vec::new,
+        pending: || false,
+        scripts: |script| if script == Script::Arabic { vec![fake("arabic.ttf").path] } else { Vec::new() },
+        covers: scripts::covering_face,
+        embedded: no_embedded,
+        eager_craft_fonts: true,
+    };
+    for size in [photocraft_engine::prefs::UiFontSize::Small, photocraft_engine::prefs::UiFontSize::Large] {
+        crate::theme::install_fonts_with(&ctx, sources());
+        crate::theme::set_ui_font_size(&ctx, size);
+        for _ in 0..3 {
+            ctx.run_ui(Default::default(), |ui| {
+                for family in [FontFamily::Proportional, FontFamily::Monospace, FontFamily::Name("medium".into()), FontFamily::Name("semibold".into())] {
+                    ui.label(egui::RichText::new("م").family(family));
+                }
+            })
+            .textures_delta
+            .clear();
+        }
+        let provider = ctx.data(|data| data.get_temp::<std::sync::Arc<CraftFontProvider>>(craft_provider_id())).expect("system-only provider");
+        assert_eq!(provider.system.lock().unwrap().reads, 1, "all weights share one system font read");
+        assert_eq!(provider.scale(), crate::theme::ui_font_scale(&ctx));
+    }
 }
 
 /// A strict first frame while Fontconfig is still pending cannot be recovered by the lazy

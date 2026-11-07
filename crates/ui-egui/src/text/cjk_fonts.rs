@@ -81,7 +81,7 @@ pub struct Sources {
     /// provider and lazy loader both use this injection (tests can therefore pin craft-font
     /// selection without depending on the build input).
     pub embedded: fn(&'static str) -> Vec<&'static CraftFont>,
-    /// Install the per-character craft-font provider, so a headless first frame can shape CJK
+    /// Install the per-character fallback provider, even without embedded craft-fonts, so a headless first frame can shape CJK
     /// and other scripts before the lazy loader gets a second pass (tests panic on a missing
     /// glyph). It selects a face for the character's script instead of putting a broad face into
     /// the family stack up front for every later character.
@@ -561,6 +561,7 @@ fn craft_provider_id() -> egui::Id {
 /// An English UI on a Japanese, Korean or Chinese OS therefore uses that OS script, not the
 /// migration baseline's manifest-first face. The baseline applies only when the effective locale
 /// is non-CJK or unknown.
+#[cfg(not(target_arch = "wasm32"))]
 fn effective_locale(ui_code: &str, os_locale: Option<&str>) -> Option<String> {
     match ui_code {
         "ja" | "ko" | "zh-hans" | "zh-hant" => Some(ui_code.to_owned()),
@@ -993,7 +994,7 @@ pub fn install_with(ctx: &egui::Context, sources: Sources) {
     }
     // The provider resolves a craft face for each missing character in the first frame, before the
     // lazy loader's next-pass system fallback. Without it a headless frame panics on CJK text.
-    if sources.eager_craft_fonts && !craft_fonts::CRAFT_FONTS.is_empty() {
+    if sources.eager_craft_fonts {
         let provider = std::sync::Arc::new(CraftFontProvider::new(&sources, crate::theme::ui_font_scale(ctx)));
         let as_provider: std::sync::Arc<dyn FontProvider> = provider.clone();
         ctx.data_mut(|d| d.insert_temp(craft_provider_id(), provider));
