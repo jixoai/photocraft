@@ -58,8 +58,32 @@ pub fn start() {
             log::error!("missing <canvas id=\"{CANVAS_ID}\">");
             return;
         };
-        let q = query();
-        let force_cpu = q.contains("cpu");
+        let parameters = match web_sys::UrlSearchParams::new_with_str(&query()) {
+            Ok(parameters) => parameters,
+            Err(error) => {
+                startup_failure(&document, &format!("Invalid task URL: {error:?}"));
+                return;
+            }
+        };
+        if parameters.get_all("scope").length() > 1 {
+            startup_failure(&document, "Specify exactly one task scope; duplicate scope parameters are not allowed");
+            return;
+        }
+        let scope = match crate::task_scope::Scope::new(parameters.get("scope")) {
+            Ok(scope) => scope,
+            Err(error) => {
+                startup_failure(&document, &error);
+                return;
+            }
+        };
+        let writer = match crate::scope_lock::Writer::acquire(&scope).await {
+            Ok(writer) => writer,
+            Err(error) => {
+                startup_failure(&document, &format!("Task workspace unavailable: {error}"));
+                return;
+            }
+        };
+        let force_cpu = parameters.has("cpu");
         #[cfg(feature = "threads")]
         if let Err(error) = wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(worker_count())).await {
             log::error!("FDE2E Photocraft workers could not start: {error:?}");
@@ -72,14 +96,14 @@ pub fn start() {
         photocraft_engine::background::enable_web_workers();
         let mut options = eframe::WebOptions::default();
         photocraft_ui_egui::gpu_canvas::use_adapter_limits(&mut options.wgpu_options.wgpu_setup);
-        if q.contains("webgl")
+        if parameters.has("webgl")
             && let eframe::egui_wgpu::WgpuSetup::CreateNew(create) = &mut options.wgpu_options.wgpu_setup
         {
             create.instance_descriptor.backends = eframe::wgpu::Backends::GL;
         }
         // Hydrate before constructing an interactive session: a late load must never undo a
         // user deletion/reorder. Storage denial or timeout still opens a usable session.
-        let (database, presets, mut preset_warnings) = match crate::indexed_presets::load().await {
+        let (database, presets, mut preset_warnings) = match crate::indexed_presets::load(&scope).await {
             Ok((db, bridge, warnings)) => (Some(db), bridge, warnings),
             Err(e) => {
                 let bridge = crate::preset_bridge::Bridge::default();
@@ -87,7 +111,7 @@ pub fn start() {
                 (None, bridge, Vec::new())
             }
         };
-        let recovery = crate::web_recovery::Recovery::load().await;
+        let recovery = crate::web_recovery::Recovery::load(&scope).await;
         let pen_target = canvas.clone();
         let result = eframe::WebRunner::new()
             .start(
@@ -103,7 +127,7 @@ pub fn start() {
                     let (session, warnings) = crate::preset_bridge::session(presets.clone());
                     preset_warnings.extend(warnings);
                     let drag = listen_drag(&pen_target);
-                    let mut platform = services(inbox.clone(), place_inbox.clone(), drag_pos_service(pen_target.clone(), drag));
+                    let mut platform = services(inbox.clone(), place_inbox.clone(), drag_pos_service(pen_target.clone(), drag), &scope);
                     let save = recovery.bridge.clone();
                     platform.autosave = Some(Box::new(move |document, revision, _| save.save(document, revision).map(|_| ())));
                     let results = recovery.bridge.clone();
@@ -112,7 +136,7 @@ pub fn start() {
                     platform.discard_autosave = Some(Box::new(move |document| discard.discard_document(document)));
                     let mut app = PhotocraftApp::new(session, platform);
                     app.background_jobs = photocraft_engine::background::available();
-                    let (agents, control) = crate::webmcp::Bridge::new(&cc.egui_ctx, recovery.bridge.clone());
+                    let (agents, control) = crate::webmcp::Bridge::new(&cc.egui_ctx, recovery.bridge.clone(), scope.clone());
                     app = app.with_control(control);
                     if !preset_warnings.is_empty() {
                         photocraft_ui_egui::notices::post(&mut app, i18n::t("Some brush presets could not be loaded"), preset_warnings, true, None);
@@ -127,7 +151,20 @@ pub fn start() {
                     }
                     let unsaved = Arc::new(AtomicBool::new(false));
                     guard_unload(unsaved.clone());
-                    Ok(Box::new(WebShell { app, agents, inbox, place_inbox, unsaved, served, database, presets, recovery, ui_language: "" }))
+                    Ok(Box::new(WebShell {
+                        app,
+                        agents,
+                        inbox,
+                        place_inbox,
+                        unsaved,
+                        served,
+                        database,
+                        presets,
+                        recovery,
+                        scope,
+                        _writer: writer,
+                        ui_language: "",
+                    }))
                 }),
             )
             .await;
@@ -143,6 +180,13 @@ pub fn start() {
             }
         }
     });
+}
+
+fn startup_failure(document: &web_sys::Document, message: &str) {
+    log::error!("FDE2E Photocraft: {message}");
+    if let Some(loading) = document.get_element_by_id("photocraft_loading") {
+        loading.set_text_content(Some(&format!("FDE2E Photocraft — {message}")));
+    }
 }
 
 #[cfg(feature = "threads")]
@@ -309,6 +353,8 @@ struct WebShell {
     database: Option<web_sys::IdbDatabase>,
     presets: crate::preset_bridge::Bridge,
     recovery: crate::web_recovery::Recovery,
+    scope: crate::task_scope::Scope,
+    _writer: crate::scope_lock::Writer,
     /// The interface language whose served script font was last asked for.
     ui_language: &'static str,
 }
@@ -420,6 +466,9 @@ impl eframe::App for WebShell {
 
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         egui::Panel::top("browser_document_recovery").show(ui, |ui| {
+            if let Some(scope) = self.scope.id() {
+                ui.label(format!("{}: {scope}", i18n::t("Task workspace")));
+            }
             let bridge = &self.recovery.bridge;
             ui.collapsing(i18n::t("Browser document recovery"), |ui| {
                 ui.label(i18n::t("Recovery snapshots stay in this browser, not in your downloads. Export a project copy for a durable backup."));
@@ -497,7 +546,9 @@ impl eframe::App for WebShell {
     }
 }
 
-fn services(inbox: Inbox, place_inbox: Inbox, cursor_pos: photocraft_ui_egui::CursorPosFn) -> Services {
+fn services(inbox: Inbox, place_inbox: Inbox, cursor_pos: photocraft_ui_egui::CursorPosFn, scope: &crate::task_scope::Scope) -> Services {
+    let preferences = scope.storage(PREFS_KEY);
+    let load_preferences = preferences.clone();
     Services {
         automation_write: Some(Box::new(download)),
         screen_pick: screen_color_service(),
@@ -554,8 +605,8 @@ fn services(inbox: Inbox, place_inbox: Inbox, cursor_pos: photocraft_ui_egui::Cu
         place_inbox: Some(place_inbox),
         cursor_pos: Some(cursor_pos),
         // Preferences live in the browser's localStorage.
-        load_prefs: Some(Box::new(|| local_storage()?.get_item(PREFS_KEY).ok().flatten())),
-        save_prefs: Some(Box::new(|text: &str| local_storage().ok_or("no localStorage")?.set_item(PREFS_KEY, text).map_err(|e| format!("{e:?}")))),
+        load_prefs: Some(Box::new(move || local_storage()?.get_item(&load_preferences).ok().flatten())),
+        save_prefs: Some(Box::new(move |text: &str| local_storage().ok_or("no localStorage")?.set_item(&preferences, text).map_err(|e| format!("{e:?}")))),
         ..Default::default()
     }
 }

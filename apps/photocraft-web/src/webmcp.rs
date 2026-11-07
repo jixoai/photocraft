@@ -120,6 +120,7 @@ pub struct Bridge {
     auxiliary: Vec<Active>,
     work: Option<Work>,
     recovery: crate::recovery_bridge::Bridge,
+    scope: crate::task_scope::Scope,
 }
 
 fn now() -> f64 {
@@ -273,14 +274,14 @@ fn enqueue(queue: &Rc<RefCell<Queue>>, ctx: &egui::Context, tool: &str, input: J
 }
 
 impl Bridge {
-    pub fn new(ctx: &egui::Context, recovery: crate::recovery_bridge::Bridge) -> (Self, Receiver<ControlRequest>) {
+    pub fn new(ctx: &egui::Context, recovery: crate::recovery_bridge::Bridge, scope: crate::task_scope::Scope) -> (Self, Receiver<ControlRequest>) {
         let (sender, receiver) = std::sync::mpsc::channel();
         let instance = page_identity().unwrap_or_else(|error| {
             log::warn!("Request tracking unavailable: {error:?}");
             String::new()
         });
         let queue = Rc::new(RefCell::new(Queue { pending: VecDeque::new(), bytes: 0, count: 0, ledger: Ledger::new(instance) }));
-        let bridge = Self { queue, sender, active: None, auxiliary: Vec::new(), work: None, recovery };
+        let bridge = Self { queue, sender, active: None, auxiliary: Vec::new(), work: None, recovery, scope };
         if let Err(e) = bridge.install(ctx) {
             log::warn!("FDE2E Photocraft WebMCP setup: {e:?}");
         }
@@ -312,6 +313,7 @@ impl Bridge {
         });
         set(&api, "validateTool", &validate.into_js_value())?;
         set(&api, "ready", &JsValue::TRUE)?;
+        set(&api, "scope", &js(&self.scope.status())?)?;
         set(&api, "backgroundWorkers", &JsValue::from_bool(photocraft_engine::background::available()))?;
         let queue = self.queue.clone();
         let wake = ctx.clone();

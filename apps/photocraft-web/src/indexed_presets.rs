@@ -8,7 +8,6 @@ use web_sys::{Blob, Event, EventTarget, IdbDatabase, IdbRequest, IdbTransactionM
 use crate::preset_bridge::{Batch, Bridge, MAX_RECORDS, record_limit};
 use photocraft_engine::preset_store::MAX_STORE_BYTES;
 
-const DATABASE: &str = "photocraft.presets";
 const FILES: &str = "files";
 const TIMEOUT_MS: f64 = 10_000.0;
 
@@ -119,10 +118,6 @@ pub(crate) async fn before(promise: &Promise, deadline: f64) -> Result<JsValue, 
     result
 }
 
-async fn open(deadline: f64) -> Result<IdbDatabase, String> {
-    open_database(DATABASE, deadline).await
-}
-
 pub(crate) async fn open_database(database: &str, deadline: f64) -> Result<IdbDatabase, String> {
     let factory = web_sys::window().ok_or("no window")?.indexed_db().map_err(js)?.ok_or("IndexedDB unavailable")?;
     let req = factory.open_with_u32(database, 1).map_err(js)?;
@@ -158,9 +153,9 @@ pub(crate) async fn open_database(database: &str, deadline: f64) -> Result<IdbDa
     }
 }
 
-pub async fn load() -> Result<(IdbDatabase, Bridge, Vec<String>), String> {
+pub async fn load(scope: &crate::task_scope::Scope) -> Result<(IdbDatabase, Bridge, Vec<String>), String> {
     let deadline = js_sys::Date::now() + TIMEOUT_MS;
-    let db = open(deadline).await?;
+    let db = open_database(&scope.storage("photocraft.presets"), deadline).await?;
     let result = read(&db, deadline).await;
     match result {
         Ok((bridge, warnings)) => Ok((db, bridge, warnings)),

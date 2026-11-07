@@ -23,10 +23,10 @@ pub struct Recovery {
 }
 
 impl Recovery {
-    pub async fn load() -> Self {
+    pub async fn load(scope: &crate::task_scope::Scope) -> Self {
         let (sender, receiver) = mpsc::channel();
         let owner = crate::webmcp::page_identity().unwrap_or_default();
-        let (database, bridge) = match crate::indexed_recovery::load().await {
+        let (database, bridge) = match crate::indexed_recovery::load(scope).await {
             Ok((database, entries)) => match Bridge::new(owner, entries) {
                 Ok(bridge) => (Some(database), bridge),
                 Err(error) => {

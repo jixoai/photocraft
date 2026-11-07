@@ -34,6 +34,12 @@ mod agent_inspect;
 #[cfg(any(target_arch = "wasm32", test))]
 mod recovery_bridge;
 
+#[cfg(any(target_arch = "wasm32", test))]
+mod task_scope;
+
+#[cfg(target_arch = "wasm32")]
+mod scope_lock;
+
 #[cfg(test)]
 mod editable_tests;
 

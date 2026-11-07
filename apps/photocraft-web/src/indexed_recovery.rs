@@ -5,7 +5,6 @@ use web_sys::{Blob, IdbDatabase, IdbObjectStore, IdbTransactionMode};
 use crate::indexed_presets::{before, open_database, request, transaction};
 use crate::recovery_bridge::{Entry, MAX_DOCUMENTS, MAX_FILE_BYTES, MAX_METADATA_BYTES, MAX_STORE_BYTES, valid_key};
 
-const DATABASE: &str = "photocraft.recovery";
 const FILES: &str = "files";
 const TIMEOUT_MS: f64 = 10_000.0;
 
@@ -60,9 +59,9 @@ async fn inventory(store: &IdbObjectStore, deadline: f64) -> Result<Vec<(String,
     Ok(records)
 }
 
-pub async fn load() -> Result<(IdbDatabase, Vec<Entry>), String> {
+pub async fn load(scope: &crate::task_scope::Scope) -> Result<(IdbDatabase, Vec<Entry>), String> {
     let deadline = js_sys::Date::now() + TIMEOUT_MS;
-    let db = open_database(DATABASE, deadline).await?;
+    let db = open_database(&scope.storage("photocraft.recovery"), deadline).await?;
     let result = catalog(&db, deadline).await;
     match result {
         Ok(entries) => Ok((db, entries)),
