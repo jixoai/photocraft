@@ -10,7 +10,9 @@ pub(super) fn description(id: &str) -> Option<&'static str> {
         "command.list" => {
             "Discover all engine commands and their parameter schemas, semantic descriptions and current enabled state. Returns a bare array, not a commands wrapper. Contracts are available even before a document is open; inspect schema coverage before constructing a call."
         }
-        "document.inspect" => "Read the active document's structure, layer IDs, selection bounds, revision and undo/redo state without modifying it.",
+        "document.inspect" => {
+            "Read a document's structure, layer IDs, selection bounds, revision and undo/redo state without modifying it. Omit document for the active document or supply its zero-based session index."
+        }
         "document.pixel" => "Sample the composited active document at a document pixel coordinate. Returns RGBA components in 0–1, not 0–255.",
         "layer.list" => "Read the layer hierarchy in display order. Use the returned stable IDs for subsequent edits; names can be ambiguous.",
         "layer.hideLayers" => "Hide the specified layer, or all selected layers when layer is omitted. Does not delete pixels or change layer order.",
@@ -50,9 +52,11 @@ pub(super) fn schema(id: &str) -> Option<Value> {
             }),
             &[],
         ),
-        "command.list" | "document.inspect" | "edit.undo" | "edit.redo" | "select.all" | "select.deselect" | "select.inverse" | "path.list" | "jobs.list" => {
-            object(json!({}), &[])
-        }
+        "command.list" | "edit.undo" | "edit.redo" | "select.all" | "select.deselect" | "select.inverse" | "path.list" | "jobs.list" => object(json!({}), &[]),
+        "document.inspect" => object(
+            json!({"document":{"type":"integer","minimum":0,"maximum":u64::MAX,"description":"Zero-based session document index; omit for the active document. Null is not an index."}}),
+            &[],
+        ),
         "document.pixel" => object(
             json!({
                 "x":{"type":"integer","minimum":i32::MIN,"maximum":i32::MAX,"default":0,"description":"Horizontal document pixel coordinate; origin is the canvas top-left. Outside-canvas samples are transparent."},

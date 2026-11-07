@@ -135,3 +135,21 @@ without live-primitive regeneration, and retain the normal paint/transform/histo
 Regression coverage includes schema/runtime agreement, unchanged neighbors and undo/redo at
 8/16/32 bits, malformed or missing paths without mutation, and the shared Web control path.
 This is a subject-independent authoring fix, not a scene generator or a visual-quality claim.
+
+The same session exposed wrong-target risk when `id` was supplied instead of `layer` and
+ignored. Shared engine precheck/execute/start now reject unknown top-level keys in complete,
+closed schemas. Partial contracts remain advisory; intentional omission of `layer` retains
+active/selected-layer defaults. WebMCP uses the same property catalogue to reject these keys
+before queue/tracked admission, with a field path and `execution: "not_started"`. Tests cover
+query/edit/delete mistakes, unchanged document/history/revision/journal, explicit targets,
+intentional defaults, partial compatibility and direct Web control dispatch. This does not
+claim full runtime JSON Schema validation of nested values or state-dependent constraints.
+
+Follow-up validation: 3,395 engine/library/integration tests and 40 Web tests passed, along
+with the opt-in adversarial command hunt, 31-crate layering and the 24-library Wasm gate
+including HEIF. Native changed-crate all-target strict Clippy and Web-only Wasm strict Clippy
+passed. Engine Wasm strict Clippy remains blocked by three pre-existing unused constants in
+display-colour/LUT code; no unrelated warning suppressions were added. The reviewed 964-command
+baseline changes only `shape.edit` and the previously omitted `document.inspect.document`
+parameter. Source/test success does not update an already-open browser tab or prove a new
+independent drawing run; retain the existing acceptance artwork and open it unchanged.

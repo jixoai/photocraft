@@ -20,6 +20,27 @@ fn png(app: &PhotocraftApp) -> Vec<u8> {
 }
 
 #[test]
+fn invalid_layer_selector_never_falls_back_to_the_active_layer_on_web_control() {
+    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Services::default());
+    execute(&mut app, "file.new", json!({"width":32,"height":24}));
+    let subject = execute(&mut app, "shape.create", json!({"rect":[2,2,10,8],"fill":"#247c98"}));
+    let neighbor = execute(&mut app, "shape.create", json!({"rect":[18,2,10,8],"fill":"#98c724"}));
+    let before = app.session.active().unwrap().doc.clone();
+    let history = app.session.active().unwrap().history.past_len();
+    for command in ["shape.info", "shape.edit", "layer.delete"] {
+        let (request, _) = ControlRequest::new("engine.execute", json!({"command":command,"params":{"id":subject["layer"]}}));
+        let Outcome::Done(reply) = photocraft_ui_egui::control::handle(&mut app, &egui::Context::default(), &request) else {
+            panic!("expected synchronous rejection");
+        };
+        assert_eq!(reply["ok"], false, "{command}: {reply}");
+        assert!(reply["error"].as_str().unwrap().contains("unknown parameter `id`"));
+        assert_eq!(app.session.active().unwrap().doc, before);
+        assert_eq!(app.session.active().unwrap().history.past_len(), history);
+    }
+    assert_eq!(execute(&mut app, "shape.info", json!({}))["layer"], neighbor["layer"]);
+}
+
+#[test]
 fn explicit_path_patch_uses_the_shared_web_control_and_undo_history() {
     let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Services::default());
     execute(&mut app, "file.new", json!({"width":32,"height":24}));

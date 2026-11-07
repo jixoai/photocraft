@@ -8,6 +8,21 @@ fn execute(session: &mut crate::Session, command: &str, params: Value) -> Value 
 }
 
 #[test]
+fn document_inspection_contract_accepts_existing_document_indices_without_switching() {
+    let mut session = crate::Session::new();
+    execute(&mut session, "file.new", json!({"width":12,"height":8,"name":"First","profile":"none"}));
+    execute(&mut session, "file.new", json!({"width":16,"height":10,"name":"Second","profile":"none"}));
+    let active = session.active().unwrap().doc.id;
+    assert_eq!(execute(&mut session, "document.inspect", json!({"document":0}))["name"], "First");
+    assert_eq!(execute(&mut session, "document.inspect", json!({}))["name"], "Second");
+    assert_eq!(session.active().unwrap().doc.id, active);
+    for params in [json!({"document":null}), json!({"document":-1}), json!({"document":"0"})] {
+        assert!(jsonschema::validate(crate::commands::input_schema("document.inspect").unwrap(), &params).is_err());
+        assert!(session.execute("document.inspect", params).is_err());
+    }
+}
+
+#[test]
 fn explicit_path_edits_match_the_contract_and_preserve_neighbors_at_every_depth() {
     for depth in [8, 16, 32] {
         let mut session = crate::Session::new();

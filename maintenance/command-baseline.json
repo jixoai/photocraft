@@ -233,7 +233,7 @@
     },
     "document.inspect": {
       "coverage": "complete",
-      "schemaSha256": "48d7732322f3f31ae0574bd341e0080533fd3c6da5a1a365cc4fa63e2c09479a"
+      "schemaSha256": "dcd4339fb828712f15e1df4db86690a410e7497d8193194bac684f94b7de8aaf"
     },
     "document.move": {
       "coverage": "partial"
@@ -2509,7 +2509,7 @@
     },
     "shape.edit": {
       "coverage": "complete",
-      "schemaSha256": "42dfb6daa8b1bc3365a057d274e1c5231ee7f17dfd47aff75e4e5f56bece8ae4"
+      "schemaSha256": "f330db7d5df46c103a19046c4db7c5cd52d058c2e6536057bc9d0b9d135a17fb"
     },
     "shape.info": {
       "coverage": "complete",

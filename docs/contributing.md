@@ -23,6 +23,8 @@
    - `run`, which returns a JSON result and records exactly **one** history step (use `coalesce` for drags and typing sessions).
 4. **Respect the context:** active selection (feathered), layer vs mask target, locks, the colour model and depth.
 5. **Tests** in the module: behaviour, undo/redo, disabled states, bad params, several depths. Keep `cmd::schema::tests` green: all schemas must pass the real metaschema, defaults/examples must validate, and representative authoring inputs must agree with execution. Preserve `partial` coverage until the command and all nested parameter forms have been audited.
+   Complete, closed contracts reject unknown top-level keys in shared dispatch and precheck;
+   include every accepted alias before certifying coverage. Partial contracts stay advisory.
    For recursive patch parameters, do not put factory values in `default`: omission preserves
    existing state. Keep local `$defs`/`$ref` self-contained, distinguish complete new enum
    payloads from same-variant patches, test execution precedence and serialized-field coverage,

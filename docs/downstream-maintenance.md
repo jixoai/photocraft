@@ -180,8 +180,10 @@ git diff -- maintenance/command-baseline.json
 
 Do not run the replacement command merely to turn a failure green. Audit changed
 execution, update representative tests and semantic documentation, and explain the
-baseline diff in the same commit. Contracts do not add default insertion or dispatch
-rejection. Keep the existing `complete`/`partial` distinction and brush deep-patch rules.
+baseline diff in the same commit. Contracts do not insert defaults. Complete, closed contracts
+reject unknown top-level names before dispatch; partial schemas remain advisory. Values and
+nested/state-dependent constraints still use command validation rather than a blanket schema
+interpreter. Keep the existing `complete`/`partial` distinction and brush deep-patch rules.
 
 ## Release gates beyond code integration
 

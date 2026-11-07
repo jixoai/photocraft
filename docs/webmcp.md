@@ -177,9 +177,15 @@ Check `inputSchema["x-photocraft-coverage"]` before treating a contract as compl
   coverage of the entire command registry**.
 
 These are authoring contracts: defaults describe omission; they are not inserted into
-requests by the transport. Historical coercions and ignored unknown keys in older engine
-commands are not a recommendation to send arbitrary values. The migration does not add
-schema-based dispatch rejection or change existing command execution behavior. `file.new`
+requests by the transport. Complete, closed contracts now reject unknown top-level parameter
+names before dispatch, shared by execute/start/precheck across transports. For example,
+`shape.info`, `shape.edit` and `layer.delete` take `layer`, not `id`; an accidental `id` no
+longer silently selects the active layer. Omitting `layer` intentionally still uses the
+command's normal active/selected-layer behavior. WebMCP preflight reports these errors with
+`INVALID_ARGUMENTS`, an escaped `/params/...` field path and `execution: "not_started"` before
+tracked admission. This is a parameter-name guard, not a full JSON Schema runtime validator;
+values and nested/state-dependent constraints remain validated by the command. Partial
+contracts remain advisory and legacy command-specific checks still apply. `file.new`
 has a closed parameter validator and, unlike most commands, does not accept `coalesce`
 or `target`. Other commands only honor a pixel-edit `target` where their operation supports
 it; an existing command-specific `target` property keeps its own meaning.

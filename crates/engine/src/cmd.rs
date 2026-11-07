@@ -236,6 +236,11 @@ pub fn input_schema(id: &str) -> Option<&'static Value> {
     registry.schemas.get_or_init(|| registry.specs.iter().map(schema::input_schema).collect()).get(index)
 }
 
+/// First unknown top-level parameter in a complete, closed command contract, with its allowed names.
+pub fn unexpected_parameter<'a>(id: &str, params: &'a Value) -> Option<(&'a str, Vec<String>)> {
+    crate::param_check::unexpected_parameter(find(id)?, params)
+}
+
 struct Registry {
     specs: Vec<CommandSpec>,
     by_id: std::collections::HashMap<&'static str, usize>,

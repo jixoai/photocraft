@@ -109,6 +109,25 @@ pub fn validate(tool: &str, args: &Value) -> Result<(), Failure> {
             }
         }
     }
+    let execute = match tool {
+        "photocraft_execute" => Some((args, "/params")),
+        "photocraft_control" if args["method"] == "engine.execute" || args["method"] == "ui.menu.invoke" => {
+            args.get("params").map(|params| (params, "/params/params"))
+        }
+        _ => None,
+    };
+    if let Some((execute, path)) = execute {
+        let command = execute.get("command").or_else(|| execute.get("id")).and_then(Value::as_str);
+        if let (Some(command), Some(params)) = (command, execute.get("params"))
+            && let Some((field, allowed)) = photocraft_engine::commands::unexpected_parameter(command, params)
+        {
+            return Err(Failure::invalid(
+                pointer(path, field),
+                json!({"additionalProperties":false,"allowedProperties":allowed}),
+                format!("Unknown parameter `{field}` for `{command}`; use its inputSchema properties"),
+            ));
+        }
+    }
     Ok(())
 }
 
@@ -203,6 +222,38 @@ fn validate_dependencies(value: &Value, schema: &Value, path: &str) -> Result<()
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn closed_command_fields_are_rejected_before_tracked_or_control_dispatch() {
+        for args in [
+            json!({"command":"shape.edit","params":{"id":7,"fill":"#ff0000"}}),
+            json!({"command":"shape.info","params":{"id":7}}),
+            json!({"command":"layer.delete","params":{"id":7},"requestId":"step-1","instanceId":"page-1"}),
+        ] {
+            let reply = crate::agent::parse("photocraft_execute", args).unwrap_err().reply();
+            assert_eq!(reply["errorInfo"]["path"], "/params/id");
+            assert_eq!(reply["errorInfo"]["code"], "INVALID_ARGUMENTS");
+            assert_eq!(reply["errorInfo"]["execution"], "not_started");
+            assert_eq!(reply["errorInfo"]["retrySafe"], true);
+            assert!(reply["errorInfo"]["expected"]["allowedProperties"].as_array().unwrap().contains(&json!("layer")));
+        }
+        for method in ["engine.execute", "ui.menu.invoke"] {
+            let reply = crate::agent::parse(
+                "photocraft_control",
+                json!({
+                    "method":method,"params":{"command":"layer.delete","params":{"id":7}}
+                }),
+            )
+            .unwrap_err()
+            .reply();
+            assert_eq!(reply["errorInfo"]["path"], "/params/params/id");
+            assert_eq!(reply["errorInfo"]["execution"], "not_started");
+        }
+        assert!(crate::agent::parse("photocraft_execute", json!({"command":"shape.edit","params":{"layer":7,"fill":"#ff0000"}})).is_ok());
+        assert!(crate::agent::parse("photocraft_execute", json!({"command":"shape.info","params":{}})).is_ok());
+        let reply = crate::agent::parse("photocraft_execute", json!({"command":"shape.info","params":{"a~/b":7}})).unwrap_err().reply();
+        assert_eq!(reply["errorInfo"]["path"], "/params/a~0~1b");
+    }
 
     #[test]
     fn validation_identifies_original_acceptance_mistakes_without_dispatch() {
